@@ -33,7 +33,7 @@ export class Application {
     );
     this.express.use(morgan(MORGAN_FORMAT));
     this.express.use(Routes);
-    this.connectDatabase();
+    //this.connectDatabase();
   }
   async connectDatabase(): Promise<void> {
     await database();
