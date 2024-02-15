@@ -6,7 +6,6 @@ import express from 'express';
 import compression from 'compression';
 import morgan from 'morgan';
 
-import { database } from '../infra/database';
 
 import Routes from '../infra/http/routes/routes';
 
@@ -17,6 +16,8 @@ import {
 
 export class Application {
   public express!: express.Application;
+  //public expressOasGenerator = require('express-oas-generator');
+
 
   public constructor() {
     this.initialize();
@@ -24,6 +25,8 @@ export class Application {
 
   protected initialize(): void {
     this.express = express();
+    
+   // this.expressOasGenerator.init(this.express, {});
     this.express.use(cors());
     this.express.use(helmet());
     this.express.use(compression());
@@ -34,9 +37,6 @@ export class Application {
     this.express.use(morgan(MORGAN_FORMAT));
     this.express.use(Routes);
     //this.connectDatabase();
-  }
-  async connectDatabase(): Promise<void> {
-    await database();
   }
 }
 
