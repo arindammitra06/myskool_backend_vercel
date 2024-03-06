@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
-import { Gender, ParentType, Prisma, PrismaClient, UserType } from '@prisma/client';
+import { Gender, ParentType,  UserType } from '@prisma/client';
 import generator from 'generate-password-ts';
 import { encrypt, generateIdsForParentAndStudent } from "../../../../../../shared/helpers/utils/generic.utils";
+import { prisma } from "../../../../../../shared/db-client";
+import moment from "moment";
 
 
-const prisma = new PrismaClient()
+
 
 export class StudentController {
 
@@ -12,7 +14,7 @@ export class StudentController {
 public async createStudent  (req: Request, res: Response)  {
 
   const studentWithParents: any = req.body;
-  //console.log(studentWithParents);
+  
   
   const password = generator.generate({
     length: 10,
@@ -20,7 +22,7 @@ public async createStudent  (req: Request, res: Response)  {
     symbols: true
   });
   const encryptedPassword = encrypt(password);
-  
+  console.log(password);
   const countOfStudentsInClassAndSection = await prisma.user.count({
     where: {
       classId: Number(studentWithParents.form.classId),
@@ -28,14 +30,23 @@ public async createStudent  (req: Request, res: Response)  {
       campusId:Number(studentWithParents.form.campusId)
     },
   });
-  console.log(countOfStudentsInClassAndSection);
 
+  let latestUserID = await prisma.user.findFirst({
+    orderBy: {
+      id: 'desc',
+    },
+    take: 1,
+  });
+  
+  const studentID = generateIdsForParentAndStudent(latestUserID.id + 1, 'ST');
+  const middleName = studentWithParents.form.middleName!==null && studentWithParents.form.middleName!==undefined? studentWithParents.form.middleName :'';
+  
   const student = {
     userType : UserType.student,
     firstName: studentWithParents.form.firstName,
-    middleName: studentWithParents.form.middleName,
+    middleName: middleName,
     lastName: studentWithParents.form.lastName,
-    displayName:studentWithParents.form.firstName +' '+studentWithParents.form.middleName +' '+ studentWithParents.form.lastName,
+    displayName:studentWithParents.form.firstName +' '+middleName +' '+ studentWithParents.form.lastName,
     citizenship: studentWithParents.form.citizenship,
     gender: studentWithParents.form.gender,
     dateOfBirth: studentWithParents.form.dateOfBirth,
@@ -43,20 +54,23 @@ public async createStudent  (req: Request, res: Response)  {
     photo: studentWithParents.photo,
     thumbnailUrl: studentWithParents.thumbnailUrl,
     homeAddress: studentWithParents.form.homeAddress,
-    routeId: studentWithParents.form.routeId!=='' ? Number(studentWithParents.form.routeId) : null as never,
+    routeId: studentWithParents.form.routeId!==null && studentWithParents.form.routeId!==undefined && studentWithParents.form.routeId!=='' ? Number(studentWithParents.form.routeId) : null as never,
     classId: Number(studentWithParents.form.classId),
     sectionId: Number(studentWithParents.form.sectionId),
     previousSchool: studentWithParents.form.previousSchool,
     admissionDate: studentWithParents.form.admissionDate,
     active: 1,
     rollNumber: Number(countOfStudentsInClassAndSection+1) as never,
-    idCardNumber: null,
+    idCardNumber: studentID,
     updated_by: studentWithParents.updated_by,
     created_by: studentWithParents.created_by,
     password:encryptedPassword,
-    campusId :Number(studentWithParents.form.campusId)
+    parentsNames :studentWithParents.form.fatherFullName + ' , ' + studentWithParents.form.motherFullName,
+    campusId :Number(studentWithParents.form.campusId),
+    colorName:'studifyblueprimary'
   };
 
+  
   let createdStudentObj;
 
 
@@ -69,24 +83,31 @@ public async createStudent  (req: Request, res: Response)  {
         
         
         if(ceratedStudentResponse!==null && ceratedStudentResponse!==undefined && ceratedStudentResponse.id!==null){
-         const studentID = generateIdsForParentAndStudent(ceratedStudentResponse.id+1, 'ST');
-         const fatherId = generateIdsForParentAndStudent(ceratedStudentResponse.id+2, 'P1');
-         const  motherId = generateIdsForParentAndStudent(ceratedStudentResponse.id+3, 'P2');
-         
-         await prisma.user.update({
-          where: {
-            id: ceratedStudentResponse.id,
-          },
-          data: {
-            idCardNumber: studentID,
-          },
-        })
+          
+          //create Student User Permission
+          const createUserPermission = await prisma.userPermission.create({
+            data: {
+              userId: Number(ceratedStudentResponse.id),
+              permissionId: Number(5) ,
+              active: 1,
+              campusId:Number(studentWithParents.form.campusId),
+              updated_at: new Date(),
+              updated_by: Number(studentWithParents.created_by),
+              created_at: new Date(),
+              created_by: Number(studentWithParents.created_by)
+            },
+          });
 
+
+         const fatherId = generateIdsForParentAndStudent(latestUserID.id+2, 'P1');
+         const  motherId = generateIdsForParentAndStudent(latestUserID.id+3, 'P2');
+         
+         
 
         //Create Parents and their relationship
           if(studentWithParents.form.createParentAccount===1){
     
-            const createFather = await prisma.user.create({
+            const parent1 = await prisma.user.create({
               data: {
                 userType : UserType.parent,
                 firstName: studentWithParents.form.fatherFullName.split(' ').slice(0, -1).join(' '),
@@ -110,10 +131,23 @@ public async createStudent  (req: Request, res: Response)  {
                 campusId :Number(studentWithParents.form.campusId),
                 childId: ceratedStudentResponse.id,
                 active: 1,
+                colorName:'studifyblueprimary'
               },
             });
-      
-            const createMother = await prisma.user.create({
+             //create Parent 1 User Permission
+              const createParent1Permission = await prisma.userPermission.create({
+                data: {
+                  userId: Number(parent1.id),
+                  permissionId: Number(4) ,
+                  active: 1,
+                  campusId:Number(studentWithParents.form.campusId),
+                  updated_at: new Date(),
+                  updated_by: Number(studentWithParents.created_by),
+                  created_at: new Date(),
+                  created_by: Number(studentWithParents.created_by)
+                },
+              });
+            const parent2 = await prisma.user.create({
               data: {
                 userType : UserType.parent,
                 firstName: studentWithParents.form.motherFullName.split(' ').slice(0, -1).join(' '),
@@ -137,45 +171,58 @@ public async createStudent  (req: Request, res: Response)  {
                 campusId :Number(studentWithParents.form.campusId),
                 childId: ceratedStudentResponse.id,
                 active: 1,
+                colorName:'studifyblueprimary'
               },
             });
+            //create Parent 2 User Permission
+              const createParent2Permission = await prisma.userPermission.create({
+                data: {
+                  userId: Number(parent2.id),
+                  permissionId: Number(4) ,
+                  active: 1,
+                  campusId:Number(studentWithParents.form.campusId),
+                  updated_at: new Date(),
+                  updated_by: Number(studentWithParents.created_by),
+                  created_at: new Date(),
+                  created_by: Number(studentWithParents.created_by)
+                },
+              });
 
-            const MonthlyFeeRecord = await prisma.monthlyFee.create({
-              data: {
-                userId : ceratedStudentResponse.id ,
-                campusId :Number(studentWithParents.form.campusId) ,
-                monthlyamount:studentWithParents.form.monthlyamount ,
-                hasDiscount:studentWithParents.form.hasDiscount ,
-                discountAmount:studentWithParents.form.discountAmount ,
-                totalamount :studentWithParents.form.monthlyamount*12,
-                active: 1,
-                updated_by: studentWithParents.updated_by,
-                created_by: studentWithParents.created_by,
-              },
-            });
 
-            const admissionRecord = await prisma.admissionRecord.create({
-              data: {
-                userId : ceratedStudentResponse.id,
-                campusId :Number(studentWithParents.form.campusId),
-                admissionComments:studentWithParents.form.admissionComments,
-                rollNumber:String(countOfStudentsInClassAndSection+1) as never,
-                active: 1,
-                updated_by: studentWithParents.updated_by,
-                created_by: studentWithParents.created_by,
-              },
-            });
-      
           }
+
+          await prisma.monthlyFee.create({
+            data: {
+              userId : ceratedStudentResponse.id ,
+              campusId :Number(studentWithParents.form.campusId) ,
+              monthlyamount:studentWithParents.form.monthlyamount ,
+              hasDiscount:studentWithParents.form.hasDiscount ,
+              discountAmount:studentWithParents.form.discountAmount ,
+              totalamount :studentWithParents.form.monthlyamount*12,
+              active: 1,
+              updated_by: studentWithParents.updated_by,
+              created_by: studentWithParents.created_by,
+            },
+          });
+
+          await prisma.admissionRecord.create({
+            data: {
+              userId : ceratedStudentResponse.id,
+              campusId :Number(studentWithParents.form.campusId),
+              admissionComments:studentWithParents.form.admissionComments,
+              rollNumber:String(countOfStudentsInClassAndSection+1) as never,
+              active: 1,
+              updated_by: studentWithParents.updated_by,
+              created_by: studentWithParents.created_by,
+            },
+          });
+
         }else{
-          return res.json({ status: false,  data: null , message:'Failed to create student. Try later.' });
+          return res.json({ status: false,  data: null , message:'Failed to add student. Try later.' });
         }
 
 
       });
-
-      
-
 
     });
     
@@ -183,11 +230,11 @@ public async createStudent  (req: Request, res: Response)  {
 
     
 
-    return res.json({ status: true,  data: createdStudentObj , message:'Student created successfully'});
+    return res.json({ status: true,  data: createdStudentObj , message:'Student added successfully'});
 
   } catch (err) {
     console.log(err);
-    return res.json({ status: false,  data: null , message:'Failed to create student. Try later.' });
+    return res.json({ status: false,  data: null , message:'Failed to add student. Try later.' });
   }
 
 }
@@ -242,8 +289,8 @@ public async deleteStudent (req: Request, res: Response) {
     return res.json({ status: false,  data: student , message:'Unable to find Student' });
   }
 
-  const deletedStudent= await prisma.user.delete({
-    where: {
+  await prisma.user.delete({
+    where: {  
       id: id,
       campusId:campusId
     },
@@ -345,7 +392,8 @@ public async getAllStudentsByClassAndSection  (req: Request, res: Response)  {
     include: {
       parents: true,  
       campus : true,
-      class: true
+      class: true,
+      section: true,
     },
   });
 

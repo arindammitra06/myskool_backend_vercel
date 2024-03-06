@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Institute` ADD COLUMN `allowOnlineClass` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `jitsiAppID` VARCHAR(255) NULL;

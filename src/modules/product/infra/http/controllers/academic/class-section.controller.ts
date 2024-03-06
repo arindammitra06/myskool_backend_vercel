@@ -1,11 +1,57 @@
 import { Request, Response } from "express";
-import { Prisma, PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient()
+import { prisma } from "../../../../../../shared/db-client";
 
 
 export class ClassSectionController {
 
+
+
+  public async createOrUpdateClass  (req: Request, res: Response) {
+
+    const classS: any = req.body;
+    
+    try {
+      
+      if(classS!==null && classS.form.id!==null && classS.form.id!==undefined){
+        
+        const updatedClassS = await prisma.class.update({
+          where: {
+            id: classS.form.id,
+            campusId:Number(classS.form.campusId)
+          },
+          data: {
+            campusId: classS.form.campusId,
+            className: classS.form.className,
+            numericName: classS.form.numericName,
+            teacherId: classS.form.teacherId,
+            updated_at: new Date(),
+            updated_by: classS.form.updated_by,
+            active: 1,
+          },
+        })
+        
+        return res.json({ status: true,  data: updatedClassS , message:'Successfully updated Class' });
+  
+
+      }else{
+        const createclassS = await prisma.class.create({
+          data: classS.form,
+        })
+        return res.json({ status: true,  data: createclassS , message:'Successfully created Class' });
+  
+      }
+      
+  
+      
+    } catch (error) {
+      console.error(error);
+  
+      return res.json({ status: false,  data: classS , message:'Failed to create Class' });
+    }
+  }
+
+
+  
 
   public async createStudentClass  (req: Request, res: Response) {
 
@@ -26,7 +72,7 @@ export class ClassSectionController {
   }
 }
 
-public async updateStudentClass (req: Request, res: Response) {
+  public async updateStudentClass (req: Request, res: Response) {
   const id = Number(req.params.id);
   const campusId = Number(req.params.campusId);
   const input: any = req.body;
@@ -57,13 +103,15 @@ public async updateStudentClass (req: Request, res: Response) {
   
 } catch (error) {
     console.error(error);
-    return res.json({ status: false,  data: classS , message:'Failed to delete Class' });
+    return res.json({ status: false,  data: classS , message:'Failed to udpate Class' });
   }
 }
 
 public async deleteStudentClass  (req: Request, res: Response)  {
   const id = Number(req.params.id);
   const campusId = Number(req.params.campusId);
+  const userId = Number(req.params.userId);
+  console.log('Indelete Class by ID : '+id);
 
   const classS = await prisma.class.findUnique({
     where: {
@@ -75,15 +123,30 @@ public async deleteStudentClass  (req: Request, res: Response)  {
   if (!classS) {
     return res.json({ status: false,  data: classS , message:'Unable to find Class' });
   }
+  
+  
+  try{
+    await prisma.class.update({
+      where: {
+        id: id,
+        campusId:campusId
+      },
+      data:{
+        active: 0,
+        updated_by: userId,
+        updated_at: new Date()
+      }
+    });
 
-  const deletedClass = await prisma.class.delete({
-    where: {
-      id: id,
-      campusId:campusId
-    },
-  })
+    return res.json({ status: true,  data: null , message:'Class is deleted' });
 
-  return res.json({ status: false,  data: null , message:'Deleted Class' });
+
+  } catch (error) {
+    console.error(error);
+    return res.json({ status: false,  data: null , message:error.message });
+  }
+  
+
 }
 
 
@@ -117,10 +180,36 @@ public async getAllStudentClass  (req: Request, res: Response)  {
 
   const classS = await prisma.class.findMany({
     where: {
-      campusId : Number(campusId)
+      campusId : Number(campusId),
+      active: 1
     },
     include: {
       Section: true, 
+
+    },
+  });
+
+  return res.json({ status: true,  data: classS , message:'Classes loaded successfully' });
+}
+
+
+
+public async getAllDetailedClass  (req: Request, res: Response)  {
+  const campusId = Number(req.params.campusId);
+
+  const classS = await prisma.class.findMany({
+    where: {
+      campusId : Number(campusId),
+      active: 1
+    },
+    include: {
+      Section: {
+        include:{
+          subjects: true
+        }
+      }, 
+      campus:true,
+      User: true,
     },
   });
 
@@ -131,20 +220,44 @@ public async getAllStudentClass  (req: Request, res: Response)  {
 
 public async createStudentSection  (req: Request, res: Response) {
 
-  const section: any = req.body;
-
+  const sectionS: any = req.body;
+  console.log(sectionS);
   try {
     
-    const createsection= await prisma.section.create({
-      data: section,
-    })
+    if(sectionS!==null && sectionS.form.id!==null && sectionS.form.id!==undefined){
+      
+      const updatedClassS = await prisma.section.update({
+        where: {
+          id: sectionS.form.id,
+          campusId:Number(sectionS.form.campusId)
+        },
+        data: {
+          campusId: sectionS.form.campusId,
+          classId: sectionS.form.classId,
+          sectionName: sectionS.form.className,
+          updated_by: sectionS.form.updated_by,
+          updated_at: new Date(),
+          active: 1,
+        },
+      })
+      
+      return res.json({ status: true,  data: updatedClassS , message:'Successfully updated section' });
 
-    return res.json({ status: true,  data: createsection , message:'Successfully created section' });
 
+    }else{
+      const createSectionS = await prisma.section.create({
+        data: sectionS.form,
+      })
+      return res.json({ status: true,  data: createSectionS , message:'Successfully created section' });
+
+    }
+    
+
+    
   } catch (error) {
     console.error(error);
 
-    return res.json({ status: false,  data: section , message:'Failed to create section' });
+    return res.json({ status: false,  data: null , message:'Failed to create Class' });
   }
 }
 
@@ -162,7 +275,7 @@ public async updateStudentSection (req: Request, res: Response) {
 
   
   if (!section) {
-    return res.json({ status: false,  data: section , message:'Failed to delete section' });
+    return res.json({ status: false,  data: section , message:'Failed to update section' });
   }
 
   try {
@@ -179,13 +292,74 @@ public async updateStudentSection (req: Request, res: Response) {
   
 } catch (error) {
     console.error(error);
-    return res.json({ status: false,  data: section , message:'Failed to delete section' });
+    return res.json({ status: false,  data: section , message:'Failed to update section' });
   }
 }
+
+
+public async addSubjectToSection (req: Request, res: Response) {
+  const input: any = req.body;
+  console.log(input.form)
+  const section = await prisma.section.findUnique({
+    where: {
+      id: input.form.id,
+      campusId:input.form.campusId
+    },
+  })
+
+  
+  if (!section) {
+    return res.json({ status: false,  data: section , message:'Failed to update section' });
+  }
+
+  try {
+                let subjectIds = [];
+                input.form.subjectId.forEach(async (idsEach) => {
+                  subjectIds.push({id: Number(idsEach)});
+                });
+
+                
+                const deletingReferences = await prisma.section.update({
+                  where: {
+                    id: input.form.id,
+                    campusId:Number(input.form.campusId)
+                  },
+                  data: {
+                    subjects: {
+                      set: []
+                    }
+                  },
+                });
+
+                
+                const updatedSectionWithSubject = await prisma.section.update({
+                  where: {
+                    id: input.form.id,
+                    campusId:Number(input.form.campusId)
+                  },
+                  data: {
+                    subjects: {
+                      connect: subjectIds
+                    }
+                  },
+                });
+
+
+    return res.json({ status: true,  data: updatedSectionWithSubject , message:'Subjects added' });
+  
+} catch (error) {
+    console.error(error);
+    return res.json({ status: false,  data: section , message:'Failed to update section' });
+  }
+}
+
 
 public async deleteStudentSection (req: Request, res: Response) {
   const id = Number(req.params.id);
   const campusId = Number(req.params.campusId);
+  const userId = Number(req.params.userId);
+
+
   const section = await prisma.section.findUnique({
     where: {
       id: id,
@@ -197,11 +371,16 @@ public async deleteStudentSection (req: Request, res: Response) {
     return res.json({ status: false,  data: section , message:'Unable to find section' });
   }
 
-  const deletedSection = await prisma.section.delete({
+  await prisma.section.update({
     where: {
       id: id,
       campusId:campusId
     },
+    data:{
+      active: 0,
+      updated_by: userId,
+      updated_at: new Date()
+    }
   })
 
   return res.json({ status: false,  data: null , message:'Deleted section' });
@@ -232,11 +411,20 @@ public async getStudentSectionById  (req: Request, res: Response)  {
 public async getAllSectionsByClass  (req: Request, res: Response)  {
   const campusId = Number(req.params.campusId);
   const classId = Number(req.params.classId);
-
+  const active = Number(req.params.active);
+  
   const section = await prisma.section.findMany({
     where: {
       campusId :Number(campusId),
-      classId : Number(classId)
+      classId : Number(classId),
+      active : Number(active)
+    },
+
+    include: {
+      class: true,
+      campus:true,
+      User: true,
+      subjects: true
     },
   });
   return res.json({ status: true,  data: section , message:'Sections for Class loaded' });

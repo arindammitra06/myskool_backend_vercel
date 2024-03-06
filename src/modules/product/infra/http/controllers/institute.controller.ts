@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../../../../../shared/db-client';
+
 
 
 export class InstituteController {
@@ -55,6 +55,41 @@ public async updateInstitute(req: Request, res: Response) {
   }
 }
 
+
+public async updateInstituteByFields (req: Request, res: Response) {
+  const instituteData: any = req.body;
+  
+  const ins = await prisma.institute.findUnique({
+    where: {
+      id: instituteData.form.instituteId,
+    },
+  })
+
+  
+  if (!ins) {
+    return res.status(404).json({status: false,  data: null , message: `The Institute with the id "${instituteData.form.id}" not found.`})
+  }
+
+  try {
+    
+    const updatedIns = await prisma.institute.update({
+      where: {
+        id: instituteData.form.instituteId,
+      },
+      data: instituteData.fields,
+    })
+
+
+  return res.json({status: true,   data: updatedIns ,message: `Updated successfully. Relogin to see changes.`});
+   } catch (error) {
+     console.error(error);
+  
+     return res.status(400).json({ status: true, data: null , message: error.message })
+  }
+}
+
+
+
 public async deleteInstitute (req: Request, res: Response) {
   const id = Number(req.params.id);
 
@@ -68,7 +103,7 @@ public async deleteInstitute (req: Request, res: Response) {
     return res.json({ status: false,  data: institute , message:'Unable to find Institute' });
   }
 
-  const deletedinstitute = await prisma.institute.delete({
+  await prisma.institute.delete({
     where: {
       id: id,
     },

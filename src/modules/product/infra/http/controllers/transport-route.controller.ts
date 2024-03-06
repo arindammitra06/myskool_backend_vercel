@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { Prisma, PrismaClient } from '@prisma/client';
+import { prisma } from "../../../../../shared/db-client";
 
-const prisma = new PrismaClient()
+
 
 export class TransportController {
   
@@ -73,7 +73,7 @@ public async deleteTransportRoute  (req: Request, res: Response) {
     return res.json({ status: false,  data: transportRoutes , message:'Unable to find transport route' });
   }
 
-  const deletedTransportRoute = await prisma.transportRoutes.delete({
+  await prisma.transportRoutes.delete({
     where: {
       id: id,
       campusId:campusId

@@ -34,6 +34,7 @@ enum MaritalStatus {
 enum SalaryType {
   NA_SALTYPE
   FullTime
+  PerTime
   PerHour
   PerLecture
 }
@@ -47,43 +48,85 @@ enum ParentType {
   LegalGuardian
 }
 
+enum SubjectType {
+  Theory
+  Practical
+  Assessment
+  Others
+}
+
+model Sessions {
+  id        Int         @id @default(autoincrement())
+  session   String      @db.VarChar(255)
+  Institute Institute[]
+}
+
 model Institute {
-  id                 Int      @id @default(autoincrement())
-  instituteName      String   @db.VarChar(255)
-  instituteSignature String   @db.VarChar(255)
-  address            String   @db.VarChar(255)
-  phone              String   @db.VarChar(255)
-  email              String   @db.VarChar(255)
-  currency           String   @db.VarChar(255)
-  sessionYearRange   String   @db.VarChar(255)
-  themeColor         String?  @db.VarChar(255)
-  logo               String   @db.VarChar(255)
-  headerImage        String   @db.VarChar(255)
+  id                 Int       @id @default(autoincrement())
+  instituteName      String    @db.VarChar(255)
+  instituteSignature String    @db.VarChar(255)
+  instituteCode      String?   @db.VarChar(255)
+  address            String    @db.VarChar(255)
+  phone              String    @db.VarChar(255)
+  email              String    @db.VarChar(255)
+  currency           String    @db.VarChar(255)
+  sessionId          Int?
+  session            Sessions? @relation(fields: [sessionId], references: [id])
+  sessionStartMonth  String?   @db.VarChar(255)
+  feeDuesDays        Int?
+  allowOnlineClass   Int       @default(0)
+  jitsiAppID         String?   @db.VarChar(255)
+  themeColor         String?   @db.VarChar(255)
+  logo               String    @db.VarChar(255)
+  headerImage        String    @db.VarChar(255)
   created_by         Int
   updated_by         Int
-  created_at         DateTime @default(now()) @db.DateTime(6)
-  updated_at         DateTime @default(now()) @db.DateTime(6)
+  created_at         DateTime  @default(now()) @db.DateTime(6)
+  updated_at         DateTime  @default(now()) @db.DateTime(6)
   Campus             Campus[]
 }
 
 model Campus {
-  id              Int               @id @default(autoincrement())
-  campusName      String            @db.VarChar(255)
-  campusAddress   String            @db.VarChar(255)
-  campusPhone     String            @db.VarChar(255)
-  active          Int               @default(1) @db.TinyInt
-  instituteId     Int
-  institute       Institute         @relation(fields: [instituteId], references: [id])
-  created_by      Int
-  updated_by      Int
-  created_at      DateTime          @default(now()) @db.DateTime(6)
-  updated_at      DateTime          @default(now()) @db.DateTime(6)
-  TransportRoutes TransportRoutes[]
-  Class           Class[]
-  Section         Section[]
-  User            User[]
-  AdmissionRecord AdmissionRecord[]
-  MonthlyFee      MonthlyFee[]
+  id                      Int                       @id @default(autoincrement())
+  campusName              String                    @db.VarChar(255)
+  campusAddress           String                    @db.VarChar(255)
+  campusPhone             String                    @db.VarChar(255)
+  active                  Int                       @default(1) @db.TinyInt
+  instituteId             Int
+  institute               Institute                 @relation(fields: [instituteId], references: [id])
+  created_by              Int
+  updated_by              Int
+  created_at              DateTime                  @default(now()) @db.DateTime(6)
+  updated_at              DateTime                  @default(now()) @db.DateTime(6)
+  TransportRoutes         TransportRoutes[]
+  Class                   Class[]
+  Section                 Section[]
+  User                    User[]
+  AdmissionRecord         AdmissionRecord[]
+  MonthlyFee              MonthlyFee[]
+  DefaultImageSetting     DefaultImageSetting[]
+  OnlineClasses           OnlineClasses[]
+  Subject                 Subject[]
+  ListOfValues            ListOfValues[]
+  UserPermission          UserPermission[]
+  Permission              Permission[]
+  MenuCategoryPermissions MenuCategoryPermissions[]
+  MenuItemPermissions     MenuItemPermissions[]
+  TimeTable               TimeTable[]
+}
+
+model DefaultImageSetting {
+  id         Int      @id @default(autoincrement())
+  campusId   Int
+  campus     Campus   @relation(fields: [campusId], references: [id])
+  front      String?  @db.VarChar(255)
+  back       String?  @db.VarChar(255)
+  type       String?  @db.VarChar(255)
+  forUser    String?  @db.VarChar(255)
+  created_by Int
+  updated_by Int
+  created_at DateTime @default(now()) @db.DateTime(6)
+  updated_at DateTime @default(now()) @db.DateTime(6)
 }
 
 model TransportRoutes {
@@ -104,35 +147,40 @@ model TransportRoutes {
 }
 
 model Class {
-  id          Int       @id @default(autoincrement())
-  className   String    @db.VarChar(255)
-  numericName String    @db.VarChar(255)
-  teacherId   Int?
-  campusId    Int
-  campus      Campus    @relation(fields: [campusId], references: [id])
-  active      Int       @default(1) @db.TinyInt
-  created_by  Int
-  updated_by  Int
-  created_at  DateTime  @default(now()) @db.DateTime(6)
-  updated_at  DateTime  @default(now()) @db.DateTime(6)
-  Section     Section[]
-  User        User[]
+  id            Int             @id @default(autoincrement())
+  className     String          @db.VarChar(255)
+  numericName   String          @db.VarChar(255)
+  teacherId     Int?
+  campusId      Int
+  campus        Campus          @relation(fields: [campusId], references: [id])
+  active        Int             @default(1) @db.TinyInt
+  created_by    Int
+  updated_by    Int
+  created_at    DateTime        @default(now()) @db.DateTime(6)
+  updated_at    DateTime        @default(now()) @db.DateTime(6)
+  Section       Section[]
+  User          User[]
+  OnlineClasses OnlineClasses[]
+  TimeTable     TimeTable[]
 }
 
 model Section {
-  id          Int      @id @default(autoincrement())
-  sectionName String   @db.VarChar(255)
-  classId     Int
-  class       Class    @relation(fields: [classId], references: [id])
-  teacherId   Int?
-  campusId    Int
-  campus      Campus   @relation(fields: [campusId], references: [id])
-  active      Int      @default(1) @db.TinyInt
-  created_by  Int
-  updated_by  Int
-  created_at  DateTime @default(now()) @db.DateTime(6)
-  updated_at  DateTime @default(now()) @db.DateTime(6)
-  User        User[]
+  id            Int             @id @default(autoincrement())
+  sectionName   String          @db.VarChar(255)
+  classId       Int
+  class         Class           @relation(fields: [classId], references: [id])
+  teacherId     Int?
+  campusId      Int
+  campus        Campus          @relation(fields: [campusId], references: [id])
+  active        Int             @default(1) @db.TinyInt
+  created_by    Int
+  updated_by    Int
+  created_at    DateTime        @default(now()) @db.DateTime(6)
+  updated_at    DateTime        @default(now()) @db.DateTime(6)
+  User          User[]
+  OnlineClasses OnlineClasses[]
+  subjects      Subject[]
+  TimeTable     TimeTable[]
 }
 
 model User {
@@ -143,7 +191,7 @@ model User {
   lastName           String            @db.VarChar(255)
   displayName        String            @db.VarChar(255)
   gender             Gender            @default(Male)
-  dateOfBirth        DateTime?         @db.DateTime(6)
+  dateOfBirth        String?           @db.VarChar(255)
   placeOfBirth       String?           @db.VarChar(255)
   photo              String?           @db.VarChar(255)
   thumbnailUrl       String?           @db.VarChar(255)
@@ -152,7 +200,7 @@ model User {
   campus             Campus?           @relation(fields: [campusId], references: [id])
   homeAddress        String?           @db.VarChar(500)
   password           String            @db.VarChar(255)
-  idCardNumber       String?           @db.VarChar(255)
+  idCardNumber       String            @unique @db.VarChar(255)
   rollNumber         Int?
   classId            Int?
   class              Class?            @relation(fields: [classId], references: [id])
@@ -161,7 +209,7 @@ model User {
   routeId            Int?
   route              TransportRoutes?  @relation(fields: [routeId], references: [id])
   previousSchool     String?           @db.VarChar(255)
-  admissionDate      DateTime?         @default(now()) @db.DateTime(6)
+  admissionDate      String?           @db.VarChar(255)
   email              String?           @db.VarChar(255)
   mobile             String?           @db.VarChar(255)
   whatsapp           String?           @db.VarChar(255)
@@ -170,7 +218,7 @@ model User {
   CNIC               String?           @db.VarChar(255)
   qualification      String?           @db.VarChar(255)
   fatherHusbandName  String?           @db.VarChar(255)
-  joiningDate        DateTime?         @db.DateTime(6)
+  joiningDate        String?           @db.VarChar(255)
   maritalStatus      MaritalStatus?    @default(NA_MARITALSTATUS)
   salaryType         SalaryType?       @default(NA_SALTYPE)
   schoolIdCardNumber String?           @db.VarChar(255)
@@ -190,7 +238,11 @@ model User {
   childId            Int?
   child              User?             @relation("ParentChildRelation", fields: [childId], references: [id])
   parents            User[]            @relation("ParentChildRelation")
+  parentsNames       String?           @db.VarChar(255)
   MonthlyFee         MonthlyFee[]
+  OnlineClasses      OnlineClasses?    @relation(fields: [onlineClassesId], references: [id])
+  onlineClassesId    Int?
+  subjects           Subject[]
 }
 
 model AdmissionRecord {
@@ -232,6 +284,8 @@ model UserPermission {
   permissionId Int
   permission   Permission @relation(fields: [permissionId], references: [id])
   active       Int        @default(1) @db.TinyInt
+  campusId     Int?
+  campus       Campus?    @relation(fields: [campusId], references: [id])
   created_by   Int
   updated_by   Int
   created_at   DateTime   @default(now()) @db.DateTime(6)
@@ -243,8 +297,12 @@ model UserPermission {
 model Permission {
   id                      Int                       @id @default(autoincrement())
   permissionName          String                    @db.VarChar(255)
+  permissionType          UserType                  @default(student)
+  isReadonly              Int                       @default(1) @db.TinyInt
   isMobile                Int                       @default(1) @db.TinyInt
   active                  Int                       @default(1) @db.TinyInt
+  campusId                Int?
+  campus                  Campus?                   @relation(fields: [campusId], references: [id])
   created_by              Int
   updated_by              Int
   created_at              DateTime                  @default(now()) @db.DateTime(6)
@@ -260,11 +318,14 @@ model MenuCategoryPermissions {
   permission     Permission   @relation(fields: [permissionId], references: [id])
   menuCategoryId Int
   menuCategory   MenuCategory @relation(fields: [menuCategoryId], references: [id], onDelete: Cascade)
-  active         Int          @default(1) @db.TinyInt
-  created_by     Int
-  updated_by     Int
-  created_at     DateTime     @default(now()) @db.DateTime(6)
-  updated_at     DateTime     @default(now()) @db.DateTime(6)
+  campusId       Int?
+  campus         Campus?      @relation(fields: [campusId], references: [id])
+
+  active     Int      @default(1) @db.TinyInt
+  created_by Int
+  updated_by Int
+  created_at DateTime @default(now()) @db.DateTime(6)
+  updated_at DateTime @default(now()) @db.DateTime(6)
 }
 
 model MenuCategory {
@@ -287,6 +348,8 @@ model MenuItemPermissions {
   permission   Permission @relation(fields: [permissionId], references: [id])
   menuItemId   Int
   menuItem     MenuItems  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  campusId     Int?
+  campus       Campus?    @relation(fields: [campusId], references: [id])
   active       Int        @default(1) @db.TinyInt
   created_by   Int
   updated_by   Int
@@ -307,4 +370,80 @@ model MenuItems {
   category            MenuCategory          @relation(fields: [categoryId], references: [id])
   categoryId          Int
   MenuItemPermissions MenuItemPermissions[]
+}
+
+model OnlineClasses {
+  id              Int      @id @default(autoincrement())
+  classTopic      String   @db.VarChar(255)
+  classId         Int
+  class           Class    @relation(fields: [classId], references: [id])
+  sectionId       Int
+  section         Section  @relation(fields: [sectionId], references: [id])
+  meetingDateTime String?  @db.VarChar(255)
+  meetingRoomId   String?  @db.VarChar(255)
+  campusId        Int
+  campus          Campus   @relation(fields: [campusId], references: [id])
+  isPast          Int      @default(1) @db.TinyInt
+  active          Int      @default(1) @db.TinyInt
+  created_by      Int
+  updated_by      Int
+  created_at      DateTime @default(now()) @db.DateTime(6)
+  updated_at      DateTime @default(now()) @db.DateTime(6)
+  User            User[]
+}
+
+model Subject {
+  id          Int          @id @default(autoincrement())
+  campusId    Int
+  campus      Campus       @relation(fields: [campusId], references: [id])
+  active      Int          @default(1) @db.TinyInt
+  subjectName String?      @db.VarChar(255)
+  subjectCode String?      @db.VarChar(255)
+  subjectType SubjectType? @default(Theory)
+  created_by  Int
+  updated_by  Int
+  created_at  DateTime     @default(now()) @db.DateTime(6)
+  updated_at  DateTime     @default(now()) @db.DateTime(6)
+  teachers    User[]
+  sections    Section[]
+  sectionId   Int?
+  TimeTable   TimeTable[]
+}
+
+model ListOfValues {
+  id         Int      @id @default(autoincrement())
+  groupName  String   @db.VarChar(255)
+  uniqueKey  String   @unique @db.VarChar(255)
+  shortName  String   @db.VarChar(255)
+  longName   String   @db.VarChar(255)
+  desc       String   @db.VarChar(255)
+  campusId   Int
+  campus     Campus   @relation(fields: [campusId], references: [id])
+  active     Int      @default(1) @db.TinyInt
+  created_by Int
+  updated_by Int
+  created_at DateTime @default(now()) @db.DateTime(6)
+  updated_at DateTime @default(now()) @db.DateTime(6)
+}
+
+model TimeTable {
+  id         Int      @id @default(autoincrement())
+  classId    Int
+  class      Class    @relation(fields: [classId], references: [id])
+  sectionId  Int
+  section    Section  @relation(fields: [sectionId], references: [id])
+  campusId   Int
+  campus     Campus   @relation(fields: [campusId], references: [id])
+  subject    String?   
+  color      String   @default("#A5DD9B")
+  active     Int      @default(1) @db.TinyInt
+  day        String
+  startTime  String
+  endTime    String
+  created_by Int
+  updated_by Int
+  created_at DateTime @default(now()) @db.DateTime(6)
+  updated_at DateTime @default(now()) @db.DateTime(6)
+  Subject    Subject? @relation(fields: [subjectId], references: [id])
+  subjectId  Int?
 }

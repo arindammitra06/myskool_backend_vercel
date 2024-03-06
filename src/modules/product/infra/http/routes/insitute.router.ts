@@ -7,5 +7,7 @@ InstituteCouter.get("/getAllInstitutes", instituteControllerInstance.getAllInsti
 InstituteCouter.get("/getInstituteById/:id", instituteControllerInstance.getInstituteById);
 InstituteCouter.put("/updateInstitute/:id", instituteControllerInstance.updateInstitute);
 InstituteCouter.delete("/deleteInstitute/:id", instituteControllerInstance.deleteInstitute);
+InstituteCouter.post("/updateInstituteByFields", instituteControllerInstance.updateInstituteByFields);
+
 
 export default InstituteCouter;
