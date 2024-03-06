@@ -267,8 +267,12 @@ public async loginUserByIdPassword  (req: Request, res: Response) {
   const parmaspassed: any = req.body.params;
   const idCardNumber = parmaspassed.idCardNumber;
   const password = parmaspassed.password;
-  
-  const user = await prisma.user
+  console.log(parmaspassed)
+  let user;
+
+  try{
+ 
+  user = await prisma.user
   .findFirst({
     where: {
       idCardNumber: String(idCardNumber),
@@ -298,8 +302,13 @@ public async loginUserByIdPassword  (req: Request, res: Response) {
       }, 
     },
   });
+  } catch (error) {
+    console.error(error);
 
+    return res.json({ status: false,  data: null , message:'User/Password not found' });
+  }
 
+  console.log(user)
   if (!user) {
     return res.json({status: false,  currentUser: null , message:'User/Password not found'});
   }
