@@ -50,7 +50,7 @@
     "mongoose": "^6.12.0",
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
-    "rimraf": "^3.0.2"
+    "rimraf": "3.0.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.1",
