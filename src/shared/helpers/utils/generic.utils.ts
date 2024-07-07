@@ -1,9 +1,11 @@
-import { TimeTable } from '@prisma/client';
+import { Permission, TimeTable } from '@prisma/client';
 import * as crypto from 'crypto';
+import { prisma } from '../../db-client';
 
 const ENC = "bf3c199c2470cb477d907b1e0917c17b";
 const IV = "5183666c72eec9e4";
 const ALGO = "aes-256-cbc";
+export const monthsString = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
 
 export function encrypt(text: string): string {
     let cipher = crypto.createCipheriv(ALGO, ENC, IV);
@@ -20,12 +22,12 @@ export function processTimeTableJsonData(timtables, day:string) {
     if (filtered !== null && filtered!==undefined && filtered.length > 0) {
       filtered.forEach(async (eachItem) => {
         events.push({
-          startTime: eachItem.startTime,
-          endTime: eachItem.endTime,
-          title: eachItem.subject,
-          color:eachItem.color,
-          description: eachItem.id,
-        });
+                startTime: eachItem.startTime,
+                endTime: eachItem.endTime,
+                title: eachItem.subject,
+                color:  eachItem.color,
+                description: eachItem.id,
+                        });
       });
     }
     dayEvent = { name: day, events: events };
@@ -41,6 +43,9 @@ export function decrypt(encryptedText: string): string {
 export function generateIdsForParentAndStudent(id: number, typeParam :string) {
     return makeid(4) + String(id).padStart(8,'0') + typeParam;
 }
+export function generateInvoiceNumber(id: number) {
+  return 'INV-'+makeid(4) + String(id).padStart(8,'0') ;
+}
 
 function makeid(length) {
     let result = '';
@@ -54,3 +59,14 @@ function makeid(length) {
     return result;
 }
 
+
+export async function getPermissionByName(name: string) {
+  let permission = await prisma.permission.findFirst({
+      where: {
+        permissionName: name,
+        active: 1
+      },
+    });
+  
+  return permission;
+}

@@ -1,8 +1,37 @@
 import { PrismaClient } from "@prisma/client";
 import moment from "moment";
+import { monthsString } from "./helpers/utils/generic.utils";
 
 export const prisma = new PrismaClient().$extends({
     result: {
+      admissionRequestOrInquiries: {
+        rowKey: {
+          needs: { id: true },
+          compute(adRq) {
+            return adRq.id;  
+          },
+        },
+      },
+      mYAALInvoices: {
+        paidOnProcessed: {
+          needs: { paidOn: true },
+          compute(inv) {
+            return inv.paidOn!==null && inv.paidOn!==undefined ? moment.utc(inv.paidOn).format('DD-MM-YYYY') :'Not Paid';  
+          },
+        },
+        yearAsString: {
+          needs: { year: true },
+          compute(inv) {
+            return inv.year+'';  
+          },
+        },
+        monthAsString: {
+          needs: { month: true },
+          compute(inv) {
+            return monthsString[inv.month]+'';  
+          },
+        },
+      },
 
       user: {
         active_processed: {
@@ -17,9 +46,29 @@ export const prisma = new PrismaClient().$extends({
               return user.rollNumber+'';  
             },
           },
+        dateOfBirthProcessed: {
+          needs: { dateOfBirth: true },
+          compute(user) {
+            return moment.utc(user.dateOfBirth).format('DD-MM-YYYY');  
+          },
+        },
+        
+        admissionDateProcessed: {
+          needs: { admissionDate: true },
+          compute(user) {
+            return moment.utc(user.admissionDate).format('DD-MM-YYYY');  
+          },
+        },
+
+        joiningDateProcessed: {
+          needs: { joiningDate: true },
+          compute(user) {
+            return moment.utc(user.joiningDate).format('DD-MM-YYYY');  
+          },
+        },
         created_at_processed: {
           needs: { created_at: true },
-          compute(user) {
+          compute(user) {//moment(new Date()).format('DD-MM-YYYY')
             return new Date(moment(user.created_at).format("DD-MM-YYYY HH:mm:ss"));  
           },
         },
@@ -29,12 +78,27 @@ export const prisma = new PrismaClient().$extends({
             return new Date(moment(user.updated_at).format("DD-MM-YYYY HH:mm:ss"));  
           },
         },
+        
       },
       permission: {
         isReadonly_processed: {
           needs: { isReadonly: true },
           compute(perm) {
             return perm.isReadonly===1 ?'Yes': 'No';  
+          },
+        },
+      },
+      holidays: {
+        holidayStart_proccessed: {
+          needs: { holidayStart: true },
+          compute(user) {
+            return moment(user.holidayStart).format('DD-MM-YYYY HH:mm');  
+          },
+        },
+        holidayEnd_proccessed: {
+          needs: { holidayEnd: true },
+          compute(user) {
+            return moment(user.holidayEnd).format('DD-MM-YYYY HH:mm');  
           },
         },
       },
@@ -69,5 +133,37 @@ export const prisma = new PrismaClient().$extends({
           },
         },
       },
+      sMSHistory:{
+        created_at_processed: {
+          needs: { created_at: true },
+          compute(data) {
+            return moment.utc(data.created_at).format('DD-MM-YYYY');  
+          },
+        },
+      },
+      emailHistory:{
+        created_at_processed: {
+          needs: { created_at: true },
+          compute(data) {
+            return moment.utc(data.created_at).format('DD-MM-YYYY');  
+          },
+        },
+      },
+      dailyHomework:{
+        homeworkDateProcessed: {
+          needs: { homeworkDate: true },
+          compute(data) {
+            return moment.utc(data.homeworkDate).format('DD-MM-YYYY');  
+          },
+        },
+      },
+      attendance:{
+        attendanceDateProcessed: {
+          needs: { attendanceDate: true },
+          compute(data) {
+            return moment.utc(data.attendanceDate).format('DD-MM-YYYY');  
+          },
+        },
+      }
     },
   });

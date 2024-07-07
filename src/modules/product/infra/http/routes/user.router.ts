@@ -6,8 +6,10 @@ const UserRouter = Router();
 
 UserRouter.post("/createUser", userControllerInstance.createUser);
 UserRouter.get("/fetchAllUsers/:campusId", userControllerInstance.fetchAllUsers);
+UserRouter.get("/fetchAllActiveInactiveUsers/:campusId/:type/:empType", userControllerInstance.fetchAllActiveInactiveUsers);
 UserRouter.get("/getUserById/:id", userControllerInstance.getUserById);
 UserRouter.post("/loginUserByIdPassword", userControllerInstance.loginUserByIdPassword);
+UserRouter.post("/resetMyPassword", userControllerInstance.resetMyPassword);
 UserRouter.put("/updateUserById/:id", userControllerInstance.updateUser);
 UserRouter.delete("/deleteUserById/:id", userControllerInstance.deleteUser);
 UserRouter.post("/updateUserByFields", userControllerInstance.updateUserByFields);

@@ -221,11 +221,11 @@ public async getAllDetailedClass  (req: Request, res: Response)  {
 public async createStudentSection  (req: Request, res: Response) {
 
   const sectionS: any = req.body;
-  console.log(sectionS);
   try {
     
     if(sectionS!==null && sectionS.form.id!==null && sectionS.form.id!==undefined){
-      
+      //console.log(sectionS);
+  
       const updatedClassS = await prisma.section.update({
         where: {
           id: sectionS.form.id,
@@ -234,7 +234,7 @@ public async createStudentSection  (req: Request, res: Response) {
         data: {
           campusId: sectionS.form.campusId,
           classId: sectionS.form.classId,
-          sectionName: sectionS.form.className,
+          sectionName: sectionS.form.sectionName,
           updated_by: sectionS.form.updated_by,
           updated_at: new Date(),
           active: 1,

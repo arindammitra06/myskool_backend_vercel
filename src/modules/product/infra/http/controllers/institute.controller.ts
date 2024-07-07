@@ -58,7 +58,7 @@ public async updateInstitute(req: Request, res: Response) {
 
 public async updateInstituteByFields (req: Request, res: Response) {
   const instituteData: any = req.body;
-  
+  console.log(instituteData)
   const ins = await prisma.institute.findUnique({
     where: {
       id: instituteData.form.instituteId,
@@ -124,6 +124,7 @@ public async getInstituteById  (req: Request, res: Response)  {
     },
     include: {
       Campus: true, 
+      PaymentDetails: true
     },
   });
 

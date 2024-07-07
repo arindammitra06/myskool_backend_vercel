@@ -55,6 +55,68 @@ enum SubjectType {
   Others
 }
 
+enum AbsenseStatus {
+  UnMarked
+  Present
+  Absent
+  Holiday
+  Leave
+}
+
+enum EntryStatus {
+  UnMarked
+  OnTime
+  Late
+  LeftEarly
+}
+
+enum DayStatus {
+  FullDay
+  HalfDay
+}
+
+enum AttendanceType {
+  Manual
+  Automated
+}
+
+enum MessageType {
+  INFO
+  WARN
+  ERROR
+}
+
+enum FeeType {
+  MONTHLY
+  YEARLY
+  ADHOC
+  LATE
+  ARREAR
+}
+
+enum TransactionType {
+  Debit
+  Credit
+}
+
+enum TransactionSource {
+  StudentFeePayment
+  StaffSalaryPayment
+}
+
+enum FeeStatus {
+  Paid
+  Unpaid
+  Partial
+  Cancelled
+}
+
+enum PaymentType {
+  Cash
+  Online
+  Credit
+}
+
 model Sessions {
   id        Int         @id @default(autoincrement())
   session   String      @db.VarChar(255)
@@ -62,57 +124,81 @@ model Sessions {
 }
 
 model Institute {
-  id                 Int       @id @default(autoincrement())
-  instituteName      String    @db.VarChar(255)
-  instituteSignature String    @db.VarChar(255)
-  instituteCode      String?   @db.VarChar(255)
-  address            String    @db.VarChar(255)
-  phone              String    @db.VarChar(255)
-  email              String    @db.VarChar(255)
-  currency           String    @db.VarChar(255)
-  sessionId          Int?
-  session            Sessions? @relation(fields: [sessionId], references: [id])
-  sessionStartMonth  String?   @db.VarChar(255)
-  feeDuesDays        Int?
-  allowOnlineClass   Int       @default(0)
-  jitsiAppID         String?   @db.VarChar(255)
-  themeColor         String?   @db.VarChar(255)
-  logo               String    @db.VarChar(255)
-  headerImage        String    @db.VarChar(255)
-  created_by         Int
-  updated_by         Int
-  created_at         DateTime  @default(now()) @db.DateTime(6)
-  updated_at         DateTime  @default(now()) @db.DateTime(6)
-  Campus             Campus[]
+  id                  Int              @id @default(autoincrement())
+  instituteName       String           @db.VarChar(255)
+  instituteSignature  String           @db.VarChar(255)
+  instituteCode       String?          @db.VarChar(255)
+  address             String           @db.VarChar(255)
+  phone               String           @db.VarChar(255)
+  email               String           @db.VarChar(255)
+  currency            String           @db.VarChar(255)
+  sessionId           Int?
+  session             Sessions?        @relation(fields: [sessionId], references: [id])
+  sessionStartMonth   String?          @db.VarChar(255)
+  feeDuesDays         Int?
+  allowOnlineClass    Int              @default(0)
+  jitsiAppID          String?          @db.VarChar(255)
+  allowEmail          Int              @default(0)
+  emailApiKey         String?          @db.VarChar(255)
+  emailFromName       String?          @db.VarChar(255)
+  emailFromId         String?          @db.VarChar(255)
+  allowSMS            Int              @default(0)
+  SMSApiKey           String?          @db.VarChar(255)
+  themeColor          String?          @db.VarChar(255)
+  logo                String           @db.VarChar(255)
+  headerImage         String           @db.VarChar(255)
+  schoolLeavingCertId Int              @default(1)
+  characterCertId     Int              @default(4)
+  dobCertId           Int              @default(6)
+  created_by          Int
+  updated_by          Int
+  created_at          DateTime         @default(now()) @db.DateTime(6)
+  updated_at          DateTime         @default(now()) @db.DateTime(6)
+  Campus              Campus[]
+  PaymentDetails      PaymentDetails[]
 }
 
 model Campus {
-  id                      Int                       @id @default(autoincrement())
-  campusName              String                    @db.VarChar(255)
-  campusAddress           String                    @db.VarChar(255)
-  campusPhone             String                    @db.VarChar(255)
-  active                  Int                       @default(1) @db.TinyInt
-  instituteId             Int
-  institute               Institute                 @relation(fields: [instituteId], references: [id])
-  created_by              Int
-  updated_by              Int
-  created_at              DateTime                  @default(now()) @db.DateTime(6)
-  updated_at              DateTime                  @default(now()) @db.DateTime(6)
-  TransportRoutes         TransportRoutes[]
-  Class                   Class[]
-  Section                 Section[]
-  User                    User[]
-  AdmissionRecord         AdmissionRecord[]
-  MonthlyFee              MonthlyFee[]
-  DefaultImageSetting     DefaultImageSetting[]
-  OnlineClasses           OnlineClasses[]
-  Subject                 Subject[]
-  ListOfValues            ListOfValues[]
-  UserPermission          UserPermission[]
-  Permission              Permission[]
-  MenuCategoryPermissions MenuCategoryPermissions[]
-  MenuItemPermissions     MenuItemPermissions[]
-  TimeTable               TimeTable[]
+  id                          Int                           @id @default(autoincrement())
+  campusName                  String                        @db.VarChar(255)
+  campusAddress               String                        @db.VarChar(255)
+  campusPhone                 String                        @db.VarChar(255)
+  active                      Int                           @default(1) @db.TinyInt
+  instituteId                 Int
+  institute                   Institute                     @relation(fields: [instituteId], references: [id])
+  created_by                  Int
+  updated_by                  Int
+  created_at                  DateTime                      @default(now()) @db.DateTime(6)
+  updated_at                  DateTime                      @default(now()) @db.DateTime(6)
+  TransportRoutes             TransportRoutes[]
+  Class                       Class[]
+  Section                     Section[]
+  User                        User[]
+  AdmissionRecord             AdmissionRecord[]
+  DefaultImageSetting         DefaultImageSetting[]
+  OnlineClasses               OnlineClasses[]
+  Subject                     Subject[]
+  ListOfValues                ListOfValues[]
+  UserPermission              UserPermission[]
+  Permission                  Permission[]
+  MenuCategoryPermissions     MenuCategoryPermissions[]
+  MenuItemPermissions         MenuItemPermissions[]
+  TimeTable                   TimeTable[]
+  AdmissionRequestOrInquiries AdmissionRequestOrInquiries[]
+  Holidays                    Holidays[]
+  Attendance                  Attendance[]
+  EmailTemplate               EmailTemplate[]
+  SMSTemplate                 SMSTemplate[]
+  EmailHistory                EmailHistory[]
+  SMSHistory                  SMSHistory[]
+  NoticeBoard                 NoticeBoard[]
+  DailyHomework               DailyHomework[]
+  FeePlan                     FeePlan[]
+  FeePlanBreakup              FeePlanBreakup[]
+  FamilyCredit                FamilyCredit[]
+  StudentFees                 StudentFees[]
+  MYAALInvoices               MYAALInvoices[]
+  Transactions                Transactions[]
 }
 
 model DefaultImageSetting {
@@ -127,6 +213,20 @@ model DefaultImageSetting {
   updated_by Int
   created_at DateTime @default(now()) @db.DateTime(6)
   updated_at DateTime @default(now()) @db.DateTime(6)
+}
+
+model PaymentDetails {
+  id                Int       @id @default(autoincrement())
+  instituteId       Int
+  institute         Institute @relation(fields: [instituteId], references: [id])
+  bankAccountName   String    @db.VarChar(255)
+  bankAccountBranch String    @db.VarChar(255)
+  bankAccountIFSC   String    @db.VarChar(255)
+  bankAccountNumber String    @db.VarChar(255)
+  created_by        Int
+  updated_by        Int
+  created_at        DateTime  @default(now()) @db.DateTime(6)
+  updated_at        DateTime  @default(now()) @db.DateTime(6)
 }
 
 model TransportRoutes {
@@ -147,21 +247,28 @@ model TransportRoutes {
 }
 
 model Class {
-  id            Int             @id @default(autoincrement())
-  className     String          @db.VarChar(255)
-  numericName   String          @db.VarChar(255)
-  teacherId     Int?
-  campusId      Int
-  campus        Campus          @relation(fields: [campusId], references: [id])
-  active        Int             @default(1) @db.TinyInt
-  created_by    Int
-  updated_by    Int
-  created_at    DateTime        @default(now()) @db.DateTime(6)
-  updated_at    DateTime        @default(now()) @db.DateTime(6)
-  Section       Section[]
-  User          User[]
-  OnlineClasses OnlineClasses[]
-  TimeTable     TimeTable[]
+  id                          Int                           @id @default(autoincrement())
+  className                   String                        @db.VarChar(255)
+  numericName                 String                        @db.VarChar(255)
+  teacherId                   Int?
+  campusId                    Int
+  campus                      Campus                        @relation(fields: [campusId], references: [id])
+  active                      Int                           @default(1) @db.TinyInt
+  created_by                  Int
+  updated_by                  Int
+  created_at                  DateTime                      @default(now()) @db.DateTime(6)
+  updated_at                  DateTime                      @default(now()) @db.DateTime(6)
+  Section                     Section[]
+  User                        User[]
+  OnlineClasses               OnlineClasses[]
+  TimeTable                   TimeTable[]
+  AdmissionRequestOrInquiries AdmissionRequestOrInquiries[]
+  Holidays                    Holidays[]
+  DailyHomework               DailyHomework[]
+  Attendance                  Attendance[]
+  StudentFees                 StudentFees[]
+  MYAALInvoices               MYAALInvoices[]
+  Transactions                Transactions[]
 }
 
 model Section {
@@ -181,74 +288,94 @@ model Section {
   OnlineClasses OnlineClasses[]
   subjects      Subject[]
   TimeTable     TimeTable[]
+  Holidays      Holidays[]
+  DailyHomework DailyHomework[]
+  Attendance    Attendance[]
+  StudentFees   StudentFees[]
+  MYAALInvoices MYAALInvoices[]
+  Transactions  Transactions[]
 }
 
 model User {
-  id                 Int               @id @default(autoincrement())
-  userType           UserType          @default(student)
-  firstName          String            @db.VarChar(255)
-  middleName         String?           @db.VarChar(255)
-  lastName           String            @db.VarChar(255)
-  displayName        String            @db.VarChar(255)
-  gender             Gender            @default(Male)
-  dateOfBirth        String?           @db.VarChar(255)
-  placeOfBirth       String?           @db.VarChar(255)
-  photo              String?           @db.VarChar(255)
-  thumbnailUrl       String?           @db.VarChar(255)
-  active             Int               @default(1) @db.TinyInt
+  id                 Int                   @id @default(autoincrement())
+  userType           UserType              @default(student)
+  firstName          String                @db.VarChar(255)
+  middleName         String?               @db.VarChar(255)
+  lastName           String                @db.VarChar(255)
+  displayName        String                @db.VarChar(255)
+  gender             Gender                @default(Male)
+  dateOfBirth        DateTime?             @db.Date
+  placeOfBirth       String?               @db.VarChar(255)
+  photo              String?               @db.VarChar(255)
+  thumbnailUrl       String?               @db.VarChar(255)
+  active             Int                   @default(1) @db.TinyInt
+  resetPasswordFlag  Int                   @default(1) @db.TinyInt
+  resetPasswordCode  String?               @db.VarChar(255)
   campusId           Int
-  campus             Campus?           @relation(fields: [campusId], references: [id])
-  homeAddress        String?           @db.VarChar(500)
-  password           String            @db.VarChar(255)
-  idCardNumber       String            @unique @db.VarChar(255)
+  campus             Campus?               @relation(fields: [campusId], references: [id])
+  homeAddress        String?               @db.VarChar(500)
+  password           String                @db.VarChar(255)
+  idCardNumber       String                @unique @db.VarChar(255)
   rollNumber         Int?
   classId            Int?
-  class              Class?            @relation(fields: [classId], references: [id])
+  class              Class?                @relation(fields: [classId], references: [id])
   sectionId          Int?
-  section            Section?          @relation(fields: [sectionId], references: [id])
+  section            Section?              @relation(fields: [sectionId], references: [id])
   routeId            Int?
-  route              TransportRoutes?  @relation(fields: [routeId], references: [id])
-  previousSchool     String?           @db.VarChar(255)
-  admissionDate      String?           @db.VarChar(255)
-  email              String?           @db.VarChar(255)
-  mobile             String?           @db.VarChar(255)
-  whatsapp           String?           @db.VarChar(255)
-  empId              String?           @db.VarChar(255)
-  designation        String?           @db.VarChar(255)
-  CNIC               String?           @db.VarChar(255)
-  qualification      String?           @db.VarChar(255)
-  fatherHusbandName  String?           @db.VarChar(255)
-  joiningDate        String?           @db.VarChar(255)
-  maritalStatus      MaritalStatus?    @default(NA_MARITALSTATUS)
-  salaryType         SalaryType?       @default(NA_SALTYPE)
-  schoolIdCardNumber String?           @db.VarChar(255)
-  idProofPhoto       String?           @db.VarChar(255)
-  religion           String?           @db.VarChar(255)
-  citizenship        String?           @db.VarChar(255)
-  parentType         ParentType?       @default(NA_PARENTTYPE)
-  profession         String?           @db.VarChar(255)
-  theme              String?           @db.VarChar(255)
-  colorName          String?           @db.VarChar(255)
+  route              TransportRoutes?      @relation(fields: [routeId], references: [id])
+  previousSchool     String?               @db.VarChar(255)
+  admissionDate      DateTime?             @db.Date
+  email              String?               @db.VarChar(255)
+  mobile             String?               @db.VarChar(255)
+  whatsapp           String?               @db.VarChar(255)
+  empId              String?               @db.VarChar(255)
+  designation        String?               @db.VarChar(255)
+  CNIC               String?               @db.VarChar(255)
+  qualification      String?               @db.VarChar(255)
+  fatherHusbandName  String?               @db.VarChar(255)
+  joiningDate        DateTime?             @db.Date
+  maritalStatus      MaritalStatus?        @default(NA_MARITALSTATUS)
+  salaryType         SalaryType?           @default(NA_SALTYPE)
+  schoolIdCardNumber String?               @db.VarChar(255)
+  idProofPhoto       String?               @db.VarChar(255)
+  religion           String?               @db.VarChar(255)
+  citizenship        String?               @db.VarChar(255)
+  parentType         ParentType?           @default(NA_PARENTTYPE)
+  profession         String?               @db.VarChar(255)
+  theme              String?               @db.VarChar(255)
+  colorName          String?               @db.VarChar(255)
   created_by         Int
   updated_by         Int
-  created_at         DateTime          @default(now()) @db.DateTime(6)
-  updated_at         DateTime          @default(now()) @db.DateTime(6)
+  created_at         DateTime              @default(now()) @db.DateTime(6)
+  updated_at         DateTime              @default(now()) @db.DateTime(6)
   userPermissions    UserPermission[]
   AdmissionRecord    AdmissionRecord[]
-  childId            Int?
-  child              User?             @relation("ParentChildRelation", fields: [childId], references: [id])
-  parents            User[]            @relation("ParentChildRelation")
-  parentsNames       String?           @db.VarChar(255)
-  MonthlyFee         MonthlyFee[]
-  OnlineClasses      OnlineClasses?    @relation(fields: [onlineClassesId], references: [id])
+  parentsNames       String?               @db.VarChar(255)
+  OnlineClasses      OnlineClasses?        @relation(fields: [onlineClassesId], references: [id])
   onlineClassesId    Int?
   subjects           Subject[]
+  parent             ParentChildRelation[] @relation("parent")
+  children           ParentChildRelation[] @relation("children")
+  Attendance         Attendance[]
+  FamilyCredit       FamilyCredit[]
+  StudentFees        StudentFees[]
+  MYAALInvoices      MYAALInvoices[]
+  Transactions       Transactions[]
+}
+
+model ParentChildRelation {
+  parent     User @relation("children", fields: [parentId], references: [id])
+  parentId   Int
+  children   User @relation("parent", fields: [childrenId], references: [id])
+  childrenId Int
+
+  @@id([parentId, childrenId])
 }
 
 model AdmissionRecord {
   id                Int      @id @default(autoincrement())
-  userId            Int
-  user              User     @relation(fields: [userId], references: [id])
+  userId            Int?
+  user              User?    @relation(fields: [userId], references: [id])
   campusId          Int
   campus            Campus   @relation(fields: [campusId], references: [id])
   admissionComments String?  @db.VarChar(255)
@@ -258,24 +385,6 @@ model AdmissionRecord {
   updated_by        Int
   created_at        DateTime @default(now()) @db.DateTime(6)
   updated_at        DateTime @default(now()) @db.DateTime(6)
-}
-
-model MonthlyFee {
-  id       Int    @id @default(autoincrement())
-  userId   Int
-  user     User   @relation(fields: [userId], references: [id])
-  campusId Int
-  campus   Campus @relation(fields: [campusId], references: [id])
-
-  monthlyamount  Int
-  hasDiscount    Int      @default(0) @db.TinyInt
-  discountAmount Int
-  totalamount    Int
-  active         Int      @default(1) @db.TinyInt
-  created_by     Int
-  updated_by     Int
-  created_at     DateTime @default(now()) @db.DateTime(6)
-  updated_at     DateTime @default(now()) @db.DateTime(6)
 }
 
 model UserPermission {
@@ -410,15 +519,125 @@ model Subject {
   TimeTable   TimeTable[]
 }
 
+model Attendance {
+  id               Int            @id @default(autoincrement())
+  campusId         Int
+  campus           Campus         @relation(fields: [campusId], references: [id])
+  classId          Int?
+  class            Class?         @relation(fields: [classId], references: [id])
+  sectionId        Int?
+  section          Section?       @relation(fields: [sectionId], references: [id])
+  userId           Int?
+  user             User?          @relation(fields: [userId], references: [id])
+  userType         UserType       @default(student)
+  attendanceType   AttendanceType @default(Manual)
+  attendanceStatus AbsenseStatus  @default(UnMarked)
+  entryStatus      EntryStatus    @default(UnMarked)
+  dayStatus        DayStatus      @default(FullDay)
+  attendanceDate   DateTime?      @db.Date
+  recordStartTime  String?        @db.VarChar(255)
+  recordEndTime    String?        @db.VarChar(255)
+  notes            String?        @db.LongText
+  created_by       Int
+  created_at       DateTime       @default(now()) @db.DateTime(6)
+}
+
 model ListOfValues {
+  id          Int      @id @default(autoincrement())
+  groupName   String   @db.VarChar(255)
+  uniqueKey   String   @unique @db.VarChar(255)
+  shortName   String   @db.VarChar(255)
+  longName    String   @db.VarChar(255)
+  description String   @db.VarChar(255)
+  campusId    Int
+  campus      Campus   @relation(fields: [campusId], references: [id])
+  active      Int      @default(1) @db.TinyInt
+  created_by  Int
+  updated_by  Int
+  created_at  DateTime @default(now()) @db.DateTime(6)
+  updated_at  DateTime @default(now()) @db.DateTime(6)
+}
+
+model TimeTable {
+  id          Int      @id @default(autoincrement())
+  classId     Int
+  class       Class    @relation(fields: [classId], references: [id])
+  sectionId   Int
+  section     Section  @relation(fields: [sectionId], references: [id])
+  campusId    Int
+  campus      Campus   @relation(fields: [campusId], references: [id])
+  subject     String?
+  color       String   @default("#A5DD9B")
+  bgcolor     String   @default("#A5DD9B")
+  duration    String
+  active      Int      @default(1) @db.TinyInt
+  isRecurring Int      @default(1) @db.TinyInt
+  day         String?
+  startTime   String?
+  endTime     String?
+  start       String?
+  end         String?
+  created_by  Int
+  updated_by  Int
+  created_at  DateTime @default(now()) @db.DateTime(6)
+  updated_at  DateTime @default(now()) @db.DateTime(6)
+  Subject     Subject? @relation(fields: [subjectId], references: [id])
+  subjectId   Int?
+}
+
+model Holidays {
+  id           Int      @id @default(autoincrement())
+  classId      Int?
+  class        Class?   @relation(fields: [classId], references: [id])
+  sectionId    Int?
+  section      Section? @relation(fields: [sectionId], references: [id])
+  campusId     Int
+  campus       Campus   @relation(fields: [campusId], references: [id])
+  active       Int      @default(1) @db.TinyInt
+  name         String?  @db.VarChar(255)
+  holidayStart String?  @db.VarChar(255)
+  holidayEnd   String?  @db.VarChar(255)
+  created_by   Int
+  updated_by   Int
+  created_at   DateTime @default(now()) @db.DateTime(6)
+  updated_at   DateTime @default(now()) @db.DateTime(6)
+}
+
+model AdmissionRequestOrInquiries {
+  id             Int      @id @default(autoincrement())
+  isFromApp      Int      @default(0)
+  isApproved     String   @default("No") @db.VarChar(255)
+  firstName      String   @db.VarChar(255)
+  middleName     String?  @db.VarChar(255)
+  lastName       String   @db.VarChar(255)
+  displayName    String   @db.VarChar(255)
+  gender         Gender   @default(Male)
+  dateOfBirth    DateTime @db.Date
+  placeOfBirth   String?  @db.VarChar(255)
+  campusId       Int
+  campus         Campus?  @relation(fields: [campusId], references: [id])
+  location       String?  @db.VarChar(500)
+  previousSchool String?  @db.VarChar(255)
+  admissionDate  DateTime @db.Date
+  email          String?  @db.VarChar(255)
+  mobile         String?  @db.VarChar(255)
+  IDorCNIC       String?  @db.VarChar(255)
+  parentFullName String?  @db.VarChar(255)
+  comments       String?  @db.VarChar(255)
+  classId        Int?
+  class          Class?   @relation(fields: [classId], references: [id])
+  active         Int      @default(1) @db.TinyInt
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime @default(now()) @db.DateTime(6)
+  updated_at     DateTime @default(now()) @db.DateTime(6)
+}
+
+model ReportThemes {
   id         Int      @id @default(autoincrement())
   groupName  String   @db.VarChar(255)
   uniqueKey  String   @unique @db.VarChar(255)
-  shortName  String   @db.VarChar(255)
-  longName   String   @db.VarChar(255)
-  desc       String   @db.VarChar(255)
-  campusId   Int
-  campus     Campus   @relation(fields: [campusId], references: [id])
+  image      String   @db.VarChar(255)
   active     Int      @default(1) @db.TinyInt
   created_by Int
   updated_by Int
@@ -426,24 +645,196 @@ model ListOfValues {
   updated_at DateTime @default(now()) @db.DateTime(6)
 }
 
-model TimeTable {
+model EmailTemplate {
+  id           Int            @id @default(autoincrement())
+  campusId     Int
+  campus       Campus         @relation(fields: [campusId], references: [id])
+  active       Int            @default(1) @db.TinyInt
+  name         String?        @db.VarChar(255)
+  subject      String?        @db.VarChar(255)
+  body         String?        @db.LongText
+  keywords     String?        @db.VarChar(500)
+  isEditable   Int            @default(1) @db.TinyInt
+  created_by   Int
+  updated_by   Int
+  created_at   DateTime       @default(now()) @db.DateTime(6)
+  updated_at   DateTime       @default(now()) @db.DateTime(6)
+  EmailHistory EmailHistory[]
+}
+
+model EmailHistory {
+  id              Int           @id @default(autoincrement())
+  campusId        Int
+  campus          Campus        @relation(fields: [campusId], references: [id])
+  active          Int           @default(1) @db.TinyInt
+  emailTemplateId Int
+  emailTemplate   EmailTemplate @relation(fields: [emailTemplateId], references: [id])
+  name            String?       @db.VarChar(255)
+  tos             String?       @db.VarChar(255)
+  subject         String?       @db.VarChar(255)
+  body            String?       @db.LongText
+  created_by      Int
+  created_at      DateTime      @default(now()) @db.DateTime(6)
+}
+
+model SMSTemplate {
+  id         Int          @id @default(autoincrement())
+  campusId   Int
+  campus     Campus       @relation(fields: [campusId], references: [id])
+  active     Int          @default(1) @db.TinyInt
+  name       String?      @db.VarChar(255)
+  body       String?      @db.VarChar(255)
+  keywords   String?      @db.VarChar(500)
+  created_by Int
+  updated_by Int
+  created_at DateTime     @default(now()) @db.DateTime(6)
+  updated_at DateTime     @default(now()) @db.DateTime(6)
+  SMSHistory SMSHistory[]
+}
+
+model SMSHistory {
+  id            Int         @id @default(autoincrement())
+  campusId      Int
+  campus        Campus      @relation(fields: [campusId], references: [id])
+  active        Int         @default(1) @db.TinyInt
+  smsTemplateId Int
+  smsTemplate   SMSTemplate @relation(fields: [smsTemplateId], references: [id])
+  name          String?     @db.VarChar(255)
+  tos           String?     @db.VarChar(255)
+  body          String?     @db.LongText
+  created_by    Int
+  created_at    DateTime    @default(now()) @db.DateTime(6)
+}
+
+model NoticeBoard {
+  id          Int         @id @default(autoincrement())
+  campusId    Int
+  campus      Campus      @relation(fields: [campusId], references: [id])
+  active      Int         @default(1) @db.TinyInt
+  name        String?     @db.VarChar(255)
+  message     String?     @db.LongText
+  messageType MessageType @default(INFO)
+  created_by  Int
+  created_at  DateTime    @default(now()) @db.DateTime(6)
+}
+
+model DailyHomework {
+  id           Int       @id @default(autoincrement())
+  campusId     Int
+  campus       Campus    @relation(fields: [campusId], references: [id])
+  classId      Int?
+  class        Class?    @relation(fields: [classId], references: [id])
+  sectionId    Int?
+  section      Section?  @relation(fields: [sectionId], references: [id])
+  active       Int       @default(1) @db.TinyInt
+  homeworkDate DateTime? @db.Date
+  homeworkData String?   @db.LongText
+  created_by   Int
+  updated_by   Int
+  created_at   DateTime  @default(now()) @db.DateTime(6)
+  updated_at   DateTime  @default(now()) @db.DateTime(6)
+}
+
+model FeePlan {
+  id             Int              @id @default(autoincrement())
+  campusId       Int
+  campus         Campus           @relation(fields: [campusId], references: [id])
+  active         Int              @default(1) @db.TinyInt
+  name           String?          @db.VarChar(255)
+  monthlyAmt     Int              @default(0)
+  yearlyAmt      Int              @default(0)
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime         @default(now()) @db.DateTime(6)
+  updated_at     DateTime         @default(now()) @db.DateTime(6)
+  FeePlanBreakup FeePlanBreakup[]
+  StudentFees    StudentFees[]
+}
+
+model FeePlanBreakup {
+  id          Int     @id @default(autoincrement())
+  feePlanId   Int
+  feePlan     FeePlan @relation(fields: [feePlanId], references: [id])
+  campusId    Int
+  campus      Campus  @relation(fields: [campusId], references: [id])
+  isYearly    Int     @default(0) @db.TinyInt
+  breakupname String? @db.VarChar(255)
+  amount      Int     @default(0)
+}
+
+model StudentFees {
   id         Int      @id @default(autoincrement())
-  classId    Int
-  class      Class    @relation(fields: [classId], references: [id])
-  sectionId  Int
-  section    Section  @relation(fields: [sectionId], references: [id])
   campusId   Int
   campus     Campus   @relation(fields: [campusId], references: [id])
-  subject    String?   
-  color      String   @default("#A5DD9B")
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  feePlanId  Int
+  feePlan    FeePlan  @relation(fields: [feePlanId], references: [id])
+  classId    Int?
+  class      Class?   @relation(fields: [classId], references: [id])
+  sectionId  Int?
+  section    Section? @relation(fields: [sectionId], references: [id])
   active     Int      @default(1) @db.TinyInt
-  day        String
-  startTime  String
-  endTime    String
   created_by Int
   updated_by Int
   created_at DateTime @default(now()) @db.DateTime(6)
   updated_at DateTime @default(now()) @db.DateTime(6)
-  Subject    Subject? @relation(fields: [subjectId], references: [id])
-  subjectId  Int?
+}
+
+model FamilyCredit {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  campusId        Int
+  campus          Campus   @relation(fields: [campusId], references: [id])
+  availableCredit Int      @default(0)
+  created_by      Int
+  updated_by      Int
+  created_at      DateTime @default(now()) @db.DateTime(6)
+  updated_at      DateTime @default(now()) @db.DateTime(6)
+}
+
+model MYAALInvoices {
+  id            Int         @id @default(autoincrement())
+  invoiceNumber String      @unique @db.VarChar(255)
+  userId        Int
+  user          User        @relation(fields: [userId], references: [id])
+  campusId      Int
+  campus        Campus      @relation(fields: [campusId], references: [id])
+  classId       Int?
+  class         Class?      @relation(fields: [classId], references: [id])
+  sectionId     Int?
+  section       Section?    @relation(fields: [sectionId], references: [id])
+  feeType       FeeType     @default(MONTHLY)
+  feeStatus     FeeStatus   @default(Unpaid)
+  paymentType   PaymentType @default(Cash)
+  year          Int
+  month         Int
+  dueDate       DateTime    @default(now()) @db.DateTime(6)
+  amount        Int         @default(0)
+  paidAmount    Int         @default(0)
+  paidOn        DateTime?   @db.DateTime(6)
+  created_by    Int
+  updated_by    Int
+  created_at    DateTime    @default(now()) @db.DateTime(6)
+  updated_at    DateTime    @default(now()) @db.DateTime(6)
+}
+
+model Transactions {
+  id              Int               @id @default(autoincrement())
+  campusId        Int
+  campus          Campus            @relation(fields: [campusId], references: [id])
+  transactionType TransactionType   @default(Credit)
+  source          TransactionSource @default(StudentFeePayment)
+  invoiceNumber   String            @db.VarChar(255)
+  userId          Int?
+  user            User?             @relation(fields: [userId], references: [id])
+  classId         Int?
+  class           Class?            @relation(fields: [classId], references: [id])
+  sectionId       Int?
+  section         Section?          @relation(fields: [sectionId], references: [id])
+  amount          Int               @default(0)
+  paymentType     PaymentType       @default(Cash)
+  created_by      Int
+  created_at      DateTime          @default(now()) @db.DateTime(6)
 }

@@ -4,6 +4,7 @@ import generator from 'generate-password-ts';
 import { encrypt, generateIdsForParentAndStudent } from "../../../../../../shared/helpers/utils/generic.utils";
 import { prisma } from "../../../../../../shared/db-client";
 import moment from "moment";
+import { sendAccountCreationEmail } from "../../../../../../shared/helpers/notifications/notifications";
 
 
 
@@ -15,7 +16,8 @@ public async createStaff  (req: Request, res: Response)  {
 
   const staffDetails: any = req.body;
   const empType = String(req.params.empType);
-  
+  const institute = await prisma.institute.findFirst();
+
   const password = generator.generate({
     length: 10,
     numbers: true,
@@ -43,11 +45,11 @@ public async createStaff  (req: Request, res: Response)  {
     displayName:staffDetails.form.firstName +' '+ middleName +' '+ staffDetails.form.lastName,
     citizenship: staffDetails.form.citizenship,
     gender: staffDetails.form.gender,
-    dateOfBirth: staffDetails.form.dateOfBirth,
+    dateOfBirth: moment(staffDetails.form.dateOfBirth, 'DD-MM-YYYY').toDate(),
     photo: staffDetails.photo,
     thumbnailUrl: staffDetails.thumbnailUrl,
     homeAddress: staffDetails.form.homeAddress,
-    joiningDate: staffDetails.form.joiningDate,
+    joiningDate: moment(staffDetails.form.joiningDate, 'DD-MM-YYYY').toDate(),
     religion:staffDetails.form.religion,
     profession:staffDetails.form.profession,
     email:staffDetails.form.email,
@@ -164,32 +166,15 @@ public async createStaff  (req: Request, res: Response)  {
                 created_by: Number(staffDetails.created_by)
               },
             });
-
-            // await prisma.monthlyFee.create({
-            //   data: {
-            //     userId : ceratedStudentResponse.id ,
-            //     campusId :Number(studentWithParents.form.campusId) ,
-            //     monthlyamount:studentWithParents.form.monthlyamount ,
-            //     hasDiscount:studentWithParents.form.hasDiscount ,
-            //     discountAmount:studentWithParents.form.discountAmount ,
-            //     totalamount :studentWithParents.form.monthlyamount*12,
-            //     active: 1,
-            //     updated_by: studentWithParents.updated_by,
-            //     created_by: studentWithParents.created_by,
-            //   },
-            // });
-  
-            // await prisma.admissionRecord.create({
-            //   data: {
-            //     userId : ceratedStudentResponse.id,
-            //     campusId :Number(studentWithParents.form.campusId),
-            //     admissionComments:studentWithParents.form.admissionComments,
-            //     rollNumber:String(countOfStudentsInClassAndSection+1) as never,
-            //     active: 1,
-            //     updated_by: studentWithParents.updated_by,
-            //     created_by: studentWithParents.created_by,
-            //   },
-            // });
+            sendAccountCreationEmail(
+              institute, 
+              Number(staffDetails.form.campusId), 
+              ceratedStaffResponse,
+              staffDetails.created_by,
+              ceratedStaffResponse.idCardNumber ,
+              password
+            );
+              
             return res.json({ status: true,  data: ceratedStaffResponse , message:'Employee added successfully'});
           }else{
             return res.json({ status: false,  data: null , message:'Failed to add employee. Try later.' });

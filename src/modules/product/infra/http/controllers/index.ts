@@ -7,6 +7,9 @@ import { StudentController } from './academic/student.controller';
 import { StaffAccountantController } from './staffAccounts/staffacc.controller';
 import { MasterController } from './general/master.controller';
 import { SubjectsController } from './academic/subjects.controller';
+import { ParentController } from './parent/parent.controller';
+import { AttendanceController } from './attendance/attendance.controller';
+import { AccountingController } from './accounting/accounting.controller';
 
 const container = createContainer({
   injectionMode: InjectionMode.PROXY,
@@ -20,7 +23,10 @@ container.register({
   classSectionController: asClass(ClassSectionController).proxy(),
   studentController: asClass(StudentController).proxy(),
   staffAccController: asClass(StaffAccountantController).proxy(),
+  parentController: asClass(ParentController).proxy(),
   subjectController: asClass(SubjectsController).proxy(),
+  attendanceController: asClass(AttendanceController).proxy(),
+  accountingController: asClass(AccountingController).proxy(),
 });
 
 export const masterControllerInstance = container.resolve<MasterController>('masterController');
@@ -30,7 +36,9 @@ export const transportControllerInstance = container.resolve<TransportController
 export const classSectionControllerInstance = container.resolve<ClassSectionController>('classSectionController');
 export const studentControllerInstance = container.resolve<StudentController>('studentController');
 export const staffAccControllerInstance = container.resolve<StaffAccountantController>('staffAccController');
+export const parentControllerInstance = container.resolve<ParentController>('parentController');
 export const subjectControllerInstance = container.resolve<SubjectsController>('subjectController');
-
+export const attendanceControllerInstance = container.resolve<AttendanceController>('attendanceController');
+export const accountingControllerInstance = container.resolve<AccountingController>('accountingController');
 
 export default container;

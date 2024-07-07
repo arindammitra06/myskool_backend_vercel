@@ -17,7 +17,16 @@ public async fetchAllUsers  (req: Request, res: Response)  {
       include: {
         campus : true,
         class: true,
-        parents: true,
+        parent: {
+          include: {
+            parent:true
+          }
+        },  
+        children: {
+          include: {
+            children:true
+          }
+        },
         userPermissions:{
           include:{
             permission: true
@@ -27,6 +36,28 @@ public async fetchAllUsers  (req: Request, res: Response)  {
     });
     return res.json({ status: true,  data: users , message:'' });
 }
+
+
+public async fetchAllActiveInactiveUsers  (req: Request, res: Response)  {
+  const campusId = Number(req.params.campusId);
+  const type = Number(req.params.type);
+  const empType = String(req.params.empType);
+  
+  const users = await prisma.user.findMany({
+    where: {
+      campusId : Number(campusId),
+      active: type,
+      userType: UserType[empType]
+    },
+    include: {
+      campus : true,
+      class: true,
+    },
+  });
+  return res.json({ status: true,  data: users , message:'' });
+}
+
+
 
 public async createUser  (req: Request, res: Response)  {
 
@@ -166,7 +197,16 @@ public async getActiveUsersByType  (req: Request, res: Response)  {
       include: {
         campus : true,
         class: true,
-        parents: true,
+        parent: {
+          include: {
+            parent:true
+          }
+        },  
+        children: {
+          include: {
+            children:true
+          }
+        },
   
       },
     });
@@ -187,7 +227,16 @@ public async getActiveUsersByType  (req: Request, res: Response)  {
       include: {
         campus : true,
         class: true,
-        parents: true,
+        parent: {
+          include: {
+            parent:true
+          }
+        },  
+        children: {
+          include: {
+            children:true
+          }
+        },
   
       },
     });
@@ -267,9 +316,7 @@ public async loginUserByIdPassword  (req: Request, res: Response) {
   const parmaspassed: any = req.body.params;
   const idCardNumber = parmaspassed.idCardNumber;
   const password = parmaspassed.password;
-  console.log(parmaspassed)
   let user;
-
   try{
  
   user = await prisma.user
@@ -308,14 +355,57 @@ public async loginUserByIdPassword  (req: Request, res: Response) {
     return res.json({ status: false,  data: null , message:'User/Password not found' });
   }
 
-  console.log(user)
   if (!user) {
     return res.json({status: false,  currentUser: null , message:'User/Password not found'});
   }
-
   return res.json({status: true,  currentUser: user , message:'Login successful'});
 }
 
+public async resetMyPassword  (req: Request, res: Response) {
+  const parmaspassed: any = req.body;
+  console.log(parmaspassed)
+  const idCardNumber = parmaspassed.form.idCardNumber;
+  const newPassword = parmaspassed.form.newPassword;
+  const otp = parmaspassed.secretCode;
+  
+  let user;
+  try{
+ 
+  user = await prisma.user
+  .findFirst({
+    where: {
+      idCardNumber: String(idCardNumber),
+      resetPasswordFlag: 1,
+      resetPasswordCode: otp
+    },
+    });
+  } catch (error) {
+    return res.json({ status: false,  data: null , message:'ID Card number or secret code invalid' });
+  }
+
+  if (!user) {
+    return res.json({status: false,  data: null , message:'ID Card number or secret code invalid'});
+  }
+
+  const encryptedPassword = encrypt(newPassword);
+  
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data:{
+        password: encryptedPassword,
+        resetPasswordFlag: 0,
+        resetPasswordCode: null,
+        updated_by: user.id,
+        updated_at: new Date()
+    }
+    
+  })
+
+
+  return res.json({status: true,  data: null , message:'Password reset successful. Relogin.'});
+}
 
 
 
@@ -373,7 +463,7 @@ public async getAllMenusAsCreatersJSON  (req: Request, res: Response) {
 
 public async getAllActivePermissions  (req: Request, res: Response) {
   const campusId = Number(req.params.campusId);
-  
+  console.log('here')
   const permissions = await prisma.permission.findMany({
     where:{
       active: 1,
@@ -398,6 +488,7 @@ public async getAllActivePermissions  (req: Request, res: Response) {
 
     },
   });
+  console.log(permissions);
   return res.json({status:true,  data: permissions, message:'' });
 }
 

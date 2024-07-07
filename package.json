@@ -26,7 +26,8 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.2",
+    "@getbrevo/brevo": "^2.1.1",
+    "@prisma/client": "^5.16.1",
     "@types/body-parser": "^1.19.2",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",
@@ -50,9 +51,11 @@
     "mongoose": "^6.12.0",
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
+    "nodemailer": "^6.9.13",
     "rimraf": "3.0.2"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.30.0",
@@ -64,7 +67,7 @@
     "jest-cucumber": "^3.0.1",
     "nodemon": "2.0.19",
     "prettier": "^2.8.1",
-    "prisma": "^5.10.2",
+    "prisma": "^5.16.1",
     "ts-node-dev": "1.1.8",
     "typescript": "^5.3.3"
   },
