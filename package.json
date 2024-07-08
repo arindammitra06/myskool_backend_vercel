@@ -32,6 +32,7 @@
     "@types/dotenv": "8.2.0",
     "@types/express": "^4.17.15",
     "@types/helmet": "^4.0.0",
+    "@types/minimatch": "^5.1.2",
     "@types/mongoose": "5.11.96",
     "@types/morgan": "^1.9.3",
     "@types/node": "^16.18.10",
