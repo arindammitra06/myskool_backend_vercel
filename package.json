@@ -52,7 +52,7 @@
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
     "nodemailer": "^6.9.13",
-    "rimraf": "3.0.2"
+    "rimraf": "^5.0.8"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.15",
