@@ -6,9 +6,7 @@
   "types": "dist/server.d.ts",
   "license": "MIT",
   "scripts": {
-    "prebuild": "rimraf dist",
     "build": "tsc",
-    "pre-prod": "rimraf dist && npm run build",
     "dev": "nodemon --watch src --exec ts-node src/server.ts",
     "predev": "npm run build",
     "prepare:enviroment": "node scripts/dev-enviroment.cjs",
@@ -51,8 +49,7 @@
     "mongoose": "^6.12.0",
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
-    "nodemailer": "^6.9.13",
-    "rimraf": "^5.0.8"
+    "nodemailer": "^6.9.13"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.15",
