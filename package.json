@@ -56,8 +56,6 @@
     "rimraf": "5.0.8"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "7.16.0",
-    "@typescript-eslint/parser": "7.16.0",
     "eslint": "9.6.0",
     "nodemon": "2.0.19",
     "prettier": "3.3.2",
