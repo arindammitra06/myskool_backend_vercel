@@ -14,6 +14,18 @@ export function encrypt(text: string): string {
     return encrypted;
 }
 
+
+export function getCurrencySymbol (locale: string, currency: string) {
+  return (0).toLocaleString(
+    locale,
+    {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }
+  ).replace(/\d/g, '').trim()
+}
 export function processTimeTableJsonData(timtables, day:string) {
     const filtered = timtables.filter((value: TimeTable) => value.day === day);
     let dayEvent;

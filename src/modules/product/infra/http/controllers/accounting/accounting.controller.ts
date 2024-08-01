@@ -1,6 +1,6 @@
 import { prisma } from "../../../../../../shared/db-client";
 import { Request, Response } from "express";
-import { FeeStatus, FeeType, PaymentType, StudentFees, SubjectType, TransactionSource, TransactionType, User } from "@prisma/client";
+import { FeeStatus, FeeType, ParentType, PaymentType, StudentFees, SubjectType, TransactionSource, TransactionType, User, UserType } from "@prisma/client";
 import moment from "moment";
 import { generateInvoiceNumber } from "../../../../../../shared/helpers/utils/generic.utils";
 
@@ -31,7 +31,27 @@ export class AccountingController {
     return res.json({ status: true,  data: student , message:'' });
   }
 
-  public async markAsQuickPaid (req: Request, res: Response)  {
+  
+  public async getPrimaryParentsDropdown (req: Request, res: Response)  {
+    const campusId = Number(req.params.campusId);
+    const parents = await prisma.user.findMany({
+      where: {
+        campusId : Number(campusId),
+        userType: UserType.parent,
+        parentType: ParentType.Father
+      },
+    });
+    let parentModel = [];
+    if(parents!==null && parents!==undefined && parents.length>0){
+      for(let i=0;i<parents.length;i++){
+        parentModel.push({ value: parents[i].id+'', label: parents[i].displayName})
+      }
+    }
+    return res.json({ status: true,  data: parentModel , message:'' });
+  }
+  
+
+  public async cancelFeeInvoice (req: Request, res: Response)  {
     const campusId = Number(req.params.campusId);
     const id = Number(req.params.id);
     const currentUserId = Number(req.params.currentUserId);
@@ -54,61 +74,99 @@ export class AccountingController {
         campusId:campusId
       },
       data: {
+        feeStatus: FeeStatus.Cancelled,
+        updated_by: Number(currentUserId),
+        updated_at: new Date()
+      },
+    });
+    return res.json({ status: true,  data: null , message:'Invoice cancelled' });
+  }
+
+  public async markAsQuickPaid (req: Request, res: Response)  {
+    const campusId = Number(req.params.campusId);
+    const id = Number(req.params.id);
+    const currentUserId = Number(req.params.currentUserId);
+    const parentID = Number(req.params.parentID);
+    
+    
+
+    const invoice = await prisma.mYAALInvoices.findUnique({
+      where: {
+        campusId : Number(campusId),
+        id:Number(id)
+      },
+    });
+   
+    if(!invoice){
+      return res.json({ status: false,  data: null , message:'Invoice not found' });
+    }
+    //calculations
+    let cashAmount = 0 ;
+    let walletBalanceAfterDeduction = 0 ;
+    let paidAmountExisting  = 0;
+    let currentDues = invoice.amount - invoice.paidAmount;
+    
+    if(invoice.paidAmount===null || invoice.paidAmount===undefined){
+      paidAmountExisting = 0;
+    }else{
+      paidAmountExisting = invoice.paidAmount;
+    }
+
+    let totalPaid = paidAmountExisting + Number(currentDues);
+    
+
+
+   
+    const updateInvoice = await prisma.mYAALInvoices.update({
+      where: {
+        id: id,
+        campusId:campusId
+      },
+      data: {
         feeStatus: FeeStatus.Paid,
         paidOn: moment(new Date(), 'DD-MM-YYYY').toDate(),
-        paidAmount: currentDues,
+        paidAmount: totalPaid,
         paymentType:PaymentType.Cash,
         updated_by: Number(currentUserId),
         updated_at: new Date()
       },
     });
-    await prisma.transactions.create({
-      data: {
-        invoiceNumber: invoice.invoiceNumber,
-        campusId:invoice.campusId,
-        transactionType: TransactionType.Credit,
-        source: TransactionSource.StudentFeePayment,
-        userId:invoice.userId,
-        classId:invoice.classId,
-        sectionId:invoice.sectionId,
-        amount:Number(currentDues),
-        paymentType:PaymentType.Cash,
-        created_by: Number(currentUserId),
-        created_at: new Date()
+
+    const parent = await prisma.user.findUnique({
+      where: {
+        campusId : Number(campusId),
+        id:Number(parentID)
       },
+      include:{
+        FamilyCredit: true
+      }
     });
-    return res.json({ status: true,  data: null , message:'Invoice paid' });
-  }
 
-  
+    console.log(parent.FamilyCredit);
 
-  public async acceptPayment (req: Request, res: Response)  {
-    const formData: any = req.body;
-    
-    if(formData!==null && formData!==undefined && formData.form.invoiceId!==null && formData.form.invoiceId!==undefined){
-        const invoice = await prisma.mYAALInvoices.findUnique({
-          where: {
-            campusId : Number(formData.form.campusId),
-            id:Number(formData.form.invoiceId)
-          },
-        });
+    if(parent!==null && parent!==undefined && parent.FamilyCredit!==null 
+              &&  parent.FamilyCredit!==undefined &&  parent.FamilyCredit.length>0 &&  parent.FamilyCredit[0].availableCredit>0 ){
+       
+      let familyCreditAmt =  parent.FamilyCredit[0].availableCredit
       
-        if(!invoice){
-          return res.json({ status: false,  data: null , message:'Invoice not found' });
-        }
-
-        const updateInvoice = await prisma.mYAALInvoices.update({
-          where: {
-            campusId : Number(formData.form.campusId),
-            id:Number(formData.form.invoiceId)
-          },
+      if(Number(familyCreditAmt) >= Number(currentDues)){
+        cashAmount = 0;
+        walletBalanceAfterDeduction =  Number(familyCreditAmt) - Number(currentDues);
+        
+        await prisma.transactions.create({
           data: {
-            feeStatus: invoice.amount === Number(formData.form.payingAmount) ? FeeStatus.Paid : Number(formData.form.payingAmount)< invoice.amount ? FeeStatus.Partial : FeeStatus.Paid ,
-            paidOn: moment(new Date(), 'DD-MM-YYYY').toDate(),
-            paymentType:PaymentType.Cash,
-            paidAmount: Number(formData.form.payingAmount),
-            updated_by: Number(formData.form.currentUserId),
-            updated_at: new Date()
+            invoiceNumber: invoice.invoiceNumber,
+            campusId:invoice.campusId,
+            transactionType: TransactionType.Debit,
+            source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
+            userId:invoice.userId,
+            classId:invoice.classId,
+            sectionId:invoice.sectionId,
+            amount:Number(currentDues),
+            paymentType:PaymentType.Wallet,
+            created_by: Number(currentUserId),
+            created_at: new Date(),
+            familyCreditId:parent.FamilyCredit[0].id
           },
         });
 
@@ -121,12 +179,284 @@ export class AccountingController {
             userId:invoice.userId,
             classId:invoice.classId,
             sectionId:invoice.sectionId,
-            amount:Number(formData.form.payingAmount),
-            paymentType:PaymentType.Cash,
-            created_by: Number(formData.form.currentUserId),
-            created_at: new Date()
+            amount:Number(currentDues),
+            paymentType:PaymentType.Wallet,
+            created_by: Number(currentUserId),
+            created_at: new Date(),
+            familyCreditId:parent.FamilyCredit[0].id
           },
         });
+
+
+      }else{
+        cashAmount = Number(currentDues) - Number(familyCreditAmt);
+        walletBalanceAfterDeduction = 0;
+        
+        await prisma.transactions.create({
+          data: {
+            invoiceNumber: invoice.invoiceNumber,
+            campusId:invoice.campusId,
+            transactionType: TransactionType.Debit,
+            source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
+            userId:invoice.userId,
+            classId:invoice.classId,
+            sectionId:invoice.sectionId,
+            amount:Number(familyCreditAmt),
+            paymentType:PaymentType.Wallet,
+            created_by: Number(currentUserId),
+            created_at: new Date(),
+            familyCreditId:parent.FamilyCredit[0].id
+          },
+        });
+
+        await prisma.transactions.create({
+          data: {
+            invoiceNumber: invoice.invoiceNumber,
+            campusId:invoice.campusId,
+            transactionType: TransactionType.Credit,
+            source: TransactionSource.StudentFeePayment,
+            userId:invoice.userId,
+            classId:invoice.classId,
+            sectionId:invoice.sectionId,
+            amount:Number(familyCreditAmt),
+            paymentType:PaymentType.Wallet,
+            created_by: Number(currentUserId),
+            created_at: new Date(),
+            familyCreditId:parent.FamilyCredit[0].id
+          },
+        });
+        
+        await prisma.transactions.create({
+          data: {
+            invoiceNumber: invoice.invoiceNumber,
+            campusId:invoice.campusId,
+            transactionType: TransactionType.Credit,
+            source: TransactionSource.StudentFeePayment,
+            userId:invoice.userId,
+            classId:invoice.classId,
+            sectionId:invoice.sectionId,
+            amount:Number(cashAmount),
+            paymentType:PaymentType.Cash,
+            created_by: Number(currentUserId),
+            created_at: new Date(),
+            familyCreditId:parent.FamilyCredit[0].id
+          },
+        });
+      }
+      
+      await prisma.familyCredit.update({
+        where: {
+          campusId : invoice.campusId,
+          id:Number(parent.FamilyCredit[0].id)
+        },
+        data: {
+          availableCredit:Number(walletBalanceAfterDeduction),
+          updated_by: Number(currentUserId),
+          updated_at: new Date()
+        },
+      });
+
+      
+
+      console.log('cashAmount > '+cashAmount+' --- walletBalanceAfterDeduction >'+walletBalanceAfterDeduction);
+
+    
+    }else{
+      await prisma.transactions.create({
+        data: {
+          invoiceNumber: invoice.invoiceNumber,
+          campusId:invoice.campusId,
+          transactionType: TransactionType.Credit,
+          source: TransactionSource.StudentFeePayment,
+          userId:invoice.userId,
+          classId:invoice.classId,
+          sectionId:invoice.sectionId,
+          amount:Number(currentDues),
+          paymentType:PaymentType.Cash,
+          created_by: Number(currentUserId),
+          created_at: new Date()
+        },
+      });
+    }
+    return res.json({ status: true,  data: null , message:'Invoice paid' });
+  }
+
+
+  public async acceptPayment (req: Request, res: Response)  {
+    const formData: any = req.body;
+    console.log(formData)
+    if(formData!==null && formData!==undefined && formData.form.invoiceId!==null && formData.form.invoiceId!==undefined){
+        const invoice = await prisma.mYAALInvoices.findUnique({
+          where: {
+            campusId : Number(formData.form.campusId),
+            id:Number(formData.form.invoiceId)
+          },
+        });
+      
+        if(!invoice){
+          return res.json({ status: false,  data: null , message:'Invoice not found' });
+        }
+        //calculations
+        let cashAmount = 0 ;
+        let walletBalanceAfterDeduction = 0 ;
+        let paidAmountExisting  = 0;
+        
+        if(invoice.paidAmount===null || invoice.paidAmount===undefined){
+          paidAmountExisting = 0;
+        }else{
+          paidAmountExisting = invoice.paidAmount;
+        }
+
+
+        let totalPaid = paidAmountExisting + Number(formData.form.payingAmount);
+        
+        const updateInvoice = await prisma.mYAALInvoices.update({
+          where: {
+            campusId : Number(formData.form.campusId),
+            id:Number(formData.form.invoiceId)
+          },
+          data: {
+            feeStatus: invoice.amount === Number(totalPaid) ? FeeStatus.Paid : Number(totalPaid) < invoice.amount ? FeeStatus.Partial : FeeStatus.Paid ,
+            paidOn: moment(new Date(), 'DD-MM-YYYY').toDate(),
+            paymentType:PaymentType.Cash,
+            paidAmount: Number(totalPaid),
+            updated_by: Number(formData.form.currentUserId),
+            updated_at: new Date()
+          },
+        });
+
+        if(formData.form.familyCredit!==null && formData.form.familyCredit!==undefined && formData.form.familyCredit>0 ){
+          
+          if(Number(formData.form.familyCredit) >= Number(formData.form.payingAmount)){
+            cashAmount = 0;
+            walletBalanceAfterDeduction =  Number(formData.form.familyCredit) - Number(formData.form.payingAmount);
+            
+            await prisma.transactions.create({
+              data: {
+                invoiceNumber: invoice.invoiceNumber,
+                campusId:invoice.campusId,
+                transactionType: TransactionType.Debit,
+                source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
+                userId:invoice.userId,
+                classId:invoice.classId,
+                sectionId:invoice.sectionId,
+                amount:Number(formData.form.payingAmount),
+                paymentType:PaymentType.Wallet,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                familyCreditId:formData.form.familyCreditId
+              },
+            });
+
+            await prisma.transactions.create({
+              data: {
+                invoiceNumber: invoice.invoiceNumber,
+                campusId:invoice.campusId,
+                transactionType: TransactionType.Credit,
+                source: TransactionSource.StudentFeePayment,
+                userId:invoice.userId,
+                classId:invoice.classId,
+                sectionId:invoice.sectionId,
+                amount:Number(formData.form.payingAmount),
+                paymentType:PaymentType.Wallet,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                familyCreditId:formData.form.familyCreditId
+              },
+            });
+
+
+          }else{
+            cashAmount = Number(formData.form.payingAmount) - Number(formData.form.familyCredit);
+            walletBalanceAfterDeduction = 0;
+            
+            await prisma.transactions.create({
+              data: {
+                invoiceNumber: invoice.invoiceNumber,
+                campusId:invoice.campusId,
+                transactionType: TransactionType.Debit,
+                source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
+                userId:invoice.userId,
+                classId:invoice.classId,
+                sectionId:invoice.sectionId,
+                amount:Number(formData.form.familyCredit),
+                paymentType:PaymentType.Wallet,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                familyCreditId:formData.form.familyCreditId
+              },
+            });
+
+            await prisma.transactions.create({
+              data: {
+                invoiceNumber: invoice.invoiceNumber,
+                campusId:invoice.campusId,
+                transactionType: TransactionType.Credit,
+                source: TransactionSource.StudentFeePayment,
+                userId:invoice.userId,
+                classId:invoice.classId,
+                sectionId:invoice.sectionId,
+                amount:Number(formData.form.familyCredit),
+                paymentType:PaymentType.Wallet,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                familyCreditId:formData.form.familyCreditId
+              },
+            });
+            
+            await prisma.transactions.create({
+              data: {
+                invoiceNumber: invoice.invoiceNumber,
+                campusId:invoice.campusId,
+                transactionType: TransactionType.Credit,
+                source: TransactionSource.StudentFeePayment,
+                userId:invoice.userId,
+                classId:invoice.classId,
+                sectionId:invoice.sectionId,
+                amount:Number(cashAmount),
+                paymentType:PaymentType.Cash,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                familyCreditId:formData.form.familyCreditId
+              },
+            });
+          }
+          
+          await prisma.familyCredit.update({
+            where: {
+              campusId : Number(formData.form.campusId),
+              id:Number(formData.form.familyCreditId)
+            },
+            data: {
+              availableCredit:Number(walletBalanceAfterDeduction),
+              updated_by: Number(formData.form.currentUserId),
+              updated_at: new Date()
+            },
+          });
+
+          
+
+          console.log('cashAmount > '+cashAmount+' --- walletBalanceAfterDeduction >'+walletBalanceAfterDeduction);
+
+        
+        }else{
+          await prisma.transactions.create({
+            data: {
+              invoiceNumber: invoice.invoiceNumber,
+              campusId:invoice.campusId,
+              transactionType: TransactionType.Credit,
+              source: TransactionSource.StudentFeePayment,
+              userId:invoice.userId,
+              classId:invoice.classId,
+              sectionId:invoice.sectionId,
+              amount:Number(formData.form.payingAmount),
+              paymentType:PaymentType.Cash,
+              created_by: Number(formData.form.currentUserId),
+              created_at: new Date()
+            },
+          });
+        }
+        
         
         
         return res.json({ status: true,  data: null , message:'Payment recorded' });
@@ -275,6 +605,7 @@ public async getStudentFeePaymentStatus  (req: Request, res: Response) {
           campus : true,
           class: true,
           section:true,
+          Transactions: true,
           StudentFees:{
             where: {
               campusId : Number(formData.campusId),
@@ -284,6 +615,11 @@ public async getStudentFeePaymentStatus  (req: Request, res: Response) {
             },
             include:{
               feePlan: true,
+            }
+          },
+          FamilyCredit:{
+            include: {
+              transactions: true
             }
           },
           MYAALInvoices:{
@@ -336,12 +672,15 @@ public async getStudentFeePaymentStatus  (req: Request, res: Response) {
                   currentStudent.MYAALInvoices[j]['latefee'] = new Date()>invoice.dueDate ? Number(lateFeeLov.shortName) : 0;
                 }
                 let dueAfterPayment = 0;
+                let totalAmountBeforePayments = invoice.amount;
+                
                 if(invoice.feeStatus!==FeeStatus.Paid && invoice.feeStatus!==FeeStatus.Cancelled){
                   dueAfterPayment = invoice.amount  - invoice.paidAmount;
                 }
                 totalDues = totalDues+ dueAfterPayment;
                 invoice.amount = dueAfterPayment;
-
+                invoice['totalAmountBeforePayments'] = totalAmountBeforePayments;
+                
                 if(new Date()>invoice.dueDate){
                   totalLateDues = totalLateDues + Number(lateFeeLov.shortName);
                 }
@@ -367,6 +706,66 @@ public async getStudentFeePaymentStatus  (req: Request, res: Response) {
     }
   }
 
+
+  public async getStudentCreditStatus  (req: Request, res: Response) {
+
+    const formData: any = req.body;
+    try {
+      
+      
+
+      const currentStudent = await prisma.user.findUnique({
+        where: {
+          id: Number(formData.studentId),
+          campusId : Number(formData.campusId),
+          classId:  Number(formData.classId),
+          sectionId: Number(formData.sectionId),
+        },
+        include: {
+          campus : true,
+          class: true,
+          section:true,
+          parent:{
+            include: {
+              parent:{
+                include: {
+                  FamilyCredit: {
+                    include: {
+                      transactions: {
+                        orderBy: {
+                          id: 'desc',
+                        },
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+      });
+
+      if(currentStudent!==null && currentStudent!==undefined 
+            && currentStudent.parent!==null &&  currentStudent.parent!==undefined && currentStudent.parent.length>0){
+              let parent1 = currentStudent.parent[0].parent;
+              if(parent1!==null && parent1!==undefined){
+                return res.json({ status: true,  data: parent1 , message:'Parent info retrieved' });
+              }else{
+                return res.json({ status: false,  data: null , message:'Parent not found' });
+              }
+        
+      
+      }else{
+        return res.json({ status: false,  data: null , message:'Student not found' });
+      }
+
+      
+    } catch (error) {
+      console.error(error);
+  
+      return res.json({ status: false,  data: null , message:'Student not found' });
+    }
+  }
 
   public async generateStudentFeesApiCall  (req: Request, res: Response) {
 
@@ -591,4 +990,182 @@ public async getStudentFeePaymentStatus  (req: Request, res: Response) {
       return res.json({ status: false,  data: null , message:'Some error occured. Try later.' });
     }
   }
+
+  public async acceptFamilyCredit (req: Request, res: Response)  {
+    const formData: any = req.body;
+    console.log(formData)
+    if(formData!==null && formData!==undefined && formData.form.parentId!==null && formData.form.parentId!==undefined){
+        
+      if(formData.form.payingAmount!==null && formData.form.payingAmount!==undefined && formData.form.payingAmount>0){
+          
+          const parent = await prisma.user.findUnique({
+            where: {
+              campusId : Number(formData.form.campusId),
+              id:Number(formData.form.parentId)
+            },
+            include: {
+              FamilyCredit:{
+                include: {
+                  transactions: true
+                }
+              }
+            }
+          });
+        
+          if(!parent){
+            return res.json({ status: false,  data: null , message:'Parent information not found' });
+          }
+          
+          
+          if(parent!==null && parent.FamilyCredit!==null && parent.FamilyCredit!==undefined && parent.FamilyCredit.length>0){
+            
+            let existingCredit = parent.FamilyCredit[0].availableCredit;
+            let newCredit = existingCredit + Number(formData.form.payingAmount);
+
+            await prisma.familyCredit.update({
+              where:{
+                  id:parent.FamilyCredit[0].id,
+                  campusId: parent.FamilyCredit[0].campusId,
+              },
+              data: {
+                availableCredit: newCredit,
+                updated_by: Number(formData.form.currentUserId),
+                updated_at: new Date()
+              },
+            });
+
+            await prisma.transactions.create({
+              data: {
+                campusId:formData.form.campusId,
+                transactionType: TransactionType.Credit,
+                source: TransactionSource.FamilyCreditAdded,
+                userId:formData.form.parentId,
+                amount:Number(formData.form.payingAmount),
+                paymentType:PaymentType.Cash,
+                familyCreditId: parent.FamilyCredit[0].id,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date()
+              },
+            });
+
+          }else{
+            const familyCredit = await prisma.familyCredit.create({
+              data: {
+                userId:formData.form.parentId,
+                campusId:formData.form.campusId,
+                availableCredit: formData.form.payingAmount,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date(),
+                updated_by: Number(formData.form.currentUserId),
+                updated_at: new Date()
+              },
+            });
+            await prisma.transactions.create({
+              data: {
+                campusId:formData.form.campusId,
+                transactionType: TransactionType.Credit,
+                source: TransactionSource.FamilyCreditAdded,
+                userId:formData.form.parentId,
+                amount:Number(formData.form.payingAmount),
+                paymentType:PaymentType.Cash,
+                familyCreditId: familyCredit.id,
+                created_by: Number(formData.form.currentUserId),
+                created_at: new Date()
+              },
+            });
+
+
+          }
+
+          
+          
+
+          return res.json({ status: true,  data: null , message:'Family Credit received' });
+    
+
+
+        }else{
+          return res.json({ status: false,  data: null , message:'Invalid credit amount' });
+        }
+        
+      }else{
+      return res.json({ status: false,  data: null , message:'Parent information not found' });
+    }
+  }
+
+  public async getFamilyFeesDuesByParentId  (req: Request, res: Response) {
+
+    const formData: any = req.body;
+    console.log(formData)
+    let availableStudents = [];
+    let parentObjToPass = {};
+    let totalDues = 0;
+    try {
+      
+      let parents = await prisma.user.findUnique({
+        where: {
+          campusId : Number(formData.campusId),
+          id: Number(formData.parentId),
+          active: 1
+        },
+        include:{
+          children: {
+            include:{
+              children: {
+                include: {
+                  class: true,
+                  section: true,
+                  campus: true,
+                  MYAALInvoices: true
+                }
+              }
+            }
+          }
+        }
+      });
+      if(parents!==null && parents!==undefined && parents.children!==null && parents.children!==undefined && parents.children.length>0){
+        
+        for(let i=0;i<parents.children.length;i++){
+          let child = parents.children[i].children;
+          if(child!==null && child!==undefined){
+            let invoices = child.MYAALInvoices;
+            let invoicesToPass = [];
+            let totalUnPaidAmount = 0;
+            let childObjToPass = {};
+            if(invoices!==null && invoices!==undefined && invoices.length>0){
+
+              for(let j=0;i<invoices.length;j++){
+                if(invoices[j]!==null && invoices[j]!==undefined && (invoices[j].feeStatus=== FeeStatus.Partial || invoices[j].feeStatus=== FeeStatus.Unpaid)){
+                  let unpaidAmt = (Number(invoices[j].amount) - Number(invoices[j].paidAmount));  
+                  console.log('Unpaid Invoice -->'+ invoices[j].invoiceNumber +' For amount '+unpaidAmt);
+                  totalUnPaidAmount = totalUnPaidAmount + unpaidAmt;
+                  invoicesToPass.push(invoices[j]);
+                }
+              }
+            }
+            childObjToPass['totalDues'] =  totalUnPaidAmount;
+            childObjToPass['name'] =  child.displayName;
+            childObjToPass['id'] =  child.id;
+            childObjToPass['class'] =  child.class.className;
+            childObjToPass['section'] =  child.section.sectionName;
+            totalDues = totalDues + totalUnPaidAmount;
+            availableStudents.push(childObjToPass);
+          }
+
+        }
+        parentObjToPass['parentName'] = parents.displayName;
+        parentObjToPass['parentId'] = parents.id;
+        parentObjToPass['child'] = availableStudents;
+        parentObjToPass['totalParentDues'] = totalDues;
+      }
+      console.log(parentObjToPass)
+      return res.json({ status: true,  data: parentObjToPass , message:'Total Family Fee Calculated' });
+      
+    } catch (error) {
+      console.error(error);
+  
+      return res.json({ status: false,  data: null , message:'Some error occured. Try again later' });
+    }
+  }
+
 }

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../../../../../../shared/db-client";
 import { EmailTemplate, MessageType, TimeTable, UserType } from "@prisma/client";
 import jwt from 'jsonwebtoken';
-import {  processTimeTableJsonData } from "../../../../../../shared/helpers/utils/generic.utils";
+import {  getCurrencySymbol, processTimeTableJsonData } from "../../../../../../shared/helpers/utils/generic.utils";
 import moment from "moment";
 import { changeAccountResetStatus, getEmailTemplateByName, sendEmailCommon } from "../../../../../../shared/helpers/notifications/notifications";
 import resetPasswordTemplate from "../../../../../../emails/reset-password";
@@ -1003,6 +1003,9 @@ public async resetPassword  (req: Request, res: Response)  {
 //Fee Plan
 public async getActiveFeePlansForDropdown  (req: Request, res: Response)  {
     const campusId = Number(req.params.campusId);
+    const institute = await prisma.institute.findFirst();
+
+
     let feePlansDropdown = [];
     const feePlans = await prisma.feePlan.findMany({
       where: {
@@ -1015,7 +1018,8 @@ public async getActiveFeePlansForDropdown  (req: Request, res: Response)  {
     });
     if(feePlans!==null && feePlans!==undefined && feePlans.length>0){
       for(let i=0;i<feePlans.length;i++){
-        feePlansDropdown.push({value: feePlans[i].id+'',  label:feePlans[i].name+' (Monthly: ₹'+feePlans[i].monthlyAmt+', Yearly: ₹'+feePlans[i].yearlyAmt+' )'});
+        feePlansDropdown.push({value: feePlans[i].id+'',  
+                    label:feePlans[i].name+' (Monthly: '+getCurrencySymbol('en-US', institute!==null && institute!==undefined && institute.currency !==null && institute.currency !==undefined? institute.currency : 'INR')+feePlans[i].monthlyAmt+', Yearly: '+getCurrencySymbol('en-US', institute!==null && institute!==undefined && institute.currency !==null && institute.currency !==undefined? institute.currency : 'INR')+feePlans[i].yearlyAmt+' )'});
       }
     }
     return res.json({ status: true,  data: feePlansDropdown , message:'' });

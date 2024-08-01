@@ -102,6 +102,8 @@ enum TransactionType {
 enum TransactionSource {
   StudentFeePayment
   StaffSalaryPayment
+  FamilyCreditAdded
+  StudentFeePaymentUsingFamilyCredit
 }
 
 enum FeeStatus {
@@ -114,6 +116,7 @@ enum FeeStatus {
 enum PaymentType {
   Cash
   Online
+  Wallet
   Credit
 }
 
@@ -781,19 +784,6 @@ model StudentFees {
   updated_at DateTime @default(now()) @db.DateTime(6)
 }
 
-model FamilyCredit {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  user            User     @relation(fields: [userId], references: [id])
-  campusId        Int
-  campus          Campus   @relation(fields: [campusId], references: [id])
-  availableCredit Int      @default(0)
-  created_by      Int
-  updated_by      Int
-  created_at      DateTime @default(now()) @db.DateTime(6)
-  updated_at      DateTime @default(now()) @db.DateTime(6)
-}
-
 model MYAALInvoices {
   id            Int         @id @default(autoincrement())
   invoiceNumber String      @unique @db.VarChar(255)
@@ -820,13 +810,27 @@ model MYAALInvoices {
   updated_at    DateTime    @default(now()) @db.DateTime(6)
 }
 
+model FamilyCredit {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id])
+  campusId        Int
+  campus          Campus         @relation(fields: [campusId], references: [id])
+  availableCredit Int            @default(0)
+  transactions    Transactions[]
+  created_by      Int
+  updated_by      Int
+  created_at      DateTime       @default(now()) @db.DateTime(6)
+  updated_at      DateTime       @default(now()) @db.DateTime(6)
+}
+
 model Transactions {
   id              Int               @id @default(autoincrement())
   campusId        Int
   campus          Campus            @relation(fields: [campusId], references: [id])
   transactionType TransactionType   @default(Credit)
   source          TransactionSource @default(StudentFeePayment)
-  invoiceNumber   String            @db.VarChar(255)
+  invoiceNumber   String?           @db.VarChar(255)
   userId          Int?
   user            User?             @relation(fields: [userId], references: [id])
   classId         Int?
@@ -837,4 +841,6 @@ model Transactions {
   paymentType     PaymentType       @default(Cash)
   created_by      Int
   created_at      DateTime          @default(now()) @db.DateTime(6)
+  FamilyCredit    FamilyCredit?     @relation(fields: [familyCreditId], references: [id])
+  familyCreditId  Int?
 }
