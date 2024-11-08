@@ -53,7 +53,8 @@
     "mongoose": "^6.12.0",
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
-    "rimraf": "5.0.8"
+    "rimraf": "5.0.8",
+    "shade-generator": "^1.2.7"
   },
   "devDependencies": {
     "eslint": "9.6.0",

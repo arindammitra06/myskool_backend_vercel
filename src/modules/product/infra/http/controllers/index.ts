@@ -10,6 +10,7 @@ import { SubjectsController } from './academic/subjects.controller';
 import { ParentController } from './parent/parent.controller';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AccountingController } from './accounting/accounting.controller';
+import { SalaryController } from './salary/salary.controller';
 
 const container = createContainer({
   injectionMode: InjectionMode.PROXY,
@@ -27,6 +28,7 @@ container.register({
   subjectController: asClass(SubjectsController).proxy(),
   attendanceController: asClass(AttendanceController).proxy(),
   accountingController: asClass(AccountingController).proxy(),
+  salaryController: asClass(SalaryController).proxy(),
 });
 
 export const masterControllerInstance = container.resolve<MasterController>('masterController');
@@ -40,5 +42,5 @@ export const parentControllerInstance = container.resolve<ParentController>('par
 export const subjectControllerInstance = container.resolve<SubjectsController>('subjectController');
 export const attendanceControllerInstance = container.resolve<AttendanceController>('attendanceController');
 export const accountingControllerInstance = container.resolve<AccountingController>('accountingController');
-
+export const salaryControllerInstance = container.resolve<SalaryController>('salaryController');
 export default container;

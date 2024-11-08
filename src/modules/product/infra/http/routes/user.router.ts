@@ -13,15 +13,20 @@ UserRouter.post("/resetMyPassword", userControllerInstance.resetMyPassword);
 UserRouter.put("/updateUserById/:id", userControllerInstance.updateUser);
 UserRouter.delete("/deleteUserById/:id", userControllerInstance.deleteUser);
 UserRouter.post("/updateUserByFields", userControllerInstance.updateUserByFields);
+UserRouter.post("/updateLoggedInUserByFields", userControllerInstance.updateLoggedInUserByFields);
 UserRouter.post("/updateThemeAndPhoto", userControllerInstance.updateThemeAndPhoto);
+UserRouter.post("/updateUserTheme", userControllerInstance.updateUserTheme);
 UserRouter.get("/getActiveUsersByType/:campusId/:empType/:classId/:sectionId", userControllerInstance.getActiveUsersByType);
 UserRouter.get("/getAllActiveMenus/:campusId", userControllerInstance.getAllActiveMenus);
 UserRouter.get("/getAllMenusAsCreatersJSON/:campusId", userControllerInstance.getAllMenusAsCreatersJSON);
+
+UserRouter.get("/getAllAccesses/:campusId", userControllerInstance.getAllAccesses);
+
 UserRouter.get("/getAllActivePermissions/:campusId", userControllerInstance.getAllActivePermissions);
 UserRouter.post("/addUpdateRoles", userControllerInstance.addUpdateRoles);
-UserRouter.get("/deleteUserRole/:id/:campusId", userControllerInstance.deleteUserRole);
+UserRouter.get("/deleteUserRole/:id/:campusId/:currentUserId", userControllerInstance.deleteUserRole);
 UserRouter.post("/updateUserPermission", userControllerInstance.updateUserPermission);
 UserRouter.get("/deactivateUser/:id/:campusId/:currentUserId", userControllerInstance.deactivateUser);
 
-
+UserRouter.get("/getUserOverviewById/:id/:isNotStaff/:campusId", userControllerInstance.getUserOverviewById);
 export default UserRouter;

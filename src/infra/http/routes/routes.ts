@@ -12,6 +12,7 @@ import SubjectRouter from '../../../modules/product/infra/http/routes/subject.ro
 import ParentRouter from '../../../modules/product/infra/http/routes/parent.route';
 import AttendanceRouter from '../../../modules/product/infra/http/routes/attendance.router';
 import AccountingRouter from '../../../modules/product/infra/http/routes/accounting.router';
+import SalaryRouter from '../../../modules/product/infra/http/routes/salary.router';
 
 
 const Routes = Router();
@@ -27,4 +28,5 @@ Routes.use("/parent", ParentRouter);
 Routes.use("/subjects", SubjectRouter);
 Routes.use("/attendance", AttendanceRouter);
 Routes.use("/accounting", AccountingRouter);
+Routes.use("/salary", SalaryRouter);
 export default Routes;

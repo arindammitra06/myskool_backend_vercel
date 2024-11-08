@@ -16,4 +16,17 @@ AccountingRouter.post("/acceptPayment", accountingControllerInstance.acceptPayme
 AccountingRouter.post("/acceptFamilyCredit", accountingControllerInstance.acceptFamilyCredit);
 
 AccountingRouter.post("/getFamilyFeesDuesByParentId", accountingControllerInstance.getFamilyFeesDuesByParentId);
+
+AccountingRouter.get("/getActiveCategories", accountingControllerInstance.getActiveCategories);
+AccountingRouter.post("/addACategory", accountingControllerInstance.addACategory);
+AccountingRouter.post("/changeCategoryStatus", accountingControllerInstance.changeCategoryStatus);
+
+AccountingRouter.get("/getAllActiveProducts", accountingControllerInstance.getAllActiveProducts);
+AccountingRouter.get("/getAllActiveProductsForSelling", accountingControllerInstance.getAllActiveProductsForSelling);
+AccountingRouter.get("/getLatestSellRecords", accountingControllerInstance.getLatestSellRecords);
+AccountingRouter.post("/addProduct", accountingControllerInstance.addProduct);
+AccountingRouter.delete("/deleteProduct/:campusId/:id/:userId", accountingControllerInstance.deleteProduct);
+AccountingRouter.post("/changeProductStatus", accountingControllerInstance.changeProductStatus);
+AccountingRouter.post("/recordACashPayment", accountingControllerInstance.recordACashPayment);
+
 export default AccountingRouter;

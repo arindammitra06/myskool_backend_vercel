@@ -32,7 +32,20 @@ export const prisma = new PrismaClient().$extends({
           },
         },
       },
-
+      paySlip: {
+        yearAsString: {
+          needs: { year: true },
+          compute(inv) {
+            return inv.year+'';  
+          },
+        },
+        monthAsString: {
+          needs: { month: true },
+          compute(inv) {
+            return monthsString[inv.month]+'';  
+          },
+        },
+      },
       user: {
         active_processed: {
           needs: { active: true },

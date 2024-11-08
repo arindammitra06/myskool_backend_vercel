@@ -6,5 +6,6 @@ AttendanceRouter.post("/fetchAnyMonthAttendance", attendanceControllerInstance.f
 AttendanceRouter.post("/fetchAttendanceForReports", attendanceControllerInstance.fetchAttendanceForReports);
 AttendanceRouter.get("/fetchAttendanceFormStats/:campusId/:userType", attendanceControllerInstance.fetchAttendanceFormStats);
 AttendanceRouter.post("/fetchAttendance", attendanceControllerInstance.fetchAttendance);
+AttendanceRouter.post("/fetchAttendanceAsCalenderView", attendanceControllerInstance.fetchAttendanceAsCalenderView);
 AttendanceRouter.post("/updateAttendance", attendanceControllerInstance.updateAttendance);
 export default AttendanceRouter;

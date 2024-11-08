@@ -1,0 +1,3419 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "description": "MySkoolReports",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "thresholdsStyle": {
+                "mode": "color",
+                "thresholds": []
+              }
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 37,
+        "options": {
+          "alwaysVisibleFilter": false,
+          "autoScroll": false,
+          "collapsedByDefault": false,
+          "customValue": false,
+          "dashboardVariable": "classId",
+          "displayMode": "minimize",
+          "emptyValue": false,
+          "favorites": {
+            "addQuery": {},
+            "datasource": "",
+            "deleteQuery": {},
+            "enabled": false,
+            "getQuery": {},
+            "storage": "browser"
+          },
+          "filter": false,
+          "groupSelection": false,
+          "header": true,
+          "padding": 10,
+          "persistent": false,
+          "saveSelectedGroup": false,
+          "saveSelectedGroupKey": "",
+          "showGroupTotal": false,
+          "showLabel": false,
+          "showName": false,
+          "showResetButton": false,
+          "showTotal": false,
+          "statusSort": false,
+          "sticky": false,
+          "tabsInOrder": true,
+          "variable": "classId"
+        },
+        "pluginVersion": "3.5.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "builder",
+            "format": "table",
+            "rawSql": "",
+            "refId": "A"
+          }
+        ],
+        "title": "Select a class for timetable",
+        "type": "volkovlabs-variable-panel"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 36,
+        "options": {
+          "colorByField": "bgcolor",
+          "endField": "holidayEnd",
+          "experiments": {
+            "enabled": true,
+            "lockToExtents": true,
+            "relativeXAxis": true
+          },
+          "labelFields": [
+            "subject"
+          ],
+          "showYAxis": true,
+          "sortBy": "startTime",
+          "sortOrder": "asc",
+          "startField": "holidayStart",
+          "textField": "name"
+        },
+        "pluginVersion": "0.8.1",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select * from myskool.Holidays",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Panel Title",
+        "type": "marcusolsson-gantt-panel"
+      },
+      {
+        "datasource": {
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Displaying current selected campus",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
+        "id": 20,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "first"
+            ],
+            "fields": "/^campusName$/",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select * from Campus where id = $campusId ",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Selected Campus",
+        "type": "stat"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 18
+        },
+        "id": 34,
+        "panels": [],
+        "title": "User Management",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 70,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 2,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "COUNT(id)"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "continuous-GrYlRd"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 19
+        },
+        "id": 1,
+        "options": {
+          "barRadius": 0.1,
+          "barWidth": 0.58,
+          "colorByField": "COUNT(id)",
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xField": "userType",
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "datasource": {
+              "type": "mysql",
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT COUNT(id),userType  FROM User \nwhere campusId=$campusId \nGROUP BY userType ",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "name": "userType",
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            },
+            "table": "User"
+          }
+        ],
+        "title": "Active Users by Type",
+        "type": "barchart"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 26
+        },
+        "id": 17,
+        "panels": [],
+        "title": "Overview",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Displaying selected session for the organization",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue"
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 0,
+          "y": 27
+        },
+        "id": 14,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "first"
+            ],
+            "fields": "/^session$/",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT sess.session FROM Institute  inst\nleft join Sessions sess ON sess.id = inst.sessionId",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Current Session",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 20
+                },
+                {
+                  "color": "#EF843C",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 4,
+          "y": 27
+        },
+        "id": 3,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT COUNT(*) FROM MYAALInvoices where feeStatus NOT IN ('Paid','Cancelled');",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Unpaid Invoices",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Total unpaid amount from invoices",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 75000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 20
+                },
+                {
+                  "color": "#EF843C",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 8,
+          "y": 27
+        },
+        "id": 4,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT SUM(AMOUNT) FROM MYAALInvoices where feeStatus IN ('Unpaid','Partial');",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Unpaid Amount",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Total income today, constitutes fee payment, pre payment, inventory sell etc",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 75000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "dark-red"
+                },
+                {
+                  "color": "red",
+                  "value": 20
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "green",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 12,
+          "y": 27
+        },
+        "id": 5,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select SUM(AMOUNT) FROM Transactions where transactionType='Credit' and DATE(created_at) = CURDATE()",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Income Today",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Sum of all debits including Salary Payment, Purchases etc",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 75000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 20
+                },
+                {
+                  "color": "#EF843C",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 16,
+          "y": 27
+        },
+        "id": 6,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' and DATE(created_at) = CURDATE()",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Expense Today",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Difference of Income & Expense",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 100000,
+            "min": -100000,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 20,
+          "y": 27
+        },
+        "id": 7,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Credit' and DATE(created_at) = CURDATE())\n  - (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' and DATE(created_at) = CURDATE()) AS Difference",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Profit Today",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Total expense for this month",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 200000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "yellow",
+                  "value": 30
+                },
+                {
+                  "color": "orange",
+                  "value": 60
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 0,
+          "y": 32
+        },
+        "id": 9,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' and MONTH(created_at) = MONTH(CURRENT_DATE())\nAND YEAR(created_at) = YEAR(CURRENT_DATE())",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Expense this month",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Total income for this month",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 200000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "red"
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 4,
+          "y": 32
+        },
+        "id": 8,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select SUM(AMOUNT) FROM Transactions where transactionType='Credit' and MONTH(created_at) = MONTH(CURRENT_DATE())\nAND YEAR(created_at) = YEAR(CURRENT_DATE())",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Income this month",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Difference of Income & Expense for this month",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 100000,
+            "min": -100000,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 8,
+          "y": 32
+        },
+        "id": 10,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Credit' and MONTH(created_at) = MONTH(CURRENT_DATE())\nAND YEAR(created_at) = YEAR(CURRENT_DATE()))\n  - (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' and MONTH(created_at) = MONTH(CURRENT_DATE())\nAND YEAR(created_at) = YEAR(CURRENT_DATE())) AS Difference",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Profit this month",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Total income this year, constitutes fee payment, pre payment, inventory sell etc",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 75000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "dark-red"
+                },
+                {
+                  "color": "red",
+                  "value": 20
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "green",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 12,
+          "y": 32
+        },
+        "id": 11,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select SUM(AMOUNT) FROM Transactions where transactionType='Credit' and YEAR(created_at) = YEAR(CURRENT_DATE())",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Income this Year",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Sum of all debits including Salary Payment, Purchases etc",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 75000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "#EAB839",
+                  "value": 20
+                },
+                {
+                  "color": "#EF843C",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 70
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 16,
+          "y": 32
+        },
+        "id": 12,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' and YEAR(created_at) = YEAR(CURRENT_DATE())",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Expense this Year",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "description": "Difference of Income & Expense for this year",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "fieldMinMax": false,
+            "links": [],
+            "mappings": [],
+            "max": 100000,
+            "min": -100000,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 4,
+          "x": 20,
+          "y": 32
+        },
+        "id": 13,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "sizing": "auto"
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "myskool",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Credit' AND YEAR(created_at) = YEAR(CURRENT_DATE()))\n  - (select IFNULL(SUM(AMOUNT),0) FROM Transactions where transactionType='Debit' AND YEAR(created_at) = YEAR(CURRENT_DATE())) AS Difference",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "name": "COUNT",
+                  "parameters": [
+                    {
+                      "name": "id",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "created_at",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "bbaaa9aa-cdef-4012-b456-7192b6696884",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Paid"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  },
+                  {
+                    "id": "98ba8a99-89ab-4cde-b012-3192b669e502",
+                    "properties": {
+                      "field": "feeStatus",
+                      "fieldSrc": "field",
+                      "operator": "not_equal",
+                      "value": [
+                        "Cancelled"
+                      ],
+                      "valueError": [
+                        null
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "text"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8a9a8bb9-0123-4456-b89a-b192b6144f9b",
+                "type": "group"
+              },
+              "whereString": "(feeStatus <> 'Paid' AND feeStatus <> 'Cancelled')"
+            },
+            "table": "MYAALInvoices"
+          }
+        ],
+        "title": "Profit this Year",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 0,
+          "y": 37
+        },
+        "id": 15,
+        "options": {
+          "baseValueField": "previous_value",
+          "baseValueFontSize": "16px",
+          "interpretAsTrend": true,
+          "percentageNrDecimals": 2,
+          "percentageValueField": "SUM(amount)",
+          "percentageValueFontSize": "80%",
+          "positiveIsGood": true,
+          "referenceText": "",
+          "referenceTextFontSize": "12px",
+          "unit": "currencyUSD"
+        },
+        "pluginVersion": "1.0.8",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select SUM(amount), LAG(SUM(amount)) OVER (ORDER BY MONTH(created_at)) AS previous_value,\nMONTH(created_at) from myskool.Transactions where transactionType='Debit'\nAND YEAR(created_at) = YEAR(CURRENT_DATE()) \nAND campusId=$campusId \ngroup by MONTH(created_at)  \norder by MONTH(created_at)  desc\nLIMIT 1;",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Expense Trend Per Month",
+        "type": "nikosc-percenttrend-panel"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 4,
+          "y": 37
+        },
+        "id": 16,
+        "options": {
+          "baseValueField": "previous_value",
+          "baseValueFontSize": "16px",
+          "interpretAsTrend": true,
+          "percentageNrDecimals": 2,
+          "percentageValueField": "SUM(amount)",
+          "percentageValueFontSize": "80%",
+          "positiveIsGood": true,
+          "referenceText": "",
+          "referenceTextFontSize": "12px",
+          "unit": "currencyUSD"
+        },
+        "pluginVersion": "1.0.8",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select SUM(amount), LAG(SUM(amount)) OVER (ORDER BY MONTH(created_at)) AS previous_value,\nMONTH(created_at) from myskool.Transactions where transactionType='Credit'\nAND YEAR(created_at) = YEAR(CURRENT_DATE()) \nAND campusId=$campusId \ngroup by MONTH(created_at)  \norder by MONTH(created_at)  desc\nLIMIT 1;",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Income Trend",
+        "type": "nikosc-percenttrend-panel"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "applyToRow": false,
+                "type": "color-background",
+                "wrapText": false
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "super-light-yellow"
+                },
+                {
+                  "color": "green",
+                  "value": 1000
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 6,
+          "w": 16,
+          "x": 8,
+          "y": 37
+        },
+        "id": 29,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT invoiceNumber as 'Invoice#',paidOn as 'Paid On',paymentType as 'Paid In',dueDate as 'Due on',amount as 'Amount' FROM MYAALInvoices\nwhere feeStatus IN ('Paid','Partial')\nAND campusId=$campusId \norder by paidOn desc LIMIT 3;",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Recent Paid Fees",
+        "transformations": [
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Paid On",
+              "useTimezone": true
+            }
+          },
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Due on",
+              "useTimezone": true
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "mode": "lcd",
+                "type": "gauge",
+                "valueDisplayMode": "text",
+                "wrapText": false
+              },
+              "inspect": false
+            },
+            "fieldMinMax": false,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "string"
+              },
+              "properties": [
+                {
+                  "id": "custom.hidden",
+                  "value": false
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "auto",
+                    "wrapText": false
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Student"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 118
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Class"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 72
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Section"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 80
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Invoice#"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 194
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 8,
+          "x": 0,
+          "y": 43
+        },
+        "id": 33,
+        "options": {
+          "cellHeight": "md",
+          "footer": {
+            "countRows": false,
+            "enablePagination": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": true
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT amount as 'Amount', usr.displayName as 'Student',cls.className as 'Class', sec.sectionName as 'Section', invoiceNumber as 'Invoice#',\ndueDate as 'Due on'FROM myskool.MYAALInvoices inv\nLEFT JOIN myskool.Class cls ON cls.id=inv.classId\nLEFT JOIN myskool.Section sec ON sec.id=inv.sectionId\nLEFT JOIN myskool.User usr ON usr.id=inv.userId\nwhere inv.feeStatus IN ('Unpaid','Partial')\nAND inv.campusId=$campusId AND inv.dueDate<curdate()\norder by inv.paidOn LIMIT 3;",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Invoices Past Due",
+        "transformations": [
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Paid On",
+              "useTimezone": true
+            }
+          },
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Due on",
+              "useTimezone": true
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "ae1o75rz8r0n4c"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "mode": "lcd",
+                "type": "gauge",
+                "valueDisplayMode": "text",
+                "wrapText": true
+              },
+              "inspect": false
+            },
+            "fieldMinMax": false,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "super-light-red"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "string"
+              },
+              "properties": [
+                {
+                  "id": "custom.hidden",
+                  "value": false
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "auto",
+                    "wrapText": false
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 16,
+          "x": 8,
+          "y": 43
+        },
+        "id": 32,
+        "options": {
+          "cellHeight": "md",
+          "footer": {
+            "countRows": false,
+            "enablePagination": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": true
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "11.3.0",
+        "targets": [
+          {
+            "dataset": "metabase",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT invoiceNumber as 'Invoice#',dueDate as 'Due on',amount as 'Amount' FROM myskool.MYAALInvoices\nwhere feeStatus IN ('Unpaid','Partial')\nAND campusId=$campusId \norder by paidOn LIMIT 3;",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          }
+        ],
+        "title": "Top Unpaid Fees",
+        "transformations": [
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Paid On",
+              "useTimezone": true
+            }
+          },
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "DD-MM-yyyy",
+              "timeField": "Due on",
+              "useTimezone": true
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 50
+        },
+        "id": 27,
+        "panels": [
+          {
+            "datasource": {
+              "type": "mysql",
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 9,
+              "x": 0,
+              "y": 41
+            },
+            "id": 35,
+            "options": {
+              "afterRender": "",
+              "content": "<div style=\"display: flex;justify-content: space-between;text-align:center\">\n  {{#each data}}\n  <div style=\"display:inline-block;text-align:center\">\n    <img src=\"{{Photo}}\"\n        alt=\"Avatar\"\n        style=\"vertical-align: middle;\n        text-align:center;\n        width: 100px;\n        height: 100px;\n        border-radius: 50%;\"/>\n      <p style=\"font-weight:600;text-align:center;\">{{Name}}</p>\n      <div style=\"display: flex;justify-content: middle;text-align:center\">\n        <p style=\"font-weight:400;text-align:center; color:red\">{{Class}}</p>\n        -\n        <p style=\"font-weight:400;text-align:center; color:red\">{{Section}}</p>\n      </div>\n</div>\n{{/each}}\n<div>",
+              "contentPartials": [],
+              "defaultContent": "The query didn't return any results.",
+              "editor": {
+                "format": "auto",
+                "language": "html"
+              },
+              "editors": [
+                "styles"
+              ],
+              "externalStyles": [],
+              "helpers": "",
+              "renderMode": "allRows",
+              "styles": "",
+              "wrap": true
+            },
+            "pluginVersion": "5.4.0",
+            "targets": [
+              {
+                "dataset": "metabase",
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select usr.displayName as 'Name',cls.className as 'Class', sec.sectionName as 'Section',usr.thumbnailUrl as'Photo'\n,usr.admissionDate from myskool.User usr\nLEFT JOIN myskool.Class cls ON cls.id=usr.classId\nLEFT JOIN myskool.Section sec ON sec.id=usr.sectionId\nwhere usr.userType='student' and usr.active=1\norder by usr.admissionDate desc\nLimit 3",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
+            ],
+            "title": "New Admissions",
+            "type": "marcusolsson-dynamictext-panel"
+          }
+        ],
+        "title": "Admissions",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 51
+        },
+        "id": 22,
+        "panels": [
+          {
+            "datasource": {
+              "type": "mysql",
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {
+                  "axisBorderShow": true,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "fillOpacity": 80,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "lineWidth": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    }
+                  ]
+                },
+                "unit": "currencyUSD"
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 7,
+              "w": 8,
+              "x": 0,
+              "y": 86
+            },
+            "id": 23,
+            "options": {
+              "barRadius": 0,
+              "barWidth": 0.3,
+              "fullHighlight": false,
+              "groupWidth": 0.7,
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "orientation": "auto",
+              "showValue": "auto",
+              "stacking": "none",
+              "tooltip": {
+                "mode": "single",
+                "sort": "none"
+              },
+              "xField": "MONTH(created_at)",
+              "xTickLabelRotation": 0,
+              "xTickLabelSpacing": 0
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+              {
+                "dataset": "myskool",
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT MONTHNAME(created_at), SUM(AMOUNT) FROM Transactions where transactionType='Credit' \nAND YEAR(created_at) = YEAR(CURRENT_DATE()) and campusId = $campusId \ngroup by MONTHNAME(created_at);",
+                "refId": "Income",
+                "sql": {
+                  "columns": [],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "name": "created_at",
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50,
+                  "whereJsonTree": {
+                    "children1": [
+                      {
+                        "id": "aba8a99b-cdef-4012-b456-7192b9857188",
+                        "properties": {
+                          "field": "transactionType",
+                          "fieldSrc": "field",
+                          "operator": "equal",
+                          "value": [
+                            "Credit"
+                          ],
+                          "valueError": [
+                            null
+                          ],
+                          "valueSrc": [
+                            "value"
+                          ],
+                          "valueType": [
+                            "text"
+                          ]
+                        },
+                        "type": "rule"
+                      }
+                    ],
+                    "id": "98989b88-0123-4456-b89a-b192b77adedd",
+                    "type": "group"
+                  },
+                  "whereString": "transactionType = 'Credit'"
+                },
+                "table": "Transactions"
+              }
+            ],
+            "title": "Month wise Income Overview",
+            "type": "barchart"
+          },
+          {
+            "datasource": {
+              "type": "mysql",
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {
+                  "axisBorderShow": true,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "fillOpacity": 80,
+                  "gradientMode": "hue",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "lineWidth": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    }
+                  ]
+                },
+                "unit": "currencyUSD"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "SUM(AMOUNT)"
+                  },
+                  "properties": [
+                    {
+                      "id": "color",
+                      "value": {
+                        "fixedColor": "red",
+                        "mode": "continuous-BlYlRd"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 7,
+              "w": 8,
+              "x": 8,
+              "y": 86
+            },
+            "id": 24,
+            "options": {
+              "barRadius": 0,
+              "barWidth": 0.3,
+              "fullHighlight": false,
+              "groupWidth": 0.7,
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "orientation": "auto",
+              "showValue": "auto",
+              "stacking": "none",
+              "tooltip": {
+                "mode": "single",
+                "sort": "none"
+              },
+              "xField": "MONTH(created_at)",
+              "xTickLabelRotation": 0,
+              "xTickLabelSpacing": 0
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+              {
+                "dataset": "myskool",
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT MONTHNAME(created_at), SUM(AMOUNT) FROM myskool.Transactions where transactionType='Debit' \nAND YEAR(created_at) = YEAR(CURRENT_DATE()) and campusId = $campusId \ngroup by MONTHNAME(created_at);",
+                "refId": "Income",
+                "sql": {
+                  "columns": [],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "name": "created_at",
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50,
+                  "whereJsonTree": {
+                    "children1": [
+                      {
+                        "id": "aba8a99b-cdef-4012-b456-7192b9857188",
+                        "properties": {
+                          "field": "transactionType",
+                          "fieldSrc": "field",
+                          "operator": "equal",
+                          "value": [
+                            "Credit"
+                          ],
+                          "valueError": [
+                            null
+                          ],
+                          "valueSrc": [
+                            "value"
+                          ],
+                          "valueType": [
+                            "text"
+                          ]
+                        },
+                        "type": "rule"
+                      }
+                    ],
+                    "id": "98989b88-0123-4456-b89a-b192b77adedd",
+                    "type": "group"
+                  },
+                  "whereString": "transactionType = 'Credit'"
+                },
+                "table": "Transactions"
+              }
+            ],
+            "title": "Month wise Expense Overview",
+            "type": "barchart"
+          },
+          {
+            "datasource": {
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "description": "Hover on the bars to see the Class, Section and Count of pending fees",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "continuous-GrYlRd"
+                },
+                "custom": {
+                  "axisBorderShow": true,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "fillOpacity": 80,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "lineWidth": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "fieldMinMax": false,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "currencyUSD"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "COUNT(*)"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "none"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 7,
+              "w": 8,
+              "x": 16,
+              "y": 86
+            },
+            "id": 25,
+            "options": {
+              "barRadius": 0.05,
+              "barWidth": 0.3,
+              "colorByField": "SUM(AMOUNT)",
+              "fullHighlight": true,
+              "groupWidth": 0.7,
+              "legend": {
+                "calcs": [],
+                "displayMode": "table",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "orientation": "auto",
+              "showValue": "auto",
+              "stacking": "none",
+              "tooltip": {
+                "mode": "single",
+                "sort": "none"
+              },
+              "xField": "MONTHNAME(inv.created_at)",
+              "xTickLabelRotation": 0,
+              "xTickLabelSpacing": 100
+            },
+            "pluginVersion": "11.3.0",
+            "targets": [
+              {
+                "dataset": "metabase",
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT MONTHNAME(inv.created_at),cls.className, sec.sectionName, SUM(AMOUNT), COUNT(*) FROM myskool.MYAALInvoices inv\nLEFT JOIN myskool.Class cls ON cls.id = inv.classId\nLEFT JOIN myskool.Section sec ON sec.id = inv.sectionId\nwhere inv.feeStatus IN ('Unpaid', 'Partial') \nAND YEAR(inv.created_at) = YEAR(CURRENT_DATE()) and inv.campusId = $campusId \ngroup by MONTHNAME(inv.created_at),cls.className, sec.sectionName;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
+            ],
+            "title": "Month wise unpaid fees amount w/t count",
+            "transformations": [
+              {
+                "id": "convertFieldType",
+                "options": {
+                  "conversions": [
+                    {
+                      "destinationType": "string",
+                      "targetField": "COUNT(*)"
+                    }
+                  ],
+                  "fields": {}
+                }
+              }
+            ],
+            "type": "barchart"
+          }
+        ],
+        "title": "Accounting",
+        "type": "row"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 52
+        },
+        "id": 26,
+        "panels": [],
+        "title": "Attendance",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 53
+        },
+        "id": 18,
+        "panels": [
+          {
+            "datasource": {
+              "type": "mysql",
+              "uid": "ae1o75rz8r0n4c"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "yellow"
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 15,
+              "w": 24,
+              "x": 0,
+              "y": 88
+            },
+            "id": 21,
+            "options": {
+              "annotations": false,
+              "annotationsLimit": 100,
+              "annotationsType": "",
+              "colors": "frame",
+              "dateFormat": "inherit",
+              "defaultView": "month",
+              "descriptionField": [
+                "className",
+                "sectionName"
+              ],
+              "displayFields": [
+                "description",
+                "labels",
+                "links",
+                "location",
+                "text",
+                "time"
+              ],
+              "endTimeField": "holidayEnd",
+              "labelFields": [
+                "name",
+                "className",
+                "sectionName"
+              ],
+              "locationField": "holidayStart",
+              "locationLabel": "",
+              "preformattedDescription": false,
+              "quickLinks": false,
+              "scrollToTime": {
+                "hours": 0,
+                "minutes": 0
+              },
+              "showEventTooltip": true,
+              "showMonthTime": true,
+              "textField": "name",
+              "timeField": "holidayStart",
+              "timeRangeType": "default",
+              "views": [
+                "day",
+                "week",
+                "month"
+              ]
+            },
+            "pluginVersion": "3.7.0",
+            "targets": [
+              {
+                "dataset": "myskool",
+                "datasource": {
+                  "type": "mysql",
+                  "uid": "ae1o75rz8r0n4c"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT holi.name, holi.holidayStart, holi.holidayEnd,cls.className,sec.sectionName FROM Holidays holi\nLEFT JOIN Class cls ON cls.id = holi.classId\nLEFT JOIN Section sec ON sec.id = holi.sectionId\nwhere holi.campusId=$campusId ",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                },
+                "table": "TimeTable"
+              }
+            ],
+            "title": "Holidays",
+            "type": "marcusolsson-calendar-panel"
+          }
+        ],
+        "title": "Calendar",
+        "type": "row"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 40,
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": 2,
+          "label": "User ID",
+          "name": "userId",
+          "options": [],
+          "query": "",
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": 2,
+          "label": "Campus ID",
+          "name": "campusId",
+          "options": [],
+          "query": "",
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Admin Home Screen Dashboard",
+    "uid": "fe1nwvuv1rugwa",
+    "version": 146,
+    "weekStart": ""
+  }

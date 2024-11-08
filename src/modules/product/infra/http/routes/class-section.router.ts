@@ -17,6 +17,6 @@ ClassSectionRouter.get("/getStudentSectionById/:id/:campusId", classSectionContr
 ClassSectionRouter.get("/getAllSectionsByClass/:campusId/:classId/:active", classSectionControllerInstance.getAllSectionsByClass);
 ClassSectionRouter.put("/updateStudentSection/:id/:campusId", classSectionControllerInstance.updateStudentSection);
 ClassSectionRouter.post("/addSubjectToSection", classSectionControllerInstance.addSubjectToSection);
-ClassSectionRouter.delete("/deleteStudentSection/:id/:campusId", classSectionControllerInstance.deleteStudentSection);
+ClassSectionRouter.delete("/deleteStudentSection/:id/:campusId/:userId", classSectionControllerInstance.deleteStudentSection);
 
 export default ClassSectionRouter;
