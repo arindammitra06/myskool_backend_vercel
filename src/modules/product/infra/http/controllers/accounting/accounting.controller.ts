@@ -1351,6 +1351,75 @@ export class AccountingController {
     }
   }
 
+  public async getStockOverview(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const yesterday = moment().subtract(1, 'day'); 
+    let overviewDate = {};
+
+    const activeCategories = await prisma.stockCategory.findMany({
+      where:{
+        campusId:campusId,
+        active: 1
+      },
+    });
+    overviewDate["activeCategories"] = activeCategories;
+    console.log('activeCategories '+activeCategories.length);
+    
+    const activeProducts = await prisma.stockProduct.findMany({
+      where:{
+        campusId:campusId,
+        active: 1
+      },
+    });
+    console.log('activeProducts '+activeProducts.length);
+    overviewDate["activeProducts"] = activeProducts;
+    
+    const outOfStockProducts = await prisma.stockProduct.findMany({
+      where:{
+        campusId:campusId,
+        active: 1,
+        stock:0
+      },
+    });
+    console.log('outOfStockProducts '+outOfStockProducts.length);
+    overviewDate["outOfStockProducts"] = outOfStockProducts;
+
+    const lowStockProducts = await prisma.stockProduct.findMany({
+      where:{
+        campusId:campusId,
+        active: 1,
+        stock: {
+          lt: 10
+        }
+      },
+    });
+    console.log('lowStockProducts '+lowStockProducts.length);
+    overviewDate["lowStockProducts"] = lowStockProducts;
+
+
+    const salesToday = await prisma.sellProductDetails.findMany({
+      where:{
+        campusId:campusId,
+        active: 1,
+        created_at: {
+          gt:yesterday.toDate()
+        }
+      },
+    });
+    console.log('salesToday '+salesToday.length);
+    overviewDate["salesToday"] = salesToday;
+
+    const salesThisMonth = await prisma.$queryRaw`SELECT us.*, sp.productName,sp.productCode,sp.purchasePrice  FROM myskool.SellProductDetails us
+    LEFT JOIN StockProduct sp ON sp.id = us.productId
+    where us.campusId=1 and us.active=1
+    and month(us.created_at) = month(curdate())`
+    console.log(salesThisMonth);
+    overviewDate["salesThisMonth"] = salesThisMonth;
+
+
+    return res.json({ status: true, data: overviewDate, message: 'Stock Reports retrieved' });
+  }
+
 
   public async changeCategoryStatus(req: Request, res: Response) {
     const categoryForm: any = req.body;

@@ -27,6 +27,10 @@ export const ROLE_DELETED = " - Role/Access been deleted. Contact Support if you
 export const LEAVE_REQUEST_APP_REJ = "Leave Request with ID {0} has been {1}, Reason: {2}";
 export const LEAVE_REQUESTED = "A new leave request with ID {0} has been submitted with reason: {1}";
 
+//Loan
+export const LOAN_REQUEST_STATUS = "Loan Request with ID {0} has been {1}, Reason: {2}";
+export const LOAN_REQUEST_CREATED = "A new loan request has been created. Please process (approve/reject) the same";
+
 
 //Notifications
 export const UPDATE_MASTER_NOTIFICATION = "Notification with ID {0} has been updated";

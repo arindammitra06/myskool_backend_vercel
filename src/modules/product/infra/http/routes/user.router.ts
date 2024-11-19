@@ -28,5 +28,5 @@ UserRouter.get("/deleteUserRole/:id/:campusId/:currentUserId", userControllerIns
 UserRouter.post("/updateUserPermission", userControllerInstance.updateUserPermission);
 UserRouter.get("/deactivateUser/:id/:campusId/:currentUserId", userControllerInstance.deactivateUser);
 
-UserRouter.get("/getUserOverviewById/:id/:isNotStaff/:campusId", userControllerInstance.getUserOverviewById);
+UserRouter.get("/getUserOverviewById/:id/:usertype/:campusId", userControllerInstance.getUserOverviewById);
 export default UserRouter;

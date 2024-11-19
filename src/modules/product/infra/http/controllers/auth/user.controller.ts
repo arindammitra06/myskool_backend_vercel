@@ -1137,16 +1137,17 @@ console.log(req.params);
   public async getUserOverviewById(req: Request, res: Response) {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
-    const isNotStaff = Boolean(req.params.isNotStaff);
+    const usertype = String(req.params.usertype);
     let daysInMonthNumber = 7;
     let overviewDate = {};
-
+    console.log('usertype >>'+usertype);
     if (id === undefined) {
       return res.json({ status: false, data: null, message: '' });
     }
     let user;
 
-    if(isNotStaff){
+    if(usertype!==null && usertype!==undefined && (usertype==='student' || usertype==='parent')){
+      
       user = await prisma.user.findUnique({
         where: {
           id: id,
@@ -1268,7 +1269,7 @@ console.log(req.params);
             orderBy: {
               id: 'desc',
             },
-            take: 1,
+            take: 5,
           },
           TeachersInSection: {
             include:{

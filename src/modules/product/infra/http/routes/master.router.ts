@@ -51,6 +51,8 @@ MasterRouter.get("/changeStudyMaterialStatus/:campusId/:id/:currentUserId", mast
 
 MasterRouter.post("/fetchHomeworks", masterControllerInstance.fetchHomeworks);
 MasterRouter.post("/addAHomework", masterControllerInstance.addAHomework);
+MasterRouter.post("/fetchEngagements", masterControllerInstance.fetchEngagements);
+
 
 //reset email
 MasterRouter.post("/resetPassword", masterControllerInstance.resetPassword);

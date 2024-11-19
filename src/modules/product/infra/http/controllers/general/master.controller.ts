@@ -1314,7 +1314,27 @@ export class MasterController {
     }
   }
 
+  public async fetchEngagements(req: Request, res: Response) {
+    const engagemntForm: any = req.body;
+    console.log(engagemntForm);
+    
+    const engagements = await prisma.engagements.findMany({
+      where: {
+        campusId: engagemntForm.campusId,
+        classId: engagemntForm.classId,
+        active:1
+      },
+      include: {
+        campus: true,
+        StudentToEngagements:true
+      },
+      orderBy: {
+        updated_at: 'desc'
+      }
+    });
 
+    return res.json({ status: true, data: engagements, message: 'Engagements retrieved' });
+  }
 
   //generic emails
 

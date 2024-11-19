@@ -70,6 +70,13 @@ enum SubjectType {
   Others
 }
 
+enum ApprovalStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+}
+
 enum AbsenseStatus {
   UnMarked
   Present
@@ -264,6 +271,9 @@ model Campus {
   Leaves                      Leaves[]
   LeaveDates                  LeaveDates[]
   StudentRatings              StudentRatings[]
+  LoanRequest                 LoanRequest[]
+  Engagements                 Engagements[]
+  StudentToEngagements        StudentToEngagements[]
 }
 
 model DefaultImageSetting {
@@ -336,6 +346,7 @@ model Class {
   Transactions                Transactions[]
   StudyMaterial               StudyMaterial[]
   StudentRatings              StudentRatings[]
+  Engagements                 Engagements[]
 }
 
 model Section {
@@ -376,67 +387,67 @@ model TeachersInSection {
 }
 
 model User {
-  id                   Int                   @id @default(autoincrement())
-  userType             UserType              @default(student)
-  firstName            String                @db.VarChar(255)
-  middleName           String?               @db.VarChar(255)
-  lastName             String                @db.VarChar(255)
-  displayName          String                @db.VarChar(255)
-  gender               Gender                @default(Male)
-  dateOfBirth          DateTime?             @db.Date
-  placeOfBirth         String?               @db.VarChar(255)
-  photo                String?               @db.VarChar(255)
-  thumbnailUrl         String?               @db.VarChar(255)
-  active               Int                   @default(1) @db.TinyInt
-  leftMenuExpanded     Int                   @default(1) @db.TinyInt
-  resetPasswordFlag    Int                   @default(1) @db.TinyInt
-  resetPasswordCode    String?               @db.VarChar(255)
+  id                   Int                    @id @default(autoincrement())
+  userType             UserType               @default(student)
+  firstName            String                 @db.VarChar(255)
+  middleName           String?                @db.VarChar(255)
+  lastName             String                 @db.VarChar(255)
+  displayName          String                 @db.VarChar(255)
+  gender               Gender                 @default(Male)
+  dateOfBirth          DateTime?              @db.Date
+  placeOfBirth         String?                @db.VarChar(255)
+  photo                String?                @db.VarChar(255)
+  thumbnailUrl         String?                @db.VarChar(255)
+  active               Int                    @default(1) @db.TinyInt
+  leftMenuExpanded     Int                    @default(1) @db.TinyInt
+  resetPasswordFlag    Int                    @default(1) @db.TinyInt
+  resetPasswordCode    String?                @db.VarChar(255)
   campusId             Int
-  campus               Campus?               @relation(fields: [campusId], references: [id])
-  homeAddress          String?               @db.VarChar(500)
-  password             String                @db.VarChar(255)
-  idCardNumber         String                @unique @db.VarChar(255)
+  campus               Campus?                @relation(fields: [campusId], references: [id])
+  homeAddress          String?                @db.VarChar(500)
+  password             String                 @db.VarChar(255)
+  idCardNumber         String                 @unique @db.VarChar(255)
   rollNumber           Int?
   classId              Int?
-  class                Class?                @relation(fields: [classId], references: [id])
+  class                Class?                 @relation(fields: [classId], references: [id])
   sectionId            Int?
-  section              Section?              @relation(fields: [sectionId], references: [id])
+  section              Section?               @relation(fields: [sectionId], references: [id])
   routeId              Int?
-  route                TransportRoutes?      @relation(fields: [routeId], references: [id])
-  previousSchool       String?               @db.VarChar(255)
-  admissionDate        DateTime?             @db.Date
-  email                String?               @db.VarChar(255)
-  mobile               String?               @db.VarChar(255)
-  whatsapp             String?               @db.VarChar(255)
-  empId                String?               @db.VarChar(255)
-  designation          String?               @db.VarChar(255)
-  CNIC                 String?               @db.VarChar(255)
-  qualification        String?               @db.VarChar(255)
-  fatherHusbandName    String?               @db.VarChar(255)
-  joiningDate          DateTime?             @db.Date
-  maritalStatus        MaritalStatus?        @default(NA_MARITALSTATUS)
-  salaryType           SalaryType?           @default(NA_SALTYPE)
-  schoolIdCardNumber   String?               @db.VarChar(255)
-  idProofPhoto         String?               @db.VarChar(255)
-  religion             String?               @db.VarChar(255)
-  citizenship          String?               @db.VarChar(255)
-  parentType           ParentType?           @default(NA_PARENTTYPE)
-  profession           String?               @db.VarChar(255)
-  emergencyContact     String?               @db.VarChar(255)
-  themeName            String                @default("LIGHT") @db.VarChar(255)
-  isUserTheme          Int                   @default(0)
+  route                TransportRoutes?       @relation(fields: [routeId], references: [id])
+  previousSchool       String?                @db.VarChar(255)
+  admissionDate        DateTime?              @db.Date
+  email                String?                @db.VarChar(255)
+  mobile               String?                @db.VarChar(255)
+  whatsapp             String?                @db.VarChar(255)
+  empId                String?                @db.VarChar(255)
+  designation          String?                @db.VarChar(255)
+  CNIC                 String?                @db.VarChar(255)
+  qualification        String?                @db.VarChar(255)
+  fatherHusbandName    String?                @db.VarChar(255)
+  joiningDate          DateTime?              @db.Date
+  maritalStatus        MaritalStatus?         @default(NA_MARITALSTATUS)
+  salaryType           SalaryType?            @default(NA_SALTYPE)
+  schoolIdCardNumber   String?                @db.VarChar(255)
+  idProofPhoto         String?                @db.VarChar(255)
+  religion             String?                @db.VarChar(255)
+  citizenship          String?                @db.VarChar(255)
+  parentType           ParentType?            @default(NA_PARENTTYPE)
+  profession           String?                @db.VarChar(255)
+  emergencyContact     String?                @db.VarChar(255)
+  themeName            String                 @default("LIGHT") @db.VarChar(255)
+  isUserTheme          Int                    @default(0)
   created_by           Int
   updated_by           Int
-  created_at           DateTime              @default(now()) @db.DateTime(6)
-  updated_at           DateTime              @default(now()) @db.DateTime(6)
+  created_at           DateTime               @default(now()) @db.DateTime(6)
+  updated_at           DateTime               @default(now()) @db.DateTime(6)
   userPermissions      UserPermission[]
   AdmissionRecord      AdmissionRecord[]
-  parentsNames         String?               @db.VarChar(255)
-  OnlineClasses        OnlineClasses?        @relation(fields: [onlineClassesId], references: [id])
+  parentsNames         String?                @db.VarChar(255)
+  OnlineClasses        OnlineClasses?         @relation(fields: [onlineClassesId], references: [id])
   onlineClassesId      Int?
   subjects             Subject[]
-  parent               ParentChildRelation[] @relation("parent")
-  children             ParentChildRelation[] @relation("children")
+  parent               ParentChildRelation[]  @relation("parent")
+  children             ParentChildRelation[]  @relation("children")
   Attendance           Attendance[]
   FamilyCredit         FamilyCredit[]
   StudentFees          StudentFees[]
@@ -447,11 +458,13 @@ model User {
   EmployeeLoan         EmployeeLoan[]
   Theme                Theme[]
   TeachersInSection    TeachersInSection[]
-  Notifications        Notifications[]       @relation(name: "UserNotification")
-  NotificationsCreater Notifications[]       @relation(name: "UserCreated")
+  Notifications        Notifications[]        @relation(name: "UserNotification")
+  NotificationsCreater Notifications[]        @relation(name: "UserCreated")
   SellDetails          SellDetails[]
   Leaves               Leaves[]
   StudentRatings       StudentRatings[]
+  LoanRequest          LoanRequest[]
+  StudentToEngagements StudentToEngagements[]
 }
 
 model ParentChildRelation {
@@ -536,6 +549,7 @@ model MenuCategory {
   id                      Int                       @id
   label                   String                    @db.VarChar(255)
   route                   String?                   @db.VarChar(255)
+  description             String?                   @db.VarChar(4000)
   orderKey                Int
   active                  Int                       @default(1) @db.TinyInt
   created_by              Int
@@ -565,6 +579,7 @@ model MenuItems {
   id                  Int                   @id
   label               String                @db.VarChar(255)
   route               String                @db.VarChar(255)
+  description         String?               @db.VarChar(4000)
   orderKey            Int
   active              Int                   @default(1) @db.TinyInt
   created_by          Int
@@ -849,6 +864,39 @@ model DailyHomework {
   updated_at   DateTime  @default(now()) @db.DateTime(6)
 }
 
+model Engagements {
+  id                   Int                    @id @default(autoincrement())
+  campusId             Int
+  campus               Campus                 @relation(fields: [campusId], references: [id])
+  classId              Int?
+  class                Class?                 @relation(fields: [classId], references: [id])
+  active               Int                    @default(1) @db.TinyInt
+  name                 String?                @db.VarChar(255)
+  details              String?                @db.LongText
+  created_by           Int
+  updated_by           Int
+  created_at           DateTime               @default(now()) @db.DateTime(6)
+  updated_at           DateTime               @default(now()) @db.DateTime(6)
+  StudentToEngagements StudentToEngagements[]
+}
+
+model StudentToEngagements {
+  id           Int          @id @default(autoincrement())
+  campusId     Int
+  campus       Campus       @relation(fields: [campusId], references: [id])
+  engagementId Int?
+  engagement   Engagements? @relation(fields: [engagementId], references: [id])
+  userId       Int?
+  user         User?        @relation(fields: [userId], references: [id])
+  completed    Int          @default(0) @db.TinyInt
+  rating       Float        @default(0.0)
+  comments     String?      @db.LongText
+  created_by   Int
+  updated_by   Int
+  created_at   DateTime     @default(now()) @db.DateTime(6)
+  updated_at   DateTime     @default(now()) @db.DateTime(6)
+}
+
 model FeePlan {
   id             Int              @id @default(autoincrement())
   campusId       Int
@@ -958,6 +1006,23 @@ model Transactions {
   employeeLoanId  Int?
   SellDetails     SellDetails?      @relation(fields: [sellDetailsId], references: [id])
   sellDetailsId   Int?
+}
+
+model LoanRequest {
+  id               Int            @id @default(autoincrement())
+  userId           Int
+  user             User           @relation(fields: [userId], references: [id])
+  campusId         Int
+  campus           Campus         @relation(fields: [campusId], references: [id])
+  approvalStatus   ApprovalStatus @default(Pending)
+  totalLoan        Float          @default(0.0)
+  monthlyAmt       Float          @default(0.0)
+  reason           String         @db.VarChar(4000)
+  approvalResponse String?        @db.VarChar(4000)
+  created_by       Int
+  updated_by       Int
+  created_at       DateTime       @default(now()) @db.DateTime(6)
+  updated_at       DateTime       @default(now()) @db.DateTime(6)
 }
 
 model EmployeeLoan {

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Gender, ParentType, UserType } from '@prisma/client';
+import { ApprovalStatus, Gender, ParentType, UserType } from '@prisma/client';
 import generator from 'generate-password-ts';
 import { addANotification, encrypt, generateIdsForParentAndStudent } from "../../../../../../shared/helpers/utils/generic.utils";
 import { prisma } from "../../../../../../shared/db-client";
@@ -222,10 +222,23 @@ export class StaffAccountantController {
         include: {
           campus: true,
           EmployeeSalary: true,
+          LoanRequest:{
+            where:{
+              approvalStatus: ApprovalStatus.Pending
+            }
+          },
           EmployeeLoan: {
             include: {
-              transactions: true,
-              LoanDetails: true
+              transactions: {
+                orderBy:{
+                  created_at: 'desc'
+                }
+              },
+              LoanDetails: {
+                orderBy:{
+                  created_at: 'desc'
+                }
+              }
             }
           },
         },

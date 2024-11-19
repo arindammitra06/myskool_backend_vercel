@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
-import { FeeStatus, FeeType, Gender, ParentType, PaymentType, Prisma, SalaryPlanBreakup, TransactionSource, TransactionType, UserType } from '@prisma/client';
+import { ApprovalStatus, FeeStatus, FeeType, Gender, ParentType, PaymentType, Prisma, SalaryPlanBreakup, TransactionSource, TransactionType, UserType } from '@prisma/client';
 import generator from 'generate-password-ts';
-import { encrypt, generateIdsForParentAndStudent, generateInvoiceNumber, generatePaySlipNumber, getARandomAlphanumericID, getCurrencySymbol } from "../../../../../../shared/helpers/utils/generic.utils";
+import { addANotification, encrypt, generateIdsForParentAndStudent, generateInvoiceNumber, generatePaySlipNumber, getARandomAlphanumericID, getCurrencySymbol } from "../../../../../../shared/helpers/utils/generic.utils";
 import { prisma } from "../../../../../../shared/db-client";
 import moment from "moment";
 import { sendAccountCreationEmail } from "../../../../../../shared/helpers/notifications/notifications";
 import { v4 as uuidv4 } from 'uuid';
+import { buildMessage, LEAVE_REQUEST_APP_REJ, LOAN_REQUEST_CREATED, LOAN_REQUEST_STATUS } from "../../../../../../shared/constants/notification.constants";
 
 
 
@@ -135,7 +136,7 @@ export class SalaryController {
         isYearly: 0,
         campusId: campusId,
         breakupname: 'Additional',
-        amount: 4000.00, 
+        amount: 4000.00,
         type: "YEARLY"
       },
       {
@@ -308,6 +309,268 @@ export class SalaryController {
     }
   }
 
+
+  public async approveRejectLoanRequest(req: Request, res: Response) {
+    const leaveForm: any = req.body;
+    console.log(leaveForm)
+
+    if (leaveForm !== null && leaveForm !== undefined &&
+      leaveForm.id !== null && leaveForm.id !== undefined) {
+
+      const loanRequest = await prisma.loanRequest.update({
+        where: {
+          id: Number(leaveForm.id),
+          campusId: Number(leaveForm.campusId),
+        },
+        data: {
+          approvalStatus: ApprovalStatus.Approved,
+          updated_at: new Date(),
+          updated_by: leaveForm.updatedBy,
+          approvalResponse: leaveForm.rejectApproveReason
+        },
+      });
+
+
+      if (leaveForm.status !== null && leaveForm.status !== undefined && leaveForm.status === 'Approve') {
+        //Approve
+
+
+        if (Boolean(leaveForm.createLoan) && loanRequest !== null && loanRequest !== undefined) {
+          const parent = await prisma.user.findUnique({
+            where: {
+              campusId: Number(leaveForm.campusId),
+              id: Number(loanRequest.userId)
+            },
+            include: {
+              EmployeeLoan: {
+                include: {
+                  LoanDetails: true,
+                  transactions: true
+                }
+              }
+            }
+          });
+
+          if (parent !== null && parent.EmployeeLoan !== null && parent.EmployeeLoan !== undefined && parent.EmployeeLoan.length > 0) {
+
+            let exisitinTotalLoanAmt = parent.EmployeeLoan[0].totalLoan;
+            let newTotalLoan = Number(exisitinTotalLoanAmt) + Number(loanRequest.totalLoan);
+
+            let exisitingRemainingAmt = parent.EmployeeLoan[0].remainingSum;
+            let newRemainingAmt = Number(exisitingRemainingAmt) + Number(loanRequest.totalLoan);
+
+
+            await prisma.employeeLoan.update({
+              where: {
+                id: parent.EmployeeLoan[0].id,
+                campusId: parent.EmployeeLoan[0].campusId,
+              },
+              data: {
+                totalLoan: newTotalLoan,
+                remainingSum: newRemainingAmt,
+                monthlyAmt: loanRequest.monthlyAmt,
+                updated_by: Number(leaveForm.updatedBy),
+                updated_at: new Date()
+              },
+            });
+            let loanDetailsInvoice = getARandomAlphanumericID();
+
+            await prisma.loanDetails.create({
+              data: {
+                LoanId: loanDetailsInvoice,
+                campusId: leaveForm.campusId,
+                employeeLoanId: parent.EmployeeLoan[0].id,
+                amount: loanRequest.totalLoan,
+                status: 1,
+                created_by: Number(leaveForm.updatedBy),
+                created_at: new Date(),
+                updated_by: Number(leaveForm.updatedBy),
+                updated_at: new Date()
+              },
+            });
+
+            await prisma.transactions.create({
+              data: {
+                campusId: leaveForm.campusId,
+                transactionType: TransactionType.Debit,
+                source: TransactionSource.NewLoanToEmployee,
+                userId: loanRequest.userId,
+                amount: Number(loanRequest.totalLoan),
+                paymentType: PaymentType.Cash,
+                employeeLoanId: parent.EmployeeLoan[0].id,
+                invoiceNumber: loanDetailsInvoice,
+                created_by: Number(leaveForm.updatedBy),
+                created_at: new Date()
+              },
+            });
+
+          } else {
+            console.log(parent.EmployeeLoan);
+
+            const newLoan = await prisma.employeeLoan.create({
+              data: {
+                userId: loanRequest.userId,
+                loanAccountId: getARandomAlphanumericID(),
+                campusId: Number(leaveForm.campusId),
+                totalLoan: loanRequest.totalLoan,
+                monthlyAmt: loanRequest.monthlyAmt,
+                remainingSum: loanRequest.totalLoan,
+                status: 1,
+                created_by: Number(leaveForm.updatedBy),
+                created_at: new Date(),
+                updated_by: Number(leaveForm.updatedBy),
+                updated_at: new Date()
+              },
+            });
+            let loadDetailsInvoice = getARandomAlphanumericID();
+            await prisma.loanDetails.create({
+              data: {
+                LoanId: loadDetailsInvoice,
+                campusId: Number(leaveForm.campusId),
+                employeeLoanId: newLoan.id,
+                amount: loanRequest.totalLoan,
+                status: 1,
+                created_by: Number(leaveForm.updatedBy),
+                created_at: new Date(),
+                updated_by: Number(leaveForm.updatedBy),
+                updated_at: new Date()
+              },
+            });
+            await prisma.transactions.create({
+              data: {
+                campusId: Number(leaveForm.campusId),
+                transactionType: TransactionType.Debit,
+                source: TransactionSource.NewLoanToEmployee,
+                userId: loanRequest.userId,
+                amount: loanRequest.totalLoan,
+                paymentType: PaymentType.Cash,
+                employeeLoanId: newLoan.id,
+                invoiceNumber: loadDetailsInvoice,
+                created_by: Number(leaveForm.updatedBy),
+                created_at: new Date()
+              },
+            });
+          }
+
+        }
+      } else {
+        //Reject or cancel
+        await prisma.loanRequest.update({
+          where: {
+            id: Number(leaveForm.id),
+            campusId: Number(leaveForm.campusId),
+          },
+          data: {
+            approvalStatus: leaveForm.status === 'Reject' ? ApprovalStatus.Rejected : leaveForm.status === 'Cancel' ? ApprovalStatus.Cancelled : ApprovalStatus.Pending,
+            updated_at: new Date(),
+            updated_by: leaveForm.updatedBy,
+            approvalResponse: leaveForm.rejectApproveReason
+          },
+        });
+      }
+
+      //Send notification
+      //Add notification
+      addANotification(Number(leaveForm.campusId),
+        Number(loanRequest.created_by),
+        Number(leaveForm.updatedBy),
+        buildMessage(LOAN_REQUEST_STATUS,
+          leaveForm.id + '',
+          leaveForm.status === 'Approve' ? 'approved' : leaveForm.status === 'Reject' ? 'rejected' : 'cancelled',
+          leaveForm.rejectApproveReason));
+
+    } else {
+      return res.json({ status: false, data: null, message: 'Loan Request is not found' });
+    }
+
+
+
+    return res.json({
+      status: true, data: null,
+      message: leaveForm.status === 'Approve' ? 'Loan Approved' : leaveForm.status === 'Reject' ? 'Loan Rejected' : 'Loan Cancelled'
+    });
+  }
+
+
+  public async createLoanRequest(req: Request, res: Response) {
+
+    const formData: any = req.body;
+    
+    try {
+
+      const loanRequests = await prisma.loanRequest.create({
+        data: {
+          campusId: Number(formData.form.campusId),
+          userId: Number(formData.form.employeeId),
+          approvalStatus: ApprovalStatus.Pending,
+          reason: formData.form.reason,
+          totalLoan: Number(formData.form.loanAmount),
+          monthlyAmt: Number(formData.form.monthlyAmount),
+          created_by:Number(formData.form.currentUserId),
+          updated_by:Number(formData.form.currentUserId),
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+      });
+      //Send notification
+      //Add notification
+      const accountants = await prisma.user.findMany({
+        where: {
+          active: 1,
+          userType: UserType.accountant,
+          campusId: Number(formData.form.campusId),
+        },
+      });
+      if (accountants !== null && accountants !== undefined && accountants.length > 0) {
+        accountants.forEach(async (eachUser: any) => {
+          addANotification(Number(formData.form.campusId),
+            Number(eachUser.id),
+            Number(formData.form.currentUserId),
+            buildMessage(LOAN_REQUEST_CREATED));
+        });
+      }
+
+      //Add message for the user
+      addANotification(Number(formData.form.campusId),
+        Number(formData.form.employeeId),
+        Number(formData.form.currentUserId),
+        buildMessage(LOAN_REQUEST_CREATED));
+
+      return res.json({ status: true, data: loanRequests, message: 'Loan Requests created' });
+
+
+    } catch (error) {
+      console.error(error);
+
+      return res.json({ status: false, data: null, message: 'Error occured while creating loan requests' });
+    }
+  }
+
+
+  public async getAllEmployeeLoanRequests(req: Request, res: Response) {
+
+    const formData: any = req.body;
+    try {
+
+      const loanRequests = await prisma.loanRequest.findMany({
+        where: {
+          campusId: Number(formData.campusId),
+        },
+        include: {
+          campus: true,
+          user: true
+        },
+      });
+
+      return res.json({ status: true, data: loanRequests, message: 'Loan Requests retrieved' });
+
+
+    } catch (error) {
+      console.error(error);
+
+      return res.json({ status: false, data: null, message: 'Error occured while fetching loan requests' });
+    }
+  }
 
   public async addUpdateSalaryPlan(req: Request, res: Response) {
     const formData: any = req.body;
@@ -620,7 +883,7 @@ export class SalaryController {
                 //Use this to generate the rest
                 if (formData.salaryType === 'MONTHLY') {
                   let amt = Number(salaryPlanActive.monthlySalary) - Number(salaryPlanActive.monthlydeductables);
-                 
+
                   await prisma.paySlip.create({
                     data: {
                       userId: employeeEach.id,
@@ -630,7 +893,7 @@ export class SalaryController {
                       slipType: FeeType.MONTHLY,
                       year: Number(formData.year),
                       month: Number(formData.month),
-                      amount:  Number(amt),
+                      amount: Number(amt),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
@@ -651,7 +914,7 @@ export class SalaryController {
                       slipType: FeeType.YEARLY,
                       year: Number(formData.year),
                       month: Number(formData.month),
-                      amount:  Number(salaryPlanActive.yearlySalary),
+                      amount: Number(salaryPlanActive.yearlySalary),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
@@ -670,7 +933,7 @@ export class SalaryController {
                       slipType: FeeType.ADHOC,
                       year: Number(formData.year),
                       month: Number(formData.month),
-                      amount:  Number(formData.adhocAmount),
+                      amount: Number(formData.adhocAmount),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,

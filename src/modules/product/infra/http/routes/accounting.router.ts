@@ -20,6 +20,8 @@ AccountingRouter.post("/getFamilyFeesDuesByParentId", accountingControllerInstan
 AccountingRouter.get("/getActiveCategories", accountingControllerInstance.getActiveCategories);
 AccountingRouter.post("/addACategory", accountingControllerInstance.addACategory);
 AccountingRouter.post("/changeCategoryStatus", accountingControllerInstance.changeCategoryStatus);
+AccountingRouter.get("/getStockOverview/:campusId", accountingControllerInstance.getStockOverview);
+
 
 AccountingRouter.get("/getAllActiveProducts", accountingControllerInstance.getAllActiveProducts);
 AccountingRouter.get("/getAllActiveProductsForSelling", accountingControllerInstance.getAllActiveProductsForSelling);

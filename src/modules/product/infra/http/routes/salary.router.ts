@@ -11,6 +11,10 @@ SalaryRouter.get("/getActiveSalaryPlans/:campusId", salaryControllerInstance.get
 SalaryRouter.get("/getSalaryPlanBreakup/:campusId", salaryControllerInstance.getSalaryPlanBreakup);
 SalaryRouter.post("/addUpdateSalaryPlan", salaryControllerInstance.addUpdateSalaryPlan);
 SalaryRouter.post("/changeSalaryPlanStatus", salaryControllerInstance.changeSalaryPlanStatus);
+SalaryRouter.post("/getAllEmployeeLoanRequests", salaryControllerInstance.getAllEmployeeLoanRequests);
+SalaryRouter.post("/approveRejectLoanRequest", salaryControllerInstance.approveRejectLoanRequest);
+SalaryRouter.post("/createLoanRequest", salaryControllerInstance.createLoanRequest);
+
 
 SalaryRouter.post("/getEmployeesForSalaryGeneration", salaryControllerInstance.getEmployeesForSalaryGeneration);
 SalaryRouter.post("/updateEmployeeSalaryPlan", salaryControllerInstance.updateEmployeeSalaryPlan);
