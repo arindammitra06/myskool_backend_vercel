@@ -130,6 +130,7 @@ enum TransactionSource {
   LoanPaymentByEmployee
   SellProductsFromInventory
   BuyProductsIntoInventory
+  OtherExpenses
 }
 
 enum FeeStatus {
@@ -274,6 +275,8 @@ model Campus {
   LoanRequest                 LoanRequest[]
   Engagements                 Engagements[]
   StudentToEngagements        StudentToEngagements[]
+  ExpenseType                 ExpenseType[]
+  Expense                     Expense[]
 }
 
 model DefaultImageSetting {
@@ -1006,6 +1009,8 @@ model Transactions {
   employeeLoanId  Int?
   SellDetails     SellDetails?      @relation(fields: [sellDetailsId], references: [id])
   sellDetailsId   Int?
+  Expense         Expense?          @relation(fields: [expenseId], references: [id])
+  expenseId       Int?
 }
 
 model LoanRequest {
@@ -1327,4 +1332,35 @@ model StudentRatings {
   updated_by       Int
   created_at       DateTime @default(now()) @db.DateTime(6)
   updated_at       DateTime @default(now()) @db.DateTime(6)
+}
+
+model ExpenseType {
+  id          Int       @id @default(autoincrement())
+  campusId    Int
+  campus      Campus    @relation(fields: [campusId], references: [id])
+  active      Int       @default(1) @db.TinyInt
+  typeName    String    @db.VarChar(255)
+  description String    @db.VarChar(255)
+  created_by  Int
+  updated_by  Int
+  created_at  DateTime  @default(now()) @db.DateTime(6)
+  updated_at  DateTime  @default(now()) @db.DateTime(6)
+  Expense     Expense[]
+}
+
+model Expense {
+  id            Int            @id @default(autoincrement())
+  campusId      Int
+  campus        Campus         @relation(fields: [campusId], references: [id])
+  title         String         @db.VarChar(255)
+  description   String         @db.VarChar(255)
+  typeId        Int
+  type          ExpenseType    @relation(fields: [typeId], references: [id])
+  amount        Float          @default(0.0)
+  expenseMethod PaymentType    @default(Cash)
+  created_by    Int
+  updated_by    Int
+  created_at    DateTime       @default(now()) @db.DateTime(6)
+  updated_at    DateTime       @default(now()) @db.DateTime(6)
+  Transactions  Transactions[]
 }

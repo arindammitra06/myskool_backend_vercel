@@ -19,6 +19,16 @@ export const FAMILY_CREDIT_UPDATED = "Wallet updated for parent {0} on {1}";
 export const PRODUCT_CATEGORY_ADDED = "New Product Category - {0} has been added by {1}";
 export const PRODUCT_CATEGORY_UPDATED = "Product Category - {0} has been updated by {1}";
 export const POINT_OF_SALE = "{0} items have been sold by {1} with Invoice # {2}";
+
+export const EXPENSE_TYPE_UPDATED = "Expense Type - {0} has been updated by {1}";
+export const EXPENSE_TYPE_ADDED = "New Expense Type - {0} has been added by {1}";
+
+
+export const EXPENSE_UPDATED = "Expense - {0} has been updated by {1}";
+export const EXPENSE_ADDED = "New Expense - {0} has been added by {1}";
+export const EXPENSE_DELETED = "Expense - {0} has been deleted by {1}";
+
+
 //Role Permission messages
 export const ROLE_UPDATES = " - Role/Access been modified. Contact Support if you didn't make this change or need more details.";
 export const ROLE_DELETED = " - Role/Access been deleted. Contact Support if you didn't make this change or need more details.";

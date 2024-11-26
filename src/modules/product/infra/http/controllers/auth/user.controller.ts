@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../../../../../../shared/db-client";
 import { addANotification, buildTheme, decrypt, encrypt, getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils";
-import { AbsenseStatus, AttendanceType, FeeStatus, UserType } from "@prisma/client";
+import { AbsenseStatus, AttendanceType, FeeStatus, Section, UserType } from "@prisma/client";
 import { systemAppThemes } from "../../../../../../shared/helpers/utils/app-themes";
 import { AttendanceSheetModel } from "../../../../../../shared/models/attendance.model";
 import moment from "moment";
@@ -39,6 +39,28 @@ export class UserController {
       },
     });
     return res.json({ status: true, data: users, message: 'Users retrieved' });
+  }
+
+  public async fetchUserDropdownForSearch(req: Request, res: Response) {
+    const parmaspassed: any = req.body;
+
+    const campusId = Number(parmaspassed.campusId);
+    const partialString = parmaspassed.partialString;
+
+    let items = [];
+    let results = [];
+    if (partialString !== null && partialString !== undefined && partialString.trim() !== '') {
+
+      results = await prisma.$queryRawUnsafe(`SELECT dh.id, dh.thumbnailUrl, dh.displayName FROM myskool.User dh where dh.campusId=${campusId} and UPPER(dh.displayName) like ('%${partialString.toUpperCase()}%') and dh.userType='student' order by dh.displayName LIMIT 5;`);
+
+      if (results !== null && results !== undefined && results.length > 0) {
+        results.forEach(async (element) => {
+          items.push({ label: element.displayName, value: element.id + '', image: element.thumbnailUrl })
+        });
+      }
+    }
+
+    return res.json({ status: true, data: items, message: '' });
   }
 
 
@@ -104,7 +126,7 @@ export class UserController {
         },
         data: input,
       })
-      
+
       return res.json({ data: updatedUser });
     } catch (error) {
       console.error(error);
@@ -144,7 +166,7 @@ export class UserController {
       })
 
       //Add notification
-      addANotification(Number(userData.form.campusId),Number(userData.form.id), Number(userData.updated_by),USER_PHOTO_UPDATED+userData.form.firstName);
+      addANotification(Number(userData.form.campusId), Number(userData.form.id), Number(userData.updated_by), USER_PHOTO_UPDATED + userData.form.firstName);
 
       return res.json({ status: true, data: updatedUser, message: `Updated successfully. Relogin for theme changes.` });
     } catch (error) {
@@ -156,7 +178,7 @@ export class UserController {
 
   public async updateUserTheme(req: Request, res: Response) {
     const userData: any = req.body;
-    
+
     const user = await prisma.user.findUnique({
       where: {
         id: Number(userData.id),
@@ -182,7 +204,7 @@ export class UserController {
       })
 
       //Add notification
-      addANotification(Number(userData.campusId),Number(userData.id), Number(userData.id),USER_THEME_UPDATED+userData.themeName);
+      addANotification(Number(userData.campusId), Number(userData.id), Number(userData.id), USER_THEME_UPDATED + userData.themeName);
 
       return res.json({ status: true, data: null, message: "" });
     } catch (error) {
@@ -219,7 +241,7 @@ export class UserController {
       })
 
       //Add notification
-      addANotification(Number(userData.campusId),Number(userData.form.id), Number(userData.updated_by),USER_DETAILS_UPDATED+userData.fields.displayName);
+      addANotification(Number(userData.campusId), Number(userData.form.id), Number(userData.updated_by), USER_DETAILS_UPDATED + userData.fields.displayName);
 
       return res.json({ status: true, data: updatedUser, message: `Updated successfully. Relogin to see changes.` });
     } catch (error) {
@@ -231,7 +253,7 @@ export class UserController {
   public async updateLoggedInUserByFields(req: Request, res: Response) {
     const userData: any = req.body;
     console.log(userData)
-    
+
     const user = await prisma.user.findUnique({
       where: {
         id: userData.form.id,
@@ -260,7 +282,7 @@ export class UserController {
       return res.status(400).json({ status: true, data: null, message: error.message })
     }
   }
-  
+
   public async getActiveUsersByType(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const empType = String(req.params.empType);
@@ -517,7 +539,7 @@ export class UserController {
             resetPasswordCode: otp
           },
         });
-        
+
     } catch (error) {
       return res.json({ status: false, data: null, message: 'ID Card number or secret code invalid' });
     }
@@ -539,12 +561,12 @@ export class UserController {
         updated_by: user.id,
         updated_at: new Date()
       }
-    }).then((userUpdatedResponse)=>{
+    }).then((userUpdatedResponse) => {
       //Add notification
-      addANotification(Number(userUpdatedResponse.campusId), 
-                        Number(userUpdatedResponse.id), 
-                        Number(user.id),
-                        USER_PASSWORD_RESET+userUpdatedResponse.displayName);
+      addANotification(Number(userUpdatedResponse.campusId),
+        Number(userUpdatedResponse.id),
+        Number(user.id),
+        USER_PASSWORD_RESET + userUpdatedResponse.displayName);
     })
 
 
@@ -653,7 +675,7 @@ export class UserController {
   public async addUpdateRoles(req: Request, res: Response) {
 
     const roleDetails: any = req.body;
-    
+
     try {
 
       if (roleDetails !== null && roleDetails.id !== null && roleDetails.id !== undefined) {
@@ -667,16 +689,16 @@ export class UserController {
             permissionName: roleDetails.permissionName,
             permissionType: roleDetails.permissionType,
             isReadonly: roleDetails.readonly,
-            dashboardUrl:roleDetails.dashboardUrl,
+            dashboardUrl: roleDetails.dashboardUrl,
             updated_by: roleDetails.currentUserId,
             updated_at: new Date()
           }
 
         });
 
-        
+
         //Add Access Permissions
-        if (roleDetails.permissionAccess !== null && roleDetails.permissionAccess !== undefined 
+        if (roleDetails.permissionAccess !== null && roleDetails.permissionAccess !== undefined
           && Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
 
           const deletingAccessPermissions = await prisma.accessPermission.deleteMany({
@@ -744,7 +766,7 @@ export class UserController {
 
           if (menuCategories !== null && menuCategories.length > 0) {
             menuCategories.forEach(async (id) => {
-              console.log('menu CAT ID-- >' + id)
+              
 
               await prisma.menuCategoryPermissions.create({
                 data: {
@@ -762,7 +784,6 @@ export class UserController {
 
           if (menuItems !== null && menuItems.length > 0) {
             menuItems.forEach(async (id) => {
-              console.log('menu ITEM ID-- >' + id)
 
               await prisma.menuItemPermissions.create({
                 data: {
@@ -800,10 +821,10 @@ export class UserController {
           }
 
           //Add notification
-          addANotification(Number(roleDetails.campusId), 
-          Number(roleDetails.currentUserId), 
-          Number(roleDetails.currentUserId),
-          roleDetails.permissionName+ ROLE_UPDATES);
+          addANotification(Number(roleDetails.campusId),
+            Number(roleDetails.currentUserId),
+            Number(roleDetails.currentUserId),
+            roleDetails.permissionName + ROLE_UPDATES);
 
 
           //END
@@ -865,7 +886,7 @@ export class UserController {
             permissionName: roleDetails.permissionName,
             permissionType: roleDetails.permissionType,
             campusId: roleDetails.campusId,
-            dashboardUrl:roleDetails.dashboardUrl,
+            dashboardUrl: roleDetails.dashboardUrl,
             isReadonly: roleDetails.readonly,
             created_by: roleDetails.currentUserId,
             created_at: new Date(),
@@ -942,11 +963,11 @@ export class UserController {
               },);
             });
           }
-        //Add notification
-            addANotification(Number(roleDetails.campusId), 
-            Number(roleDetails.currentUserId), 
+          //Add notification
+          addANotification(Number(roleDetails.campusId),
             Number(roleDetails.currentUserId),
-            roleDetails.permissionName+ ROLE_UPDATES);
+            Number(roleDetails.currentUserId),
+            roleDetails.permissionName + ROLE_UPDATES);
 
         }
         return res.json({ status: true, data: null, message: 'Created new role' });
@@ -966,7 +987,7 @@ export class UserController {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
     const currentUserId = Number(req.params.currentUserId);
-console.log(req.params);
+    console.log(req.params);
     console.log('Delete User Role By ID : ' + id);
     try {
 
@@ -1003,16 +1024,16 @@ console.log(req.params);
           id: Number(id),
           campusId: Number(campusId),
         },
-      }).then((delRole)=>{
-          //Add notification
-          addANotification(Number(campusId), 
-          Number(currentUserId), 
+      }).then((delRole) => {
+        //Add notification
+        addANotification(Number(campusId),
           Number(currentUserId),
-          delRole.permissionName+ ROLE_DELETED);
+          Number(currentUserId),
+          delRole.permissionName + ROLE_DELETED);
       });
 
 
-      
+
 
     } catch (error) {
       console.error(error);
@@ -1076,15 +1097,15 @@ console.log(req.params);
           },
         });
         //Add notification
-        addANotification(Number(userData.form.campusId), 
-        Number(updatedUser.id), 
-        Number(userData.form.currentUserId),
-        USER_PERMISSION_MODIFIED+updatedUser.displayName);
+        addANotification(Number(userData.form.campusId),
+          Number(updatedUser.id),
+          Number(userData.form.currentUserId),
+          USER_PERMISSION_MODIFIED + updatedUser.displayName);
 
-        addANotification(Number(userData.form.campusId), 
-        Number(userData.form.currentUserId), 
-        Number(userData.form.currentUserId),
-        USER_PERMISSION_MODIFIED+updatedUser.displayName);
+        addANotification(Number(userData.form.campusId),
+          Number(userData.form.currentUserId),
+          Number(userData.form.currentUserId),
+          USER_PERMISSION_MODIFIED + updatedUser.displayName);
 
       } else {
         return res.status(404).json({ status: false, data: null, message: `Selected permission not found.` })
@@ -1122,7 +1143,7 @@ console.log(req.params);
       });
 
       //Add notification
-      addANotification(Number(campusId),  Number(id),  Number(req.params.currentUserId),  USER_DELETED+ deactivatedUSer.displayName);
+      addANotification(Number(campusId), Number(id), Number(req.params.currentUserId), USER_DELETED + deactivatedUSer.displayName);
 
 
     } catch (error) {
@@ -1140,14 +1161,14 @@ console.log(req.params);
     const usertype = String(req.params.usertype);
     let daysInMonthNumber = 7;
     let overviewDate = {};
-    console.log('usertype >>'+usertype);
+    console.log('usertype >>' + usertype);
     if (id === undefined) {
       return res.json({ status: false, data: null, message: '' });
     }
     let user;
 
-    if(usertype!==null && usertype!==undefined && (usertype==='student' || usertype==='parent')){
-      
+    if (usertype !== null && usertype !== undefined && (usertype === 'student' || usertype === 'parent')) {
+
       user = await prisma.user.findUnique({
         where: {
           id: id,
@@ -1161,22 +1182,22 @@ console.log(req.params);
           OnlineClasses: true,
           MYAALInvoices: {
             where: {
-              feeStatus:{
+              feeStatus: {
                 in: [FeeStatus.Unpaid, FeeStatus.Partial]
               }
             }
           },
-          Notifications:{
-            where:{
+          Notifications: {
+            where: {
               markedRead: 0
             },
             orderBy: {
               id: 'desc',
             },
             take: 5,
-            include:{
+            include: {
               user: true,
-              createdbyuser:true,
+              createdbyuser: true,
             }
           },
           Transactions: {
@@ -1187,50 +1208,53 @@ console.log(req.params);
           },
         },
       });
-      if(user!==null && user!==undefined){
+      if (user !== null && user !== undefined) {
         //last 5 transactions
-        if(user.Transactions!==null && user.Transactions!==undefined && user.Transactions.length>0){
+        if (user.Transactions !== null && user.Transactions !== undefined && user.Transactions.length > 0) {
           overviewDate["my-last-transaction"] = user.Transactions;
-        }else{
+        } else {
           overviewDate["my-last-transaction"] = [];
         }
         //current loan
-        if(user.FamilyCredit!==null && user.FamilyCredit!==undefined && user.FamilyCredit.length>0){
+        if (user.FamilyCredit !== null && user.FamilyCredit !== undefined && user.FamilyCredit.length > 0) {
           overviewDate["my-wallet"] = user.FamilyCredit[0];
-        }else{
+        } else {
           overviewDate["my-wallet"] = null;
         }
 
         //last 2 MYAALInvoices
-        if(user.MYAALInvoices!==null && user.MYAALInvoices!==undefined && user.MYAALInvoices.length>0){
+        if (user.MYAALInvoices !== null && user.MYAALInvoices !== undefined && user.MYAALInvoices.length > 0) {
           overviewDate["my-fees"] = user.MYAALInvoices;
-        }else{
+        } else {
           overviewDate["my-fees"] = [];
         }
         //current notifications
-        if(user.Notifications!==null && user.Notifications!==undefined && user.Notifications.length>0){
+        if (user.Notifications !== null && user.Notifications !== undefined && user.Notifications.length > 0) {
           overviewDate["my-notifications"] = user.Notifications;
-        }else{
-          overviewDate["my-notifications"]  = [];
+        } else {
+          overviewDate["my-notifications"] = [];
         }
       }
-    }else{
+    } else {
       user = await prisma.user.findUnique({
         where: {
           id: id,
           campusId: campusId
         },
         include: {
-          campus:{
-            include:{
-              Attendance:{
-                include:{
-                  user: true,
+          campus: {
+            include: {
+              Attendance: {
+                include: {
+                  user:  {
+                    where: {
+                      active: 1
+                    }
+                  },
                   class: true,
                   section: true
                 },
-                where:{
-                  attendanceStatus: AbsenseStatus.Present,
+                where: {
                   userType: UserType.student
                 },
                 orderBy: {
@@ -1240,17 +1264,17 @@ console.log(req.params);
               }
             }
           },
-          Notifications:{
-            where:{
+          Notifications: {
+            where: {
               markedRead: 0
             },
             orderBy: {
               id: 'desc',
             },
             take: 5,
-            include:{
+            include: {
               user: true,
-              createdbyuser:true,
+              createdbyuser: true,
             }
           },
           EmployeeSalary: {
@@ -1272,11 +1296,32 @@ console.log(req.params);
             take: 5,
           },
           TeachersInSection: {
-            include:{
-              section:{
+            include: {
+              section: {
                 include: {
                   class: true,
+                  Attendance: {
+                    include: {
+                      user: {
+                        where: {
+                          active: 1
+                        }
+                      },
+                      class: true,
+                      section: true
+                    },
+                    where: {
+                      userType: UserType.student
+                    },
+                    orderBy: {
+                      id: 'desc',
+                    },
+                    take: 10,
+                  },
                   User: {
+                    where: {
+                        active: 1
+                    },
                     include: {
                       _count: true,
                       Attendance: {
@@ -1299,105 +1344,132 @@ console.log(req.params);
           },
         },
       });
-      if(user!==null && user!==undefined){
+      if (user !== null && user !== undefined) {
         //last 5 transactions
-        if(user.Transactions!==null && user.Transactions!==undefined && user.Transactions.length>0){
+        if (user.Transactions !== null && user.Transactions !== undefined && user.Transactions.length > 0) {
           overviewDate["my-last-transaction"] = user.Transactions;
-        }else{
-          overviewDate["my-last-transaction"] =[];
+        } else {
+          overviewDate["my-last-transaction"] = [];
         }
         //last 2 payslips
-        if(user.PaySlip!==null && user.PaySlip!==undefined && user.PaySlip.length>0){
+        if (user.PaySlip !== null && user.PaySlip !== undefined && user.PaySlip.length > 0) {
           overviewDate["my-payslips"] = user.PaySlip;
-        }else{
+        } else {
           overviewDate["my-payslips"] = [];
         }
         //current loan
-        if(user.EmployeeLoan!==null && user.EmployeeLoan!==undefined && user.EmployeeLoan.length>0){
+        if (user.EmployeeLoan !== null && user.EmployeeLoan !== undefined && user.EmployeeLoan.length > 0) {
           overviewDate["my-loan"] = user.EmployeeLoan[0];
-        }else{
+        } else {
           overviewDate["my-loan"] = [];
         }
         //current notifications
-        if(user.Notifications!==null && user.Notifications!==undefined && user.Notifications.length>0){
+        if (user.Notifications !== null && user.Notifications !== undefined && user.Notifications.length > 0) {
           overviewDate["my-notifications"] = user.Notifications;
-        }else{
-          overviewDate["my-notifications"]  = []
+        } else {
+          overviewDate["my-notifications"] = []
         }
 
         //latest activity for overview
-        if(user.campus!==null && user.campus!==undefined && user.campus.Attendance!==null 
-                                      && user.campus.Attendance!==undefined && user.campus.Attendance.length>0){
+        //get latest activity for admin as everything
+        //but for other staff only take subscribed class's info
+        if (usertype === 'admin') {
+          if (user.campus !== null && user.campus !== undefined && user.campus.Attendance !== null
+            && user.campus.Attendance !== undefined && user.campus.Attendance.length > 0) {
+            let attendanceActivity = [];
+            user.campus.Attendance.forEach(async (eachAttendanceActivity) => {
+              if (eachAttendanceActivity !== null && eachAttendanceActivity !== undefined) {
+                let activity = {};
+                activity["message"] = eachAttendanceActivity.user.displayName + ' (' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + ") was checked in";
+                activity["datetime"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                attendanceActivity.push(activity);
+              }
+            })
+            overviewDate["latest-activity"] = attendanceActivity;
+          } else {
+            overviewDate["latest-activity"] = [];
+          }
+        } else {
           let attendanceActivity = [];
-          user.campus.Attendance.forEach(async (eachAttendanceActivity) => {
-            if(eachAttendanceActivity!==null && eachAttendanceActivity!==undefined){
-              let activity = {};
-              activity["message"] =eachAttendanceActivity.user.displayName +' ('+ eachAttendanceActivity.class.className+", "+eachAttendanceActivity.section.sectionName+") was checked in";
-              activity["datetime"] =eachAttendanceActivity.attendanceDateProcessed+" - "+eachAttendanceActivity.recordStartTime;
-              attendanceActivity.push(activity);
-            }
-          })
+          
+          if (user.TeachersInSection !== null && user.TeachersInSection !== undefined && user.TeachersInSection.length > 0) {
+            user.TeachersInSection.forEach(async (eachTSection) => {
+              if (eachTSection !== null && eachTSection !== undefined && eachTSection.section !== null && eachTSection.section !== undefined) {
+                
+                if(eachTSection.section.Attendance!==null && eachTSection.section.Attendance!==undefined && eachTSection.section.Attendance.length>0){
+                  eachTSection.section.Attendance.forEach(async (eachAttendanceActivity) => {
+                    if (eachAttendanceActivity !== null && eachAttendanceActivity !== undefined) {
+                      let activity = {};
+                      activity["message"] = eachAttendanceActivity.user.displayName + ' (' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + ") was checked in";
+                      activity["datetime"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                      attendanceActivity.push(activity);
+                    }
+                });
+               }
+              }
+            });
+          }
           overviewDate["latest-activity"] = attendanceActivity;
-        }else{
-          overviewDate["latest-activity"] = [];
         }
+
+
 
         //Checkin ratio
         let overviewCheckingRaio = [];
-        if(user.TeachersInSection!==null && user.TeachersInSection!==undefined && user.TeachersInSection.length>0){
-          
+        if (user.TeachersInSection !== null && user.TeachersInSection !== undefined && user.TeachersInSection.length > 0) {
+
           user.TeachersInSection.forEach(async (eachTSection) => {
-            
-            if(eachTSection!==null && eachTSection!==undefined  && eachTSection.section!==null && eachTSection.section!==undefined ){
-                let sectionStats = {};
-                sectionStats["class"] =eachTSection.section.class.className; 
-                sectionStats["section"] =eachTSection.section.sectionName;
-                sectionStats["totalUsers"] =eachTSection.section.User.length;
-                let totalPresent =0;
-                let totalAbsent=0;
-                let totalHoliday =0;
-                let totalLeave =0;
 
-                if(eachTSection.section.User!==null && eachTSection.section.User!==undefined && eachTSection.section.User.length>0){
-                  eachTSection.section.User.forEach(async (eachUser) => {
-                      if(eachUser!==null && eachUser!==undefined && eachUser.Attendance!==null 
-                                  &&  eachUser.Attendance!==undefined &&  eachUser.Attendance.length>0){
+            if (eachTSection !== null && eachTSection !== undefined && eachTSection.section !== null && eachTSection.section !== undefined) {
+              let sectionStats = {};
+              sectionStats["class"] = eachTSection.section.class.className;
+              sectionStats["section"] = eachTSection.section.sectionName;
+              sectionStats["totalUsers"] = eachTSection.section.User.length;
+              let totalPresent = 0;
+              let totalAbsent = 0;
+              let totalHoliday = 0;
+              let totalLeave = 0;
 
-                            let todaysAttendance = eachUser.Attendance.find(i => i.attendanceDateProcessed === moment(Date.now()).format("DD-MM-YYYY"));
-                            
-                            
-                            if(todaysAttendance!==null && todaysAttendance!==undefined){
-                              console.log(todaysAttendance);
-                              if(todaysAttendance.attendanceStatus==="Present"){
-                                totalPresent = totalPresent+1;
-                              }else if(todaysAttendance.attendanceStatus==="Absent"){
-                                totalAbsent = totalAbsent+1;
-                              }else if(todaysAttendance.attendanceStatus==="Holiday"){
-                                totalHoliday = totalHoliday+1;
-                              }else if(todaysAttendance.attendanceStatus==="Leave"){
-                                totalLeave = totalLeave+1;
-                              }
-                            }
+              if (eachTSection.section.User !== null && eachTSection.section.User !== undefined && eachTSection.section.User.length > 0) {
+                eachTSection.section.User.forEach(async (eachUser) => {
+                  if (eachUser !== null && eachUser !== undefined && eachUser.Attendance !== null
+                    && eachUser.Attendance !== undefined && eachUser.Attendance.length > 0) {
+
+                    let todaysAttendance = eachUser.Attendance.find(i => i.attendanceDateProcessed === moment(Date.now()).format("DD-MM-YYYY"));
+
+
+                    if (todaysAttendance !== null && todaysAttendance !== undefined) {
+                     
+                      if (todaysAttendance.attendanceStatus === "Present") {
+                        totalPresent = totalPresent + 1;
+                      } else if (todaysAttendance.attendanceStatus === "Absent") {
+                        totalAbsent = totalAbsent + 1;
+                      } else if (todaysAttendance.attendanceStatus === "Holiday") {
+                        totalHoliday = totalHoliday + 1;
+                      } else if (todaysAttendance.attendanceStatus === "Leave") {
+                        totalLeave = totalLeave + 1;
                       }
-                  });
-                }
-                sectionStats["totalPresent"] =totalPresent;
-                sectionStats["totalAbsent"] =totalAbsent;
-                sectionStats["totalHoliday"] =totalHoliday;
-                sectionStats["totalLeave"] =totalLeave;
-
-                overviewCheckingRaio.push(sectionStats);
+                    }
+                  }
+                });
               }
+              sectionStats["totalPresent"] = totalPresent;
+              sectionStats["totalAbsent"] = totalAbsent;
+              sectionStats["totalHoliday"] = totalHoliday;
+              sectionStats["totalLeave"] = totalLeave;
+
+              overviewCheckingRaio.push(sectionStats);
+            }
           });
         }
         overviewDate["sectionwise-checkin-ratio"] = overviewCheckingRaio;
       }
-    
+
     }
-    
+
     let myAttendance = await findAttendanceForStudentInDateRange(user, campusId, daysInMonthNumber);
     overviewDate["my-attendance"] = myAttendance;
-  
+
 
     return res.json({ status: true, data: overviewDate, message: 'Information refreshed' });
   }
@@ -1436,7 +1508,7 @@ export async function findAttendanceForStudentInDateRange(user: any, campusId: n
           studentName: user.displayName,
           studentPhoto: user.photo,
           studentAttendance: result[0].attendanceStatus,
-          dayStatus:result[0].dayStatus,
+          dayStatus: result[0].dayStatus,
           recordType: result[0].attendanceType,
           checkinTime: result[0].recordStartTime,
           checkOutTime: result[0].recordEndTime,
@@ -1451,9 +1523,9 @@ export async function findAttendanceForStudentInDateRange(user: any, campusId: n
           studentName: user.displayName,
           studentPhoto: user.photo,
           studentAttendance: "Not Recorded",
-          dayStatus:"N/A",
+          dayStatus: "N/A",
           recordType: "N/A",
-          checkinTime:"N/A",
+          checkinTime: "N/A",
           checkOutTime: "N/A",
 
         });

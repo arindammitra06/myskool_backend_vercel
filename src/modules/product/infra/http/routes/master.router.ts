@@ -42,6 +42,8 @@ MasterRouter.post("/changeNoticeStatus", masterControllerInstance.changeNoticeSt
 MasterRouter.get("/getActiveCampuses", masterControllerInstance.getActiveCampuses);
 MasterRouter.post("/addACampus", masterControllerInstance.addACampus);
 MasterRouter.post("/changeCampusStatus", masterControllerInstance.changeCampusStatus);
+MasterRouter.post("/changeUserCampus", masterControllerInstance.changeUserCampus);
+
 
 MasterRouter.get("/getStudyMaterials/:campusId", masterControllerInstance.getStudyMaterials);
 MasterRouter.get("/getStudyMaterialsByClassSection/:campusId/:classId/:sectionId", masterControllerInstance.getStudyMaterialsByClassSection);
@@ -52,7 +54,12 @@ MasterRouter.get("/changeStudyMaterialStatus/:campusId/:id/:currentUserId", mast
 MasterRouter.post("/fetchHomeworks", masterControllerInstance.fetchHomeworks);
 MasterRouter.post("/addAHomework", masterControllerInstance.addAHomework);
 MasterRouter.post("/fetchEngagements", masterControllerInstance.fetchEngagements);
-
+MasterRouter.post("/fetchStudentEngagements", masterControllerInstance.fetchStudentEngagements);
+MasterRouter.post("/addEngagement", masterControllerInstance.addEngagement);
+MasterRouter.post("/changeEngagementStatus", masterControllerInstance.changeEngagementStatus);
+MasterRouter.post("/saveStudentEngagement", masterControllerInstance.saveStudentEngagement);
+MasterRouter.post("/updateStudentEngagementRatingAndComments", masterControllerInstance.updateStudentEngagementRatingAndComments);
+MasterRouter.get("/deleteStudentEngagement/:campusId/:id/:currentUserId", masterControllerInstance.deleteStudentEngagement);
 
 //reset email
 MasterRouter.post("/resetPassword", masterControllerInstance.resetPassword);

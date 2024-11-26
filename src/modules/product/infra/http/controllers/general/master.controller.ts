@@ -1215,6 +1215,20 @@ export class MasterController {
             updated_by: campusForm.form.created_by,
             updated_at: new Date()
           },
+        }).then(async (campusAdded)=> {
+          
+          await prisma.expenseType.create({
+            data: {
+              active: 1,
+              campusId: campusAdded.id,
+              typeName: 'STAFF_SALARY_PAYMENT',
+              description:'Expense Type: Salary disbursal considered as an expense',
+              created_by: campusForm.form.created_by,
+              created_at: new Date(),
+              updated_by: campusForm.form.created_by,
+              updated_at: new Date()
+            },
+          })
         });
       }
       return res.json({ data: null, status: true, message: 'Campus added' });
@@ -1224,6 +1238,45 @@ export class MasterController {
     }
   }
 
+
+  public async changeUserCampus(req: Request, res: Response) {
+    const campusForm: any = req.body;
+
+    try {
+      if (campusForm !== null && campusForm !== undefined) {
+        console.log(campusForm);
+
+        await prisma.campus.findUnique({
+          where: {
+            id: campusForm.id,
+          },
+        }).then(async (existingCampus) => {
+
+          if (existingCampus !== null && existingCampus !== undefined) {
+            
+            await prisma.user.update({
+              where: {
+                id: campusForm.currentUserid,
+              },
+              data: {
+                campusId:existingCampus.id,
+                updated_by: Number(campusForm.currentUserid),
+                updated_at: new Date()
+              },
+            });
+
+            return res.json({ data: null, status: true, message: 'Campus updated. Relogin to see changes.' });
+          }
+
+        });
+
+      }
+
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: false, data: null })
+    }
+  }
 
   public async changeCampusStatus(req: Request, res: Response) {
     const campusForm: any = req.body;
@@ -1253,7 +1306,7 @@ export class MasterController {
               },
             });
 
-            return res.json({ data: null, status: true, message: 'Updated. Relogin to see changes.' });
+            return res.json({ data: null, status: true, message: 'Status updated. Relogin to see changes.' });
           }
 
         });
@@ -1262,7 +1315,7 @@ export class MasterController {
 
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res.status(400).json({ message: error.message, status: false, data: null })
     }
   }
 
@@ -1290,8 +1343,11 @@ export class MasterController {
 
   public async addAHomework(req: Request, res: Response) {
     const homeworkform: any = req.body;
+    console.log(homeworkform);
+
     try {
       if (homeworkform !== null && homeworkform !== undefined) {
+        
         await prisma.dailyHomework.create({
           data: {
             active: 1,
@@ -1307,7 +1363,113 @@ export class MasterController {
           },
         });
       }
-      return res.json({ data: null, status: true, message: 'Homework added' });
+      return res.json({ data: null, status: true, message: 'Engagement added' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+  public async deleteStudentEngagement(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const campusId = Number(req.params.campusId);
+    const currentUserId = Number(req.params.currentUserId);
+
+    let deleteEngagement = await prisma.studentToEngagements.delete({
+      where: {
+        id: Number(id),
+        campusId: Number(campusId),
+      },
+    });
+
+
+    return res.json({ status: true, data: deleteEngagement, message: 'Engagement deleted' });
+  }
+
+  public async changeEngagementStatus(req: Request, res: Response) {
+    const formData: any = req.body;
+
+    try {
+      if (formData !== null && formData !== undefined) {
+        console.log(formData);
+
+        await prisma.engagements.findUnique({
+          where: {
+            id: formData.id,
+          },
+        }).then(async (existingData) => {
+
+          if (existingData !== null && existingData !== undefined) {
+            let isActive: number = existingData.active;
+            
+            console.log('Current Engagement Active Status : ' + isActive);
+
+            await prisma.engagements.update({
+              where: {
+                id: formData.id,
+              },
+              data: {
+                active: isActive === 1 ? 0 : 1,
+                updated_by: Number(formData.currentUserid),
+                updated_at: new Date()
+              },
+            });
+
+            return res.json({ data: null, status: true, message: 'Engagement status updated' });
+          }
+
+        });
+
+      }
+
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+
+  public async addEngagement(req: Request, res: Response) {
+    const formData: any = req.body;
+    
+    try {
+      if (formData !== null && formData !== undefined) {
+        
+        if (formData.form.id !== null && formData.form.id !== undefined) {
+          await prisma.engagements.update({
+            where:{
+              id:formData.form.id,
+              campusId:formData.form.campusId
+            },
+            data: {
+              classId: formData.form.classId,
+              name: formData.form.name,
+              details: formData.details,
+              updated_by: formData.form.created_by,
+              updated_at: new Date()
+            },
+          });
+          return res.json({ data: null, status: true, message: 'Engagement updated' });
+        }else{
+            await prisma.engagements.create({
+                data: {
+                  active: 1,
+                  campusId: formData.form.campusId,
+                  classId: formData.form.classId,
+                  name: formData.form.name,
+                  details: formData.details,
+                  created_by: formData.form.created_by,
+                  created_at: new Date(),
+                  updated_by: formData.form.created_by,
+                  updated_at: new Date()
+                },
+              });
+          return res.json({ data: null, status: true, message: 'Engagement added' });
+        }
+      
+      }else{
+        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+      }
     } catch (error) {
       console.error(error);
       return res.status(400).json({ message: error.message, status: true, data: null })
@@ -1322,11 +1484,17 @@ export class MasterController {
       where: {
         campusId: engagemntForm.campusId,
         classId: engagemntForm.classId,
-        active:1
       },
       include: {
         campus: true,
-        StudentToEngagements:true
+        class: true,
+        StudentToEngagements:{
+          
+          where:{
+             completed: 0,
+
+          }
+        }
       },
       orderBy: {
         updated_at: 'desc'
@@ -1334,6 +1502,111 @@ export class MasterController {
     });
 
     return res.json({ status: true, data: engagements, message: 'Engagements retrieved' });
+  }
+
+  public async fetchStudentEngagements(req: Request, res: Response) {
+    const engagemntForm: any = req.body;
+    console.log(engagemntForm);
+    let engagementItems = [];
+    
+    const engagements = await prisma.engagements.findMany({
+      where: {
+        campusId: engagemntForm.campusId,
+        classId: engagemntForm.classId,
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+    if(engagements!==null && engagements!==undefined && engagements.length>0){
+      engagements.forEach(async (element) => {
+        engagementItems.push({ label: element.name, value: element.id })
+      });
+    }
+
+
+    const studentengagements = await prisma.studentToEngagements.findMany({
+      where: {
+        campusId: engagemntForm.campusId,
+        userId: engagemntForm.userId,
+      },
+      include: {
+        campus: true,
+        engagement: {
+          where: {
+            classId :engagemntForm.classId,
+          }
+        }
+      },
+      orderBy: {
+        updated_at: 'desc'
+      }
+    });
+
+    return res.json({ status: true, 
+                      data: {studentEngagements : studentengagements, engagementItems : engagementItems},
+                      message: 'Student Engagements retrieved' });
+  }
+
+  public async saveStudentEngagement(req: Request, res: Response) {
+    const formData: any = req.body;
+    console.log(formData);
+    try {
+      if (formData !== null && formData !== undefined) {
+        
+        await prisma.studentToEngagements.create({
+          data: {
+            campusId: formData.form.campusId,
+            engagementId:formData.form.engagementId,
+            userId: formData.form.studentId,
+            completed: 0,
+            rating:0,
+            comments: null,
+            created_by: formData.form.currentUserId,
+            created_at: new Date(),
+            updated_by: formData.form.currentUserId,
+            updated_at: new Date()
+          },
+        });
+        return res.json({ data: null, status: true, message: 'Engagement is assigned to '+formData.form.displayName });
+
+      }else{
+        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+  public async updateStudentEngagementRatingAndComments(req: Request, res: Response) {
+    const formData: any = req.body;
+    console.log(formData);
+    try {
+      if (formData !== null && formData !== undefined && formData.form.studentEngagementId!==null && formData.form.studentEngagementId!==undefined) {
+        
+        await prisma.studentToEngagements.update({
+          where: {
+            id:formData.form.studentEngagementId,
+            campusId:formData.form.campusId,
+          },
+          data: {
+            completed: formData.form.completed ?1:0,
+            rating:formData.form.rating,
+            comments: formData.form.comments,
+            updated_by: formData.form.currentUserId,
+            updated_at: new Date()
+          },
+        });
+        return res.json({ data: null, status: true, message: 'Engagement is assigned to '+formData.form.displayName });
+
+      }else{
+        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
   }
 
   //generic emails

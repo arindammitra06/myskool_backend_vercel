@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { FeeStatus, FeeType, ParentType, PaymentType, Prisma, SellProductDetails, StudentFees, SubjectType, TransactionSource, TransactionType, User, UserType } from "@prisma/client";
 import moment from "moment";
 import { addANotification, generateInvoiceNumber, generateProductIdNumber, generateSellingInvoiceNumber, getARandomAlphanumericID } from "../../../../../../shared/helpers/utils/generic.utils";
-import { buildMessage, FAMILY_CREDIT_UPDATED, FEE_PLAN_UPDATED, INVOICE_CANCELLED, INVOICE_PAID, POINT_OF_SALE, PRODUCT_CATEGORY_ADDED, PRODUCT_CATEGORY_UPDATED } from "../../../../../../shared/constants/notification.constants";
+import { buildMessage, EXPENSE_ADDED, EXPENSE_TYPE_ADDED, EXPENSE_TYPE_UPDATED, EXPENSE_UPDATED, FAMILY_CREDIT_UPDATED, FEE_PLAN_UPDATED, INVOICE_CANCELLED, INVOICE_PAID, POINT_OF_SALE, PRODUCT_CATEGORY_ADDED, PRODUCT_CATEGORY_UPDATED } from "../../../../../../shared/constants/notification.constants";
 
 
 
@@ -1289,11 +1289,14 @@ export class AccountingController {
   //Stock & Inventory
 
   public async getActiveCategories(req: Request, res: Response) {
-
+    const campusId = Number(req.params.campusId);
     const categories = await prisma.stockCategory.findMany({
       include: {
         campus: true,
         StockProduct: true
+      },
+      where:{
+        campusId: Number(campusId)
       }
     });
     return res.json({ status: true, data: categories, message: 'Categories retrieved' });
@@ -1492,20 +1495,25 @@ export class AccountingController {
   }
 
   public async getAllActiveProducts(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
 
     const products = await prisma.stockProduct.findMany({
       include: {
         campus: true,
         category: true,
+      },
+      where:{
+        campusId: Number(campusId)
       }
     });
     return res.json({ status: true, data: products, message: 'Products retrieved' });
   }
 
   public async getAllActiveProductsForSelling(req: Request, res: Response) {
-
+    const campusId = Number(req.params.campusId);
     const products = await prisma.stockProduct.findMany({
       where:{
+        campusId: Number(campusId),
         active:1,
         stock :{
           gte: 1,
@@ -1520,11 +1528,12 @@ export class AccountingController {
   }
 
   public async getLatestSellRecords(req: Request, res: Response) {
-
+    const campusId = Number(req.params.campusId);
     const sellRecords = await prisma.sellDetails.findMany({
       
       where:{
-        active:1
+        active:1,
+        campusId:Number(campusId)
       },
       orderBy: {
         id: 'desc',
@@ -1792,6 +1801,368 @@ export class AccountingController {
       console.error(error);
       return res.status(400).json({ message: error.message, status: true, data: null })
     }
+  }
+
+  //Expenses
+  public async getActiveExpenseTypes(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    
+    const types = await prisma.expenseType.findMany({
+      include: {
+        campus: true,
+        Expense: true
+      },
+      where:{
+        campusId: Number(campusId)
+      }
+    });
+    return res.json({ status: true, data: types, message: 'Expense Types retrieved' });
+  }
+
+  public async getExpenseTypeModel(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    let model = [];
+    const types = await prisma.expenseType.findMany({
+      where:{
+        campusId: Number(campusId)
+      }
+    });
+    types.forEach(async (eachType: any) => {
+      model.push({ label: eachType.typeName, value: eachType.id })
+    });
+    return res.json({ status: true, data: model, message: '' });
+  }
+
+  public async changeExpenseTypeStatus(req: Request, res: Response) {
+    const typeForm: any = req.body;
+
+    try {
+      if (typeForm !== null && typeForm !== undefined) {
+        
+        await prisma.expenseType.findUnique({
+          where: {
+            id: typeForm.id,
+            campusId: typeForm.campusId,
+          },
+        }).then(async (existingData) => {
+
+          if (existingData !== null && existingData !== undefined) {
+            let isActive: number = existingData.active;
+            console.log('Current Active Status : ' + isActive);
+
+            await prisma.expenseType.update({
+              where: {
+                id: typeForm.id,
+                campusId: typeForm.campusId,
+              },
+              data: {
+                active: isActive === 1 ? 0 : 1,
+                updated_by: Number(typeForm.currentUserid),
+                updated_at: new Date()
+              },
+            }).then(async (category)=>{
+          
+          
+              await prisma.user.findUnique({
+                where: {
+                  active: 1,
+                  id:Number(typeForm.currentUserid),
+                  campusId: Number(typeForm.campusId)
+                },
+              }).then(async (res)=>{
+                const admins = await prisma.user.findMany({
+                  where: {
+                    active: 1,
+                    userType: UserType.admin,
+                    campusId: Number(typeForm.campusId),
+                  },
+                });
+                if(admins!==null && admins!==undefined && admins.length>0){
+                  admins.forEach(async (eachUser: any) => {
+                    addANotification(Number(typeForm.campusId),
+                    Number(eachUser.id),
+                    Number(typeForm.currentUserid),
+                    buildMessage(EXPENSE_TYPE_UPDATED, category.typeName, res.displayName));
+                  });
+                }
+              });
+    
+              
+            });
+
+            return res.json({ data: null, status: true, message: 'Type updated' });
+          }
+
+        });
+
+      }
+
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+  public async addAExpenseType(req: Request, res: Response) {
+    const typeForm: any = req.body;
+    try {
+      if (typeForm !== null && typeForm !== undefined) {
+        await prisma.expenseType.create({
+          data: {
+            active: 1,
+            campusId: typeForm.form.campusId,
+            typeName: typeForm.form.typeName,
+            description: typeForm.form.description,
+            created_by: typeForm.form.created_by,
+            created_at: new Date(),
+            updated_by: typeForm.form.created_by,
+            updated_at: new Date()
+          },
+        }).then(async (res)=>{
+          
+          
+          await prisma.user.findUnique({
+            where: {
+              active: 1,
+              id:Number(typeForm.form.created_by),
+              campusId: Number(typeForm.form.campusId)
+            },
+          }).then(async (res)=>{
+            const admins = await prisma.user.findMany({
+              where: {
+                active: 1,
+                userType: UserType.admin,
+                campusId: Number(typeForm.form.campusId),
+              },
+            });
+            if(admins!==null && admins!==undefined && admins.length>0){
+              admins.forEach(async (eachUser: any) => {
+                addANotification(Number(typeForm.form.campusId),
+                Number(eachUser.id),
+                Number(typeForm.form.created_by),
+                buildMessage(EXPENSE_TYPE_ADDED, typeForm.form.typeName, res.displayName));
+              });
+            }
+          });
+
+          
+        });
+      }
+      return res.json({ data: null, status: true, message: 'Expense Type added' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+  public async getLatestExpenses(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const types = await prisma.expense.findMany({
+      include: {
+        campus: true,
+        type: true
+      },
+      where:{
+        campusId: Number(campusId)
+      },
+      take: 50,
+      orderBy: {
+        created_at:'desc'
+      }
+    });
+    return res.json({ status: true, data: types, message: 'Expenses retrieved' });
+  }
+
+
+  public async addAExpense(req: Request, res: Response) {
+    const typeForm: any = req.body;
+    console.log(typeForm)
+    try {
+      if (typeForm !== null && typeForm !== undefined) {
+        if (typeForm.form.id !== null && typeForm.form.id !== undefined){
+
+          await prisma.expense.update({
+            where:{
+              id:typeForm.form.id,
+              campusId: typeForm.form.campusId,
+            },
+            data: {
+              title: typeForm.form.title,
+              description: typeForm.form.description,
+              typeId:typeForm.form.typeId,
+              amount:typeForm.form.amount,
+              expenseMethod:typeForm.form.expenseMethod,
+              updated_by: typeForm.form.created_by,
+              updated_at: new Date()
+            },
+          }).then(async (res)=>{
+            
+            await prisma.transactions.deleteMany({
+              where:{
+                expenseId: res.id,
+                campusId: Number(typeForm.form.campusId)
+              },
+            }).then(async (resDel)=>{
+              await prisma.transactions.create({
+                data: {
+                  campusId: Number(typeForm.form.campusId),
+                  transactionType: TransactionType.Debit,
+                  source: TransactionSource.OtherExpenses,
+                  amount: Number(typeForm.form.amount),
+                  paymentType: typeForm.form.expenseMethod,
+                  created_by: Number(typeForm.form.created_by),
+                  created_at: new Date(),
+                  expenseId: res.id
+                },
+              });
+            });
+
+
+            await prisma.user.findUnique({
+              where: {
+                active: 1,
+                id:Number(typeForm.form.created_by),
+                campusId: Number(typeForm.form.campusId)
+              },
+            }).then(async (res)=>{
+              const admins = await prisma.user.findMany({
+                where: {
+                  active: 1,
+                  userType: UserType.admin,
+                  campusId: Number(typeForm.form.campusId),
+                },
+              });
+              if(admins!==null && admins!==undefined && admins.length>0){
+                admins.forEach(async (eachUser: any) => {
+                  addANotification(Number(typeForm.form.campusId),
+                  Number(eachUser.id),
+                  Number(typeForm.form.created_by),
+                  buildMessage(EXPENSE_UPDATED, typeForm.form.typeName, res.displayName));
+                });
+              }
+            });
+          });
+
+        }else{
+          await prisma.expense.create({
+            data: {
+              campusId: typeForm.form.campusId,
+              title: typeForm.form.title,
+              description: typeForm.form.description,
+              typeId:typeForm.form.typeId,
+              amount:typeForm.form.amount,
+              expenseMethod:typeForm.form.expenseMethod,
+              created_by: typeForm.form.created_by,
+              created_at: new Date(),
+              updated_by: typeForm.form.created_by,
+              updated_at: new Date()
+            },
+          }).then(async (res)=>{
+            await prisma.transactions.create({
+              data: {
+                campusId: Number(typeForm.form.campusId),
+                transactionType: TransactionType.Debit,
+                source: TransactionSource.OtherExpenses,
+                amount: Number(typeForm.form.amount),
+                paymentType: typeForm.form.expenseMethod,
+                created_by: Number(typeForm.form.created_by),
+                created_at: new Date(),
+                expenseId: res.id
+              },
+            });
+
+            await prisma.user.findUnique({
+              where: {
+                active: 1,
+                id:Number(typeForm.form.created_by),
+                campusId: Number(typeForm.form.campusId)
+              },
+            }).then(async (res)=>{
+              const admins = await prisma.user.findMany({
+                where: {
+                  active: 1,
+                  userType: UserType.admin,
+                  campusId: Number(typeForm.form.campusId),
+                },
+              });
+              if(admins!==null && admins!==undefined && admins.length>0){
+                admins.forEach(async (eachUser: any) => {
+                  addANotification(Number(typeForm.form.campusId),
+                  Number(eachUser.id),
+                  Number(typeForm.form.created_by),
+                  buildMessage(EXPENSE_ADDED, typeForm.form.typeName, res.displayName));
+                });
+              }
+            });
+          });
+        }
+        
+      }
+      return res.json({ data: null, status: true, message: 'Expense added' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+  public async deleteExpense(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const id = Number(req.params.id);
+    const userId = Number(req.params.userId);
+    
+    await prisma.expense.findUnique({
+      where: {
+        id: id,
+        campusId: campusId
+      }
+    }).then(async (expense)=>{
+          
+          //add notification
+          await prisma.user.findUnique({
+            where: {
+              active: 1,
+              id:Number(userId),
+              campusId: Number(campusId)
+            },
+          }).then(async (creator)=>{
+            const admins = await prisma.user.findMany({
+              where: {
+                active: 1,
+                userType: UserType.admin,
+                campusId: Number(campusId),
+              },
+            });
+            if(admins!==null && admins!==undefined && admins.length>0){
+              admins.forEach(async (eachUser: any) => {
+                addANotification(Number(campusId),
+                Number(eachUser.id),
+                Number(creator.id),
+                buildMessage(EXPENSE_TYPE_ADDED, expense.title, creator.displayName));
+              });
+            }
+          });
+          //end add notification
+          
+          //Delete transaction
+         
+          await prisma.transactions.deleteMany({
+            where: {
+              expenseId: id,
+              campusId: campusId
+            }
+          })
+          //End Delete transaction
+
+          //Delete expense 
+          await prisma.expense.delete({
+            where: {
+              id: id,
+              campusId: campusId
+            }
+          })
+          //End of Delete expense 
+        });;
+    return res.json({ status: true, data: null, message: 'Expense deleted successfully' });
   }
 
 }

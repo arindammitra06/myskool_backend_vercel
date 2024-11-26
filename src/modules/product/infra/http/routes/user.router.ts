@@ -6,6 +6,7 @@ const UserRouter = Router();
 
 UserRouter.post("/createUser", userControllerInstance.createUser);
 UserRouter.get("/fetchAllUsers/:campusId", userControllerInstance.fetchAllUsers);
+UserRouter.post("/fetchUserDropdownForSearch", userControllerInstance.fetchUserDropdownForSearch);
 UserRouter.get("/fetchAllActiveInactiveUsers/:campusId/:type/:empType", userControllerInstance.fetchAllActiveInactiveUsers);
 UserRouter.get("/getUserById/:id", userControllerInstance.getUserById);
 UserRouter.post("/loginUserByIdPassword", userControllerInstance.loginUserByIdPassword);
