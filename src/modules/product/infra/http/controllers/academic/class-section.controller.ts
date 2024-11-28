@@ -468,30 +468,84 @@ export class ClassSectionController {
 
   public async getAllSectionsByClass(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
-    const classId = Number(req.params.classId);
+    const classId = req.params.classId;
     const active = Number(req.params.active);
-
-    const section = await prisma.section.findMany({
-      where: {
-        campusId: Number(campusId),
-        classId: Number(classId),
-        active: Number(active)
-      },
-
-      include: {
-        class: true,
-        campus: true,
-        User: true,
-        subjects: true,
-        TeachersInSection: {
-          include:{
-            teacher: true
+    console.log(classId);
+    let section = [];
+    if(classId!==null && classId!==undefined &&  classId!=='0'  &&  classId!=='NaN'){
+      section  =await prisma.section.findMany({
+        where: {
+          campusId: Number(campusId),
+          classId: Number(classId),
+          active: Number(active)
+        },
+  
+        include: {
+          class: true,
+          campus: true,
+          User: true,
+          subjects: true,
+          TeachersInSection: {
+            include:{
+              teacher: true
+            }
           }
-        }
-      },
-    });
+        },
+      });
+    }else{
+      section  =await prisma.section.findMany({
+        where: {
+          campusId: Number(campusId),
+          active: Number(active)
+        },
+  
+        include: {
+          class: true,
+          campus: true,
+          User: true,
+          subjects: true,
+          TeachersInSection: {
+            include:{
+              teacher: true
+            }
+          }
+        },
+      });
+    }
+    
     return res.json({ status: true, data: section, message: 'Sections for Class loaded' });
   }
+
+  public async changeSectionSubscriptionStatus(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const sectionId = Number(req.params.sectionId);
+    const isSubscribed = req.params.isSubscribed;
+    const currentUserid = Number(req.params.currentUserid);
+    console.log(req.params);
+
+    if(isSubscribed==='false'){
+      console.log('Not Subscribed')
+      await prisma.teachersInSection.create({
+        data: {
+          campusId: Number(campusId),
+          teacherId: Number(currentUserid),
+          sectionId: Number(sectionId),
+        }
+      });
+    }else{
+      console.log('Already Subscribed')
+      await prisma.teachersInSection.deleteMany({
+        where: {
+          campusId: Number(campusId),
+          teacherId: Number(currentUserid),
+          sectionId: Number(sectionId),
+        }
+      });
+    }
+    
+    return res.json({ status: true, data: null, message: isSubscribed==='false' ? 'Subscribed to updates'  : 'Unsubscribed from updates'});
+  }
+
 
   public async getAllStudentSections(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);

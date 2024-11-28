@@ -15,6 +15,7 @@ ClassSectionRouter.post("/createStudentSection", classSectionControllerInstance.
 ClassSectionRouter.get("/getAllStudentSections/:campusId", classSectionControllerInstance.getAllStudentSections);
 ClassSectionRouter.get("/getStudentSectionById/:id/:campusId", classSectionControllerInstance.getStudentSectionById);
 ClassSectionRouter.get("/getAllSectionsByClass/:campusId/:classId/:active", classSectionControllerInstance.getAllSectionsByClass);
+ClassSectionRouter.get("/changeSectionSubscriptionStatus/:campusId/:sectionId/:isSubscribed/:currentUserid", classSectionControllerInstance.changeSectionSubscriptionStatus);
 ClassSectionRouter.put("/updateStudentSection/:id/:campusId", classSectionControllerInstance.updateStudentSection);
 ClassSectionRouter.post("/addSubjectToSection", classSectionControllerInstance.addSubjectToSection);
 ClassSectionRouter.delete("/deleteStudentSection/:id/:campusId/:userId", classSectionControllerInstance.deleteStudentSection);

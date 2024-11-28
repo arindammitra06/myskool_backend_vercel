@@ -237,6 +237,29 @@ public async getAllSubjects  (req: Request, res: Response)  {
   return res.json({ status: true,  data: subjects , message:'Subjects fetched' });
 }
 
+public async getAllSubjectsModel  (req: Request, res: Response)  {
+  const campusId = Number(req.params.campusId);
+  let subjectSelectItems = [];
+  const subjects = await prisma.subject.findMany({
+    select:{
+      id: true,
+      subjectName: true,
+      subjectType: true
+    },
+    where: {
+      campusId : Number(campusId),
+      active: 1
+    },
+  });
+  if(subjects!==null && subjects!==undefined && subjects.length>0){
+    subjects.forEach(async (element) => {
+      subjectSelectItems.push({ label: `${element.subjectName} (${element.subjectType})`, value: element.id })
+    });
+  }
+
+  return res.json({ status: true,  data: subjectSelectItems , message:'Subjects fetched' });
+}
+
 public async getAllSubjectsByType  (req: Request, res: Response)  {
   const campusId = Number(req.params.campusId);
   const type = String(req.params.type);
