@@ -30,7 +30,9 @@ export type NotificationModel = {
                 staff_payment_total?:string;
                 staff_present_days?:string;
                 staff_absent_days?:string;
-
+                diary?:string;
+                selected_day?:string;
+                user_name?:string;
                 campusId : number;
                 loggedInUserId: number;
                 studentOrTeacherId?: number;

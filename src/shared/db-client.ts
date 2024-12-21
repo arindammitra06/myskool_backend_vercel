@@ -172,7 +172,7 @@ export const prisma = new PrismaClient().$extends({
       },
       attendance:{
         attendanceDateProcessed: {
-          needs: { attendanceDate: true },
+          needs: { attendanceDate: true},
           compute(data) {
             return moment.utc(data.attendanceDate).format('DD-MM-YYYY');  
           },

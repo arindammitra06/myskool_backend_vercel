@@ -17,6 +17,8 @@ import {
 export class Application {
   public express!: express.Application;
   //public expressOasGenerator = require('express-oas-generator');
+  public swaggerUi = require('swagger-ui-express');
+  public swaggerFile = require('../../swagger_output.json')
 
 
   public constructor() {
@@ -25,6 +27,7 @@ export class Application {
 
   protected initialize(): void {
     this.express = express();
+    
     
    // this.expressOasGenerator.init(this.express, {});
     this.express.use(cors());
@@ -36,6 +39,7 @@ export class Application {
     );
     this.express.use(morgan(MORGAN_FORMAT));
     this.express.use(Routes);
+    this.express.use('/doc', this.swaggerUi.serve, this.swaggerUi.setup(this.swaggerFile))
     //this.connectDatabase();
   }
 }

@@ -30,8 +30,8 @@ export const EXPENSE_DELETED = "Expense - {0} has been deleted by {1}";
 
 
 //Role Permission messages
-export const ROLE_UPDATES = " - Role/Access been modified. Contact Support if you didn't make this change or need more details.";
-export const ROLE_DELETED = " - Role/Access been deleted. Contact Support if you didn't make this change or need more details.";
+export const ROLE_UPDATES = " - Role/Access been modified. Contact Support if you didn't make this change or need more details";
+export const ROLE_DELETED = " - Role/Access been deleted. Contact Support if you didn't make this change or need more details";
 
 //Leaves
 export const LEAVE_REQUEST_APP_REJ = "Leave Request with ID {0} has been {1}, Reason: {2}";
@@ -41,6 +41,17 @@ export const LEAVE_REQUESTED = "A new leave request with ID {0} has been submitt
 export const LOAN_REQUEST_STATUS = "Loan Request with ID {0} has been {1}, Reason: {2}";
 export const LOAN_REQUEST_CREATED = "A new loan request has been created. Please process (approve/reject) the same";
 
+//HOMEWORK
+export const NEW_HOMEWORK_ADDED = "New Assignment/Task has been added on {0}";
+
+//EXAM
+export const EXAM_RESULT_DECLARED = "{0} has acquired {1} in {2}";
+
+
+
+//Attendance
+export const STUDENT_STAFF_ATTENDANCE_MARKED_LATE = "{0} has been marked late on {0}. Please maintain punctuality to avoid inconvenience. Thank You";
+export const STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT = "{0} has been marked absent on {0}. Please maintain punctuality to avoid inconvenience. Thank You";
 
 //Notifications
 export const UPDATE_MASTER_NOTIFICATION = "Notification with ID {0} has been updated";

@@ -20,7 +20,8 @@
     "preversion": "npm run lint",
     "version": "npm run format && git add -A src",
     "postversion": "git push && git push --tags",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "swagger-autogen": "node swagger.js"
   },
   "engines": {
     "node": ">=16"
@@ -37,7 +38,9 @@
     "@types/mongoose": "5.11.96",
     "@types/morgan": "^1.9.3",
     "@types/node": "^16.18.10",
+    "@types/swagger-ui-express": "^4.1.7",
     "@vercel/node": "2.5.6",
+    "and": "^0.0.3",
     "awilix": "^8.0.0",
     "body-parser": "^1.20.0",
     "compression": "^1.7.4",
@@ -54,7 +57,9 @@
     "morgan": "^1.10.0",
     "nest-shared": "^5.0.3",
     "rimraf": "5.0.8",
-    "shade-generator": "^1.2.7"
+    "shade-generator": "^1.2.7",
+    "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "eslint": "9.6.0",

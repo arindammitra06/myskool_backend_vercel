@@ -4,7 +4,9 @@ import moment from "moment";
 import { AbsenseStatus, AttendanceType, DayStatus, EntryStatus, UserType } from "@prisma/client";
 import { Attendance, AttendanceSheetModel, AttendanceShort } from "../../../../../../shared/models/attendance.model";
 import { v4 as uuidv4 } from 'uuid';
-import { getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils";
+import { addANotification, getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils";
+import { sendSms, sendEmail } from "../../../../../../shared/helpers/notifications/notifications";
+import { buildMessage, NEW_HOMEWORK_ADDED, STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT, STUDENT_STAFF_ATTENDANCE_MARKED_LATE } from "../../../../../../shared/constants/notification.constants";
 
 export class AttendanceController {
 
@@ -671,6 +673,178 @@ export class AttendanceController {
                 created_at: new Date(),
               },
             });
+
+
+            if ((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
+                        || element.attendanceStatus === 'Absent') {
+
+              if (element.userType === 'student') {
+
+                await prisma.user.findUnique({
+                  where: {
+                    campusId: Number(element.campusId),
+                    id: Number(element.userId)
+                  },
+                  include: {
+                    campus: true,
+                    class: true,
+                    section: true,
+                    parent: {
+                      include: {
+                        parent: true
+                      }
+                    }
+                  }
+                }).then((studentsInClass) => {
+
+                  if (studentsInClass !== null && studentsInClass !== undefined &&
+                    studentsInClass.parent !== null && studentsInClass.parent !== undefined && studentsInClass.parent.length > 0) {
+
+                    for (let j = 0; j < studentsInClass.parent.length; j++) {
+                      if (studentsInClass.parent[j].parent !== null && studentsInClass.parent[j].parent !== undefined &&
+                        studentsInClass.parent[j].parent.email !== null && studentsInClass.parent[j].parent.email !== undefined
+                      ) {
+                        addANotification(Number(element.campusId),
+                          Number(studentsInClass.parent[j].parent.id),
+                          Number(attendanceForm.currentUserId),
+                          buildMessage((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
+                              ? STUDENT_STAFF_ATTENDANCE_MARKED_LATE : STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT,
+                                studentsInClass.displayName,
+                                moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY')));
+
+
+                        if (element.entryStatus === 'Late' && element.attendanceStatus==='Present') {
+                          sendSms('Late SMS',
+                            {
+                              user_name: studentsInClass.displayName,
+                              selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                              campusId: element.campusId,
+                              loggedInUserId: attendanceForm.currentUserId
+                            },
+                            [
+                              studentsInClass.parent[j].parent.mobile
+                            ]);
+
+                          sendEmail('Late Email',
+                            {
+                              user_name: studentsInClass.displayName,
+                              selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                              campusId: element.campusId,
+                              loggedInUserId: attendanceForm.currentUserId
+                            },
+                            [
+                              {
+                                name: studentsInClass.parent[j].parent.displayName,
+                                email: studentsInClass.parent[j].parent.email
+                              },
+                            ]
+                          );
+                        } else if (element.attendanceStatus === 'Absent') {
+                          sendSms('Absent SMS',
+                            {
+                              user_name: studentsInClass.displayName,
+                              selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                              campusId: element.campusId,
+                              loggedInUserId: attendanceForm.currentUserId
+                            },
+                            [
+                              studentsInClass.parent[j].parent.mobile
+                            ]);
+
+                          sendEmail('Absent Email',
+                            {
+                              user_name: studentsInClass.displayName,
+                              selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                              campusId: element.campusId,
+                              loggedInUserId: attendanceForm.currentUserId
+                            },
+                            [
+                              {
+                                name: studentsInClass.parent[j].parent.displayName,
+                                email: studentsInClass.parent[j].parent.email
+                              },
+                            ]
+                          );
+                        }
+
+                      }
+                    }
+                  }
+                });
+              } else {
+                //Send for staff
+                await prisma.user.findUnique({
+                  where: {
+                    campusId: Number(element.campusId),
+                    id: Number(element.userId)
+                  },
+                }).then((staffFetched) => {
+                  addANotification(Number(element.campusId),
+                    Number(staffFetched.id),
+                    Number(attendanceForm.currentUserId),
+                    buildMessage((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
+                      ? STUDENT_STAFF_ATTENDANCE_MARKED_LATE : STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT,
+                      staffFetched.displayName,
+                      moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY')));
+
+
+                  if (element.entryStatus === 'Late' && element.attendanceStatus==='Present') {
+                    sendSms('Late SMS',
+                      {
+                        user_name: staffFetched.displayName,
+                        selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                        campusId: element.campusId,
+                        loggedInUserId: attendanceForm.currentUserId
+                      },
+                      [
+                        staffFetched.mobile
+                      ]);
+
+                    sendEmail('Late Email',
+                      {
+                        user_name: staffFetched.displayName,
+                        selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                        campusId: element.campusId,
+                        loggedInUserId: attendanceForm.currentUserId
+                      },
+                      [
+                        {
+                          name: staffFetched.displayName,
+                          email: staffFetched.email
+                        },
+                      ]
+                    );
+                  } else if (element.attendanceStatus === 'Absent') {
+                    sendSms('Absent SMS',
+                      {
+                        user_name: staffFetched.displayName,
+                        selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                        campusId: element.campusId,
+                        loggedInUserId: attendanceForm.currentUserId
+                      },
+                      [
+                        staffFetched.mobile
+                      ]);
+
+                    sendEmail('Absent Email',
+                      {
+                        user_name: staffFetched.displayName,
+                        selected_day: moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY'),
+                        campusId: element.campusId,
+                        loggedInUserId: attendanceForm.currentUserId
+                      },
+                      [
+                        {
+                          name: staffFetched.displayName,
+                          email: staffFetched.email
+                        },
+                      ]
+                    );
+                  }
+                });
+              }
+
+            }
           } else {
             //only update few fields
             await prisma.attendance.update({
@@ -720,15 +894,15 @@ export class AttendanceController {
         FROM myskool.Attendance dh
         LEFT JOIN myskool.Campus cam ON cam.id=dh.campusId
         where dh.userId=${Number(userId)} and dh.campusId=${Number(campusId)}
-        and DATE_FORMAT(dh.attendanceDate,'%Y-%m-%d') BETWEEN '${moment(startDate , 'DD-MM-YYYY').format('YYYY-MM-DD')}' AND '${moment(endDate, 'DD-MM-YYYY').format('YYYY-MM-DD')}' `;
+        and DATE_FORMAT(dh.attendanceDate,'%Y-%m-%d') BETWEEN '${moment(startDate, 'DD-MM-YYYY').format('YYYY-MM-DD')}' AND '${moment(endDate, 'DD-MM-YYYY').format('YYYY-MM-DD')}' `;
       console.log(query);
 
       attendance = await prisma.$queryRaw`SELECT DATE_FORMAT(dh.attendanceDate,'%d-%m-%Y') as attendanceDateProcessed, dh.*  
                   FROM myskool.Attendance dh
                   LEFT JOIN myskool.Campus cam ON cam.id=dh.campusId
                   where dh.userId=${Number(userId)} and dh.campusId=${Number(campusId)}
-                  and DATE_FORMAT(dh.attendanceDate,'%Y-%m-%d') BETWEEN ${moment(startDate , 'DD-MM-YYYY').format('YYYY-MM-DD')} AND ${moment(endDate, 'DD-MM-YYYY').format('YYYY-MM-DD')}`
-      
+                  and DATE_FORMAT(dh.attendanceDate,'%Y-%m-%d') BETWEEN ${moment(startDate, 'DD-MM-YYYY').format('YYYY-MM-DD')} AND ${moment(endDate, 'DD-MM-YYYY').format('YYYY-MM-DD')}`
+
 
       var i = 0;
       var startingDate = moment(startDate, 'DD-MM-YYYY').startOf('day');
@@ -748,19 +922,19 @@ export class AttendanceController {
             if (foundObject.attendanceStatus === 'Present') {
               status = 'PR';
               color = '#00712D';
-              description= 'Marked present for '+ m.format('DD-MM-YYYY');
+              description = 'Marked present for ' + m.format('DD-MM-YYYY');
             } else if (foundObject.attendanceStatus === 'Absent') {
               status = 'AB';
               color = '#FF0000';
-              description= 'Marked absent for '+ m.format('DD-MM-YYYY')
+              description = 'Marked absent for ' + m.format('DD-MM-YYYY')
             } else if (foundObject.attendanceStatus === 'Holiday') {
               status = 'HL';
               color = '#5AB2FF';
-              description= 'Holiday on '+ m.format('DD-MM-YYYY')
+              description = 'Holiday on ' + m.format('DD-MM-YYYY')
             } else if (foundObject.attendanceStatus === 'Leave') {
               status = 'LV';
               color = '#FFA62F';
-              description= 'Marked leave for '+ m.format('DD-MM-YYYY')
+              description = 'Marked leave for ' + m.format('DD-MM-YYYY')
             }
             data.push({
               title: status,

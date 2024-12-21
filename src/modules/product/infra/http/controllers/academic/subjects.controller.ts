@@ -150,6 +150,65 @@ public async createOrUpdateSubject  (req: Request, res: Response) {
     }
   }
 
+
+  public async bulkLoadSubjects(req: Request, res: Response) {
+    const formContent: any = req.body;
+    
+    try {
+      if (formContent !== null && formContent !== undefined) {
+        if (formContent.data!== null && formContent.data !== undefined && formContent.data.length>0) {
+          
+          for(let i= 0;i <formContent.data.length; i++){
+           
+            let subjectFound = await prisma.subject.findFirst({
+              where:{
+                subjectCode:formContent.data[i]['Subject Code']
+              },
+              take: 1,
+            });
+            //Subject Exists just Update name and type
+            if(subjectFound!==null && subjectFound!==undefined &&  subjectFound.id!==null && subjectFound.id!==undefined){
+              
+              await prisma.subject.update({
+                where: {
+                  id: Number(subjectFound.id),
+                  campusId: Number(subjectFound.campusId),
+                },
+                data: {
+                  subjectName: formContent.data[i]['Subject Name'],
+                  subjectType: formContent.data[i]['Subject Type'],
+                  active: 1,
+                  updated_by: formContent.currentUserId,
+                  updated_at: new Date()
+                },
+              });
+            }else{
+              await prisma.subject.create({
+                data: {
+                  active: 1,
+                  campusId: Number(formContent.data[i]['Campus Id']),
+                  subjectCode: formContent.data[i]['Subject Code'],
+                  subjectName: formContent.data[i]['Subject Name'],
+                  subjectType: formContent.data[i]['Subject Type'],
+                  created_by: formContent.currentUserId,
+                  created_at: new Date(),
+                  updated_by: formContent.currentUserId,
+                  updated_at: new Date()
+                },
+              });
+            }
+          }
+        } else {
+          return res.json({ data: null, status: false, message: 'No data to upload' });
+        }
+
+      }
+      return res.json({ data: null, status: true, message: 'Bulk Subjects data loaded' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
   
 
 public async deleteSubject (req: Request, res: Response)  {
@@ -254,6 +313,42 @@ public async getAllSubjectsModel  (req: Request, res: Response)  {
   if(subjects!==null && subjects!==undefined && subjects.length>0){
     subjects.forEach(async (element) => {
       subjectSelectItems.push({ label: `${element.subjectName} (${element.subjectType})`, value: element.id })
+    });
+  }
+
+  return res.json({ status: true,  data: subjectSelectItems , message:'Subjects fetched' });
+}
+
+public async getAllSubjectsModelByClassSection  (req: Request, res: Response)  {
+  const campusId = Number(req.params.campusId);
+  const classId = Number(req.params.classId);
+  const sectionId = Number(req.params.sectionId);
+  console.log(req.params)
+  let subjectSelectItems = [];
+  
+  const classSection = await prisma.section.findMany({
+    where: {
+      campusId : Number(campusId),
+      classId : Number(classId),
+      id : Number(sectionId),
+      active: 1
+    },
+    include:{
+      subjects: true
+    }
+  });
+  console.log(classSection);
+  if(classSection!==null && classSection!==undefined && classSection.length>0){
+    classSection.forEach((element) => {
+      if(element!==null && element!==undefined && element.subjects.length>0){
+        element.subjects.forEach((subject) => {
+          subjectSelectItems.push({ id: subject.id,
+                                    label: `${subject.subjectName} (${subject.subjectType})`,
+                                    date: '',
+                                  start:'',
+                                end:'' })
+        })
+      }
     });
   }
 

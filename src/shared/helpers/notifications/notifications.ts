@@ -156,6 +156,14 @@ function evaluateVariables(messageBody: string,keywords: string,  model : Notifi
                         } 
                         break; 
                     } 
+                    //diary
+                    case '$diary': { 
+                        if(model!==null && model!==undefined && model.diary!==null && model.diary!==undefined){
+                            messageBody = messageBody.replaceAll("$diary",model.diary);
+                        } 
+                        break; 
+                    } 
+
                     //Exam
                     case '$exam_name': { 
                         if(model!==null && model!==undefined && model.exam_name!==null && model.exam_name!==undefined){
@@ -169,6 +177,19 @@ function evaluateVariables(messageBody: string,keywords: string,  model : Notifi
                         } 
                         break; 
                     } 
+                    //Attendance
+                    case '$user_name': { 
+                        if(model!==null && model!==undefined && model.user_name!==null && model.user_name!==undefined){
+                            messageBody = messageBody.replaceAll("$user_name",model.user_name);
+                        } 
+                        break; 
+                    }
+                    case '$selected_day': { 
+                        if(model!==null && model!==undefined && model.selected_day!==null && model.selected_day!==undefined){
+                            messageBody = messageBody.replaceAll("$selected_day",model.selected_day);
+                        } 
+                        break; 
+                    }
 
                     //Fees
                     case '$reminder_number': { 
@@ -215,7 +236,7 @@ function evaluateVariables(messageBody: string,keywords: string,  model : Notifi
                         } 
                         break; 
                     }
-
+                    
                     case '$student_leave_end': { 
                         if(model!==null && model!==undefined && model.student_leave_end!==null && model.student_leave_end!==undefined){
                             messageBody = messageBody.replaceAll("$student_leave_end",model.student_leave_end);

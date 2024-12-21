@@ -43,6 +43,22 @@ export function getBlankMonthWiseHolidayList() {
   return arrayOfMonths;
 }
 
+export function getUniqueValues(arr: any[], key: string, field : string): any[] {
+  const uniqueSet = [];
+  
+  arr.forEach(async (element) => {
+    const attribute= element[key];
+    if(attribute!==null && attribute!==undefined && !objectExists(uniqueSet, 'id', attribute.id)){
+      uniqueSet.push({ id: attribute.id, value: attribute[field]})
+    }
+  });
+  return uniqueSet;
+
+}
+function objectExists(arr: any[], prop: string, value: any): boolean {
+  return arr.some(obj => obj[prop] === value);
+}
+
 
 export function getCurrencySymbol(locale: string, currency: string) {
   return (0).toLocaleString(

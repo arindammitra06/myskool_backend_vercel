@@ -212,8 +212,6 @@ export class AccountingController {
             transactionType: TransactionType.Debit,
             source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(currentDues),
             paymentType: PaymentType.Wallet,
             created_by: Number(currentUserId),
@@ -229,8 +227,6 @@ export class AccountingController {
             transactionType: TransactionType.Credit,
             source: TransactionSource.StudentFeePayment,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(currentDues),
             paymentType: PaymentType.Wallet,
             created_by: Number(currentUserId),
@@ -251,8 +247,6 @@ export class AccountingController {
             transactionType: TransactionType.Debit,
             source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(familyCreditAmt),
             paymentType: PaymentType.Wallet,
             created_by: Number(currentUserId),
@@ -268,8 +262,6 @@ export class AccountingController {
             transactionType: TransactionType.Credit,
             source: TransactionSource.StudentFeePayment,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(familyCreditAmt),
             paymentType: PaymentType.Wallet,
             created_by: Number(currentUserId),
@@ -285,8 +277,6 @@ export class AccountingController {
             transactionType: TransactionType.Credit,
             source: TransactionSource.StudentFeePayment,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(cashAmount),
             paymentType: PaymentType.Cash,
             created_by: Number(currentUserId),
@@ -321,8 +311,6 @@ export class AccountingController {
           transactionType: TransactionType.Credit,
           source: TransactionSource.StudentFeePayment,
           userId: invoice.userId,
-          classId: invoice.classId,
-          sectionId: invoice.sectionId,
           amount: Number(currentDues),
           paymentType: PaymentType.Cash,
           created_by: Number(currentUserId),
@@ -411,8 +399,6 @@ export class AccountingController {
               transactionType: TransactionType.Debit,
               source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
               userId: invoice.userId,
-              classId: invoice.classId,
-              sectionId: invoice.sectionId,
               amount: Number(formData.form.payingAmount),
               paymentType: PaymentType.Wallet,
               created_by: Number(formData.form.currentUserId),
@@ -428,8 +414,6 @@ export class AccountingController {
               transactionType: TransactionType.Credit,
               source: TransactionSource.StudentFeePayment,
               userId: invoice.userId,
-              classId: invoice.classId,
-              sectionId: invoice.sectionId,
               amount: Number(formData.form.payingAmount),
               paymentType: PaymentType.Wallet,
               created_by: Number(formData.form.currentUserId),
@@ -450,8 +434,6 @@ export class AccountingController {
               transactionType: TransactionType.Debit,
               source: TransactionSource.StudentFeePaymentUsingFamilyCredit,
               userId: invoice.userId,
-              classId: invoice.classId,
-              sectionId: invoice.sectionId,
               amount: Number(formData.form.familyCredit),
               paymentType: PaymentType.Wallet,
               created_by: Number(formData.form.currentUserId),
@@ -467,8 +449,6 @@ export class AccountingController {
               transactionType: TransactionType.Credit,
               source: TransactionSource.StudentFeePayment,
               userId: invoice.userId,
-              classId: invoice.classId,
-              sectionId: invoice.sectionId,
               amount: Number(formData.form.familyCredit),
               paymentType: PaymentType.Wallet,
               created_by: Number(formData.form.currentUserId),
@@ -484,8 +464,6 @@ export class AccountingController {
               transactionType: TransactionType.Credit,
               source: TransactionSource.StudentFeePayment,
               userId: invoice.userId,
-              classId: invoice.classId,
-              sectionId: invoice.sectionId,
               amount: Number(cashAmount),
               paymentType: PaymentType.Cash,
               created_by: Number(formData.form.currentUserId),
@@ -520,8 +498,6 @@ export class AccountingController {
             transactionType: TransactionType.Credit,
             source: TransactionSource.StudentFeePayment,
             userId: invoice.userId,
-            classId: invoice.classId,
-            sectionId: invoice.sectionId,
             amount: Number(formData.form.payingAmount),
             paymentType: PaymentType.Cash,
             created_by: Number(formData.form.currentUserId),
@@ -558,6 +534,7 @@ export class AccountingController {
           campusId: Number(formData.campusId),
           classId: Number(formData.classId),
           sectionId: Number(formData.sectionId),
+          active: 1
         },
         include: {
           campus: true,
@@ -566,8 +543,6 @@ export class AccountingController {
           StudentFees: {
             where: {
               campusId: Number(formData.campusId),
-              classId: Number(formData.classId),
-              sectionId: Number(formData.sectionId),
               active: 1,
             },
             include: {
@@ -577,8 +552,6 @@ export class AccountingController {
           MYAALInvoices: {
             where: {
               campusId: Number(formData.campusId),
-              classId: Number(formData.classId),
-              sectionId: Number(formData.sectionId),
             }
           },
         },
@@ -682,8 +655,6 @@ export class AccountingController {
           StudentFees: {
             where: {
               campusId: Number(formData.campusId),
-              classId: Number(formData.classId),
-              sectionId: Number(formData.sectionId),
               active: 1,
             },
             include: {
@@ -889,8 +860,6 @@ export class AccountingController {
                       userId: studentEach.id,
                       invoiceNumber: invoiceNumber,
                       campusId: Number(formData.campusId),
-                      classId: Number(studentEach.class.id),
-                      sectionId: Number(studentEach.section.id),
                       feeStatus: FeeStatus.Unpaid,
                       feeType: FeeType.MONTHLY,
                       year: Number(formData.year),
@@ -914,8 +883,6 @@ export class AccountingController {
                       userId: studentEach.id,
                       invoiceNumber: invoiceNumber,
                       campusId: Number(formData.campusId),
-                      classId: Number(studentEach.class.id),
-                      sectionId: Number(studentEach.section.id),
                       feeStatus: FeeStatus.Unpaid,
                       feeType: FeeType.YEARLY,
                       year: Number(formData.year),
@@ -938,8 +905,6 @@ export class AccountingController {
                       userId: studentEach.id,
                       invoiceNumber: invoiceNumber,
                       campusId: Number(formData.campusId),
-                      classId: Number(studentEach.class.id),
-                      sectionId: Number(studentEach.section.id),
                       feeStatus: FeeStatus.Unpaid,
                       feeType: FeeType.ADHOC,
                       year: Number(formData.year),
@@ -962,8 +927,6 @@ export class AccountingController {
                       userId: studentEach.id,
                       invoiceNumber: invoiceNumber,
                       campusId: Number(formData.campusId),
-                      classId: Number(studentEach.class.id),
-                      sectionId: Number(studentEach.section.id),
                       feeStatus: FeeStatus.Unpaid,
                       feeType: FeeType.LATE,
                       year: Number(formData.year),
@@ -1032,8 +995,6 @@ export class AccountingController {
               },
               data: {
                 feePlanId: Number(formData.feePlanId),
-                classId: Number(formData.classId),
-                sectionId: Number(formData.sectionId),
                 updated_by: Number(formData.currentUserId),
                 updated_at: new Date(),
               },
@@ -1046,8 +1007,6 @@ export class AccountingController {
                 campusId: Number(formData.campusId),
                 feePlanId: Number(formData.feePlanId),
                 active: 1,
-                classId: Number(formData.classId),
-                sectionId: Number(formData.sectionId),
                 updated_by: Number(formData.currentUserId),
                 updated_at: new Date(),
                 created_by: Number(formData.currentUserId),
@@ -1093,7 +1052,7 @@ export class AccountingController {
 
   public async acceptFamilyCredit(req: Request, res: Response) {
     const formData: any = req.body;
-    
+
     if (formData !== null && formData !== undefined && formData.form.parentId !== null && formData.form.parentId !== undefined) {
 
       if (formData.form.payingAmount !== null && formData.form.payingAmount !== undefined && formData.form.payingAmount > 0) {
@@ -1180,19 +1139,19 @@ export class AccountingController {
         await prisma.user.findUnique({
           where: {
             active: 1,
-            id:  Number(formData.form.currentUserId),
+            id: Number(formData.form.currentUserId),
             campusId: Number(formData.form.campusId)
           },
         }).then(async (res) => {
           addANotification(Number(formData.form.campusId),
-              Number(formData.form.currentUserId),
-              Number(formData.form.currentUserId),
-              buildMessage(FAMILY_CREDIT_UPDATED, parent.displayName, moment(new Date()).format('DD-MMM-YYYY HH:mm')));
-          
-              addANotification(Number(formData.form.campusId),
-              Number(parent.id),
-              Number(formData.form.currentUserId),
-              buildMessage(FAMILY_CREDIT_UPDATED, parent.displayName, moment(new Date()).format('DD-MMM-YYYY HH:mm')));
+            Number(formData.form.currentUserId),
+            Number(formData.form.currentUserId),
+            buildMessage(FAMILY_CREDIT_UPDATED, parent.displayName, moment(new Date()).format('DD-MMM-YYYY HH:mm')));
+
+          addANotification(Number(formData.form.campusId),
+            Number(parent.id),
+            Number(formData.form.currentUserId),
+            buildMessage(FAMILY_CREDIT_UPDATED, parent.displayName, moment(new Date()).format('DD-MMM-YYYY HH:mm')));
         });
 
 
@@ -1295,7 +1254,7 @@ export class AccountingController {
         campus: true,
         StockProduct: true
       },
-      where:{
+      where: {
         campusId: Number(campusId)
       }
     });
@@ -1317,16 +1276,16 @@ export class AccountingController {
             updated_by: categoryForm.form.created_by,
             updated_at: new Date()
           },
-        }).then(async (res)=>{
-          
-          
+        }).then(async (res) => {
+
+
           await prisma.user.findUnique({
             where: {
               active: 1,
-              id:Number(categoryForm.form.created_by),
+              id: Number(categoryForm.form.created_by),
               campusId: Number(categoryForm.form.campusId)
             },
-          }).then(async (res)=>{
+          }).then(async (res) => {
             const admins = await prisma.user.findMany({
               where: {
                 active: 1,
@@ -1334,17 +1293,17 @@ export class AccountingController {
                 campusId: Number(categoryForm.form.campusId),
               },
             });
-            if(admins!==null && admins!==undefined && admins.length>0){
+            if (admins !== null && admins !== undefined && admins.length > 0) {
               admins.forEach(async (eachUser: any) => {
                 addANotification(Number(categoryForm.form.campusId),
-                Number(eachUser.id),
-                Number(categoryForm.form.created_by),
-                buildMessage(PRODUCT_CATEGORY_ADDED, categoryForm.form.categoryName, res.displayName));
+                  Number(eachUser.id),
+                  Number(categoryForm.form.created_by),
+                  buildMessage(PRODUCT_CATEGORY_ADDED, categoryForm.form.categoryName, res.displayName));
               });
             }
           });
 
-          
+
         });
       }
       return res.json({ data: null, status: true, message: 'Product Category added' });
@@ -1356,60 +1315,60 @@ export class AccountingController {
 
   public async getStockOverview(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
-    const yesterday = moment().subtract(1, 'day'); 
+    const yesterday = moment().subtract(1, 'day');
     let overviewDate = {};
 
     const activeCategories = await prisma.stockCategory.findMany({
-      where:{
-        campusId:campusId,
+      where: {
+        campusId: campusId,
         active: 1
       },
     });
     overviewDate["activeCategories"] = activeCategories;
-    console.log('activeCategories '+activeCategories.length);
-    
+    console.log('activeCategories ' + activeCategories.length);
+
     const activeProducts = await prisma.stockProduct.findMany({
-      where:{
-        campusId:campusId,
+      where: {
+        campusId: campusId,
         active: 1
       },
     });
-    console.log('activeProducts '+activeProducts.length);
+    console.log('activeProducts ' + activeProducts.length);
     overviewDate["activeProducts"] = activeProducts;
-    
+
     const outOfStockProducts = await prisma.stockProduct.findMany({
-      where:{
-        campusId:campusId,
+      where: {
+        campusId: campusId,
         active: 1,
-        stock:0
+        stock: 0
       },
     });
-    console.log('outOfStockProducts '+outOfStockProducts.length);
+    console.log('outOfStockProducts ' + outOfStockProducts.length);
     overviewDate["outOfStockProducts"] = outOfStockProducts;
 
     const lowStockProducts = await prisma.stockProduct.findMany({
-      where:{
-        campusId:campusId,
+      where: {
+        campusId: campusId,
         active: 1,
         stock: {
           lt: 10
         }
       },
     });
-    console.log('lowStockProducts '+lowStockProducts.length);
+    console.log('lowStockProducts ' + lowStockProducts.length);
     overviewDate["lowStockProducts"] = lowStockProducts;
 
 
     const salesToday = await prisma.sellProductDetails.findMany({
-      where:{
-        campusId:campusId,
+      where: {
+        campusId: campusId,
         active: 1,
         created_at: {
-          gt:yesterday.toDate()
+          gt: yesterday.toDate()
         }
       },
     });
-    console.log('salesToday '+salesToday.length);
+    console.log('salesToday ' + salesToday.length);
     overviewDate["salesToday"] = salesToday;
 
     const salesThisMonth = await prisma.$queryRaw`SELECT us.*, sp.productName,sp.productCode,sp.purchasePrice  FROM myskool.SellProductDetails us
@@ -1429,7 +1388,7 @@ export class AccountingController {
 
     try {
       if (categoryForm !== null && categoryForm !== undefined) {
-        
+
         await prisma.stockCategory.findUnique({
           where: {
             id: categoryForm.id,
@@ -1451,16 +1410,16 @@ export class AccountingController {
                 updated_by: Number(categoryForm.currentUserid),
                 updated_at: new Date()
               },
-            }).then(async (category)=>{
-          
-          
+            }).then(async (category) => {
+
+
               await prisma.user.findUnique({
                 where: {
                   active: 1,
-                  id:Number(categoryForm.currentUserid),
+                  id: Number(categoryForm.currentUserid),
                   campusId: Number(categoryForm.campusId)
                 },
-              }).then(async (res)=>{
+              }).then(async (res) => {
                 const admins = await prisma.user.findMany({
                   where: {
                     active: 1,
@@ -1468,17 +1427,17 @@ export class AccountingController {
                     campusId: Number(categoryForm.campusId),
                   },
                 });
-                if(admins!==null && admins!==undefined && admins.length>0){
+                if (admins !== null && admins !== undefined && admins.length > 0) {
                   admins.forEach(async (eachUser: any) => {
                     addANotification(Number(categoryForm.campusId),
-                    Number(eachUser.id),
-                    Number(categoryForm.currentUserid),
-                    buildMessage(PRODUCT_CATEGORY_UPDATED, category.categoryName, res.displayName));
+                      Number(eachUser.id),
+                      Number(categoryForm.currentUserid),
+                      buildMessage(PRODUCT_CATEGORY_UPDATED, category.categoryName, res.displayName));
                   });
                 }
               });
-    
-              
+
+
             });
 
             return res.json({ data: null, status: true, message: 'Category updated' });
@@ -1502,7 +1461,7 @@ export class AccountingController {
         campus: true,
         category: true,
       },
-      where:{
+      where: {
         campusId: Number(campusId)
       }
     });
@@ -1512,10 +1471,10 @@ export class AccountingController {
   public async getAllActiveProductsForSelling(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const products = await prisma.stockProduct.findMany({
-      where:{
+      where: {
         campusId: Number(campusId),
-        active:1,
-        stock :{
+        active: 1,
+        stock: {
           gte: 1,
         }
       },
@@ -1530,10 +1489,10 @@ export class AccountingController {
   public async getLatestSellRecords(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const sellRecords = await prisma.sellDetails.findMany({
-      
-      where:{
-        active:1,
-        campusId:Number(campusId)
+
+      where: {
+        active: 1,
+        campusId: Number(campusId)
       },
       orderBy: {
         id: 'desc',
@@ -1606,6 +1565,72 @@ export class AccountingController {
     }
   }
 
+  public async bulkLoadProduct(req: Request, res: Response) {
+    const productForm: any = req.body;
+    
+    try {
+      if (productForm !== null && productForm !== undefined) {
+        if (productForm.data!== null && productForm.data !== undefined && productForm.data.length>0) {
+          
+          for(let i= 0;i <productForm.data.length; i++){
+            let productFound = await prisma.stockProduct.findFirst({
+              where:{
+                productCode:productForm.data[i]['Product Code']
+              },
+              take: 1,
+            });
+            //Product Exists just Update stock & prices
+            if(productFound!==null && productFound!==undefined &&  productFound.id!==null && productFound.id!==undefined){
+              let stock = productFound.stock + Number(productForm.data[i].Stock);
+              
+              
+              await prisma.stockProduct.update({
+                where: {
+                  id: Number(productFound.id),
+                  campusId: Number(productFound.campusId),
+                },
+                data: {
+                  purchasePrice: Number(productForm.data[i]['Purchase Price']),
+                  sellPrice: Number(productForm.data[i]['Sell Price']),
+                  stock: Number(stock),
+                  updated_by: productForm.currentUserId,
+                  updated_at: new Date()
+                },
+              });
+            }else{
+              let appProdId = generateProductIdNumber(5);
+
+              await prisma.stockProduct.create({
+                data: {
+                  active: 1,
+                  campusId: Number(productForm.data[i]['Campus Id']),
+                  productName: productForm.data[i]['Product Name'],
+                  productCode: productForm.data[i]['Product Code'],
+                  appUniqueCode: appProdId,
+                  categoryId: Number(productForm.data[i]['Category Id']),
+                  purchasePrice: Number(productForm.data[i]['Purchase Price']),
+                  sellPrice: Number(productForm.data[i]['Sell Price']),
+                  stock: Number(productForm.data[i].Stock),
+                  created_by: productForm.currentUserId,
+                  created_at: new Date(),
+                  updated_by: productForm.currentUserId,
+                  updated_at: new Date()
+                },
+              });
+            }
+          }
+        } else {
+          return res.json({ data: null, status: false, message: 'No data to upload' });
+        }
+
+      }
+      return res.json({ data: null, status: true, message: 'Bulk Product data loaded' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
   public async deleteProduct(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const id = Number(req.params.id);
@@ -1666,16 +1691,16 @@ export class AccountingController {
 
   public async recordACashPayment(req: Request, res: Response) {
     const cartItemsForm: any = req.body;
-    
+
     try {
       if (cartItemsForm !== null && cartItemsForm !== undefined) {
-        
-        if(cartItemsForm.cartItems!== null && cartItemsForm.cartItems !== undefined && cartItemsForm.cartItems.length>0){
+
+        if (cartItemsForm.cartItems !== null && cartItemsForm.cartItems !== undefined && cartItemsForm.cartItems.length > 0) {
           let totalIncome = 0;
           let totalQuantity = 0;
           let sellProducts = [];
 
-          for(let i = 0;i< cartItemsForm.cartItems.length;i++){
+          for (let i = 0; i < cartItemsForm.cartItems.length; i++) {
             totalIncome = totalIncome + cartItemsForm.cartItems[i].total;
             totalQuantity = totalQuantity + cartItemsForm.cartItems[i].quantity;
 
@@ -1685,7 +1710,7 @@ export class AccountingController {
                 campusId: Number(cartItemsForm.campusId),
               },
               data: {
-                stock: {decrement: cartItemsForm.cartItems[i].quantity },
+                stock: { decrement: cartItemsForm.cartItems[i].quantity },
                 updated_by: cartItemsForm.currentUserid,
                 updated_at: new Date()
               },
@@ -1693,10 +1718,10 @@ export class AccountingController {
 
             sellProducts.push({
               campusId: Number(cartItemsForm.campusId),
-              active:1,
+              active: 1,
               productId: Number(cartItemsForm.cartItems[i].id),
-              sellPrice:cartItemsForm.cartItems[i].price,
-              quantity: cartItemsForm.cartItems[i].quantity ,
+              sellPrice: cartItemsForm.cartItems[i].price,
+              quantity: cartItemsForm.cartItems[i].quantity,
               totalSellPrice: cartItemsForm.cartItems[i].total,
               updated_by: cartItemsForm.currentUserid,
               updated_at: new Date(),
@@ -1705,17 +1730,17 @@ export class AccountingController {
             });
 
           }
-          
 
 
 
-         
-          
+
+
+
           //create seller invoice
-          if(sellProducts!==null && sellProducts!==undefined && sellProducts.length>0){
-            
-            console.log('Total no of items being sold:' +sellProducts.length)
-            
+          if (sellProducts !== null && sellProducts !== undefined && sellProducts.length > 0) {
+
+            console.log('Total no of items being sold:' + sellProducts.length)
+
             let latestInvoiceObj = await prisma.sellDetails.findFirst({
               orderBy: {
                 id: 'desc',
@@ -1725,12 +1750,12 @@ export class AccountingController {
 
             let latestInvoiceID = latestInvoiceObj !== null && latestInvoiceObj !== undefined ? latestInvoiceObj.id : 0;
             const invoiceNumber = generateSellingInvoiceNumber(latestInvoiceID);
-            console.log('Selling Invoice No: '+invoiceNumber);
+            console.log('Selling Invoice No: ' + invoiceNumber);
 
             await prisma.sellDetails.create({
               data: {
                 campusId: Number(cartItemsForm.campusId),
-                active:1,
+                active: 1,
                 invoiceNumber: invoiceNumber,
                 combinedSellPrice: totalIncome,
                 totalQuantity: totalQuantity,
@@ -1739,18 +1764,18 @@ export class AccountingController {
                 created_by: cartItemsForm.currentUserid,
                 created_at: new Date()
               },
-            }).then(async (sellRecord)=> {
-              
+            }).then(async (sellRecord) => {
+
               //add sell records products
               sellProducts.forEach(async (eachItem: any) => {
                 await prisma.sellProductDetails.create({
                   data: {
                     campusId: Number(cartItemsForm.campusId),
-                    active:1,
+                    active: 1,
                     sellDetailsId: sellRecord.id,
                     productId: Number(eachItem.productId),
-                    sellPrice:eachItem.sellPrice,
-                    quantity: eachItem.quantity ,
+                    sellPrice: eachItem.sellPrice,
+                    quantity: eachItem.quantity,
                     totalSellPrice: eachItem.totalSellPrice,
                     updated_by: cartItemsForm.currentUserid,
                     updated_at: new Date(),
@@ -1774,7 +1799,7 @@ export class AccountingController {
                   sellDetailsId: sellRecord.id
                 },
               });
-              
+
               await prisma.user.findUnique({
                 where: {
                   active: 1,
@@ -1783,20 +1808,20 @@ export class AccountingController {
                 },
               }).then((res) => {
                 addANotification(Number(cartItemsForm.campusId),
-                Number(cartItemsForm.currentUserid),
-                Number(cartItemsForm.currentUserid),
-                buildMessage(POINT_OF_SALE, totalQuantity+'', res.displayName, invoiceNumber));
+                  Number(cartItemsForm.currentUserid),
+                  Number(cartItemsForm.currentUserid),
+                  buildMessage(POINT_OF_SALE, totalQuantity + '', res.displayName, invoiceNumber));
               });
             })
-            
-            
+
+
           }
-        }else{
+        } else {
           return res.json({ data: null, status: false, message: 'No items in the cart' });
         }
       }
       return res.json({ data: null, status: true, message: 'Cash payment recorded' });
-    
+
     } catch (error) {
       console.error(error);
       return res.status(400).json({ message: error.message, status: true, data: null })
@@ -1806,13 +1831,13 @@ export class AccountingController {
   //Expenses
   public async getActiveExpenseTypes(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
-    
+
     const types = await prisma.expenseType.findMany({
       include: {
         campus: true,
         Expense: true
       },
-      where:{
+      where: {
         campusId: Number(campusId)
       }
     });
@@ -1823,7 +1848,7 @@ export class AccountingController {
     const campusId = Number(req.params.campusId);
     let model = [];
     const types = await prisma.expenseType.findMany({
-      where:{
+      where: {
         campusId: Number(campusId)
       }
     });
@@ -1838,7 +1863,7 @@ export class AccountingController {
 
     try {
       if (typeForm !== null && typeForm !== undefined) {
-        
+
         await prisma.expenseType.findUnique({
           where: {
             id: typeForm.id,
@@ -1860,16 +1885,16 @@ export class AccountingController {
                 updated_by: Number(typeForm.currentUserid),
                 updated_at: new Date()
               },
-            }).then(async (category)=>{
-          
-          
+            }).then(async (category) => {
+
+
               await prisma.user.findUnique({
                 where: {
                   active: 1,
-                  id:Number(typeForm.currentUserid),
+                  id: Number(typeForm.currentUserid),
                   campusId: Number(typeForm.campusId)
                 },
-              }).then(async (res)=>{
+              }).then(async (res) => {
                 const admins = await prisma.user.findMany({
                   where: {
                     active: 1,
@@ -1877,17 +1902,17 @@ export class AccountingController {
                     campusId: Number(typeForm.campusId),
                   },
                 });
-                if(admins!==null && admins!==undefined && admins.length>0){
+                if (admins !== null && admins !== undefined && admins.length > 0) {
                   admins.forEach(async (eachUser: any) => {
                     addANotification(Number(typeForm.campusId),
-                    Number(eachUser.id),
-                    Number(typeForm.currentUserid),
-                    buildMessage(EXPENSE_TYPE_UPDATED, category.typeName, res.displayName));
+                      Number(eachUser.id),
+                      Number(typeForm.currentUserid),
+                      buildMessage(EXPENSE_TYPE_UPDATED, category.typeName, res.displayName));
                   });
                 }
               });
-    
-              
+
+
             });
 
             return res.json({ data: null, status: true, message: 'Type updated' });
@@ -1918,16 +1943,16 @@ export class AccountingController {
             updated_by: typeForm.form.created_by,
             updated_at: new Date()
           },
-        }).then(async (res)=>{
-          
-          
+        }).then(async (res) => {
+
+
           await prisma.user.findUnique({
             where: {
               active: 1,
-              id:Number(typeForm.form.created_by),
+              id: Number(typeForm.form.created_by),
               campusId: Number(typeForm.form.campusId)
             },
-          }).then(async (res)=>{
+          }).then(async (res) => {
             const admins = await prisma.user.findMany({
               where: {
                 active: 1,
@@ -1935,17 +1960,17 @@ export class AccountingController {
                 campusId: Number(typeForm.form.campusId),
               },
             });
-            if(admins!==null && admins!==undefined && admins.length>0){
+            if (admins !== null && admins !== undefined && admins.length > 0) {
               admins.forEach(async (eachUser: any) => {
                 addANotification(Number(typeForm.form.campusId),
-                Number(eachUser.id),
-                Number(typeForm.form.created_by),
-                buildMessage(EXPENSE_TYPE_ADDED, typeForm.form.typeName, res.displayName));
+                  Number(eachUser.id),
+                  Number(typeForm.form.created_by),
+                  buildMessage(EXPENSE_TYPE_ADDED, typeForm.form.typeName, res.displayName));
               });
             }
           });
 
-          
+
         });
       }
       return res.json({ data: null, status: true, message: 'Expense Type added' });
@@ -1962,12 +1987,12 @@ export class AccountingController {
         campus: true,
         type: true
       },
-      where:{
+      where: {
         campusId: Number(campusId)
       },
       take: 50,
       orderBy: {
-        created_at:'desc'
+        created_at: 'desc'
       }
     });
     return res.json({ status: true, data: types, message: 'Expenses retrieved' });
@@ -1979,30 +2004,30 @@ export class AccountingController {
     console.log(typeForm)
     try {
       if (typeForm !== null && typeForm !== undefined) {
-        if (typeForm.form.id !== null && typeForm.form.id !== undefined){
+        if (typeForm.form.id !== null && typeForm.form.id !== undefined) {
 
           await prisma.expense.update({
-            where:{
-              id:typeForm.form.id,
+            where: {
+              id: typeForm.form.id,
               campusId: typeForm.form.campusId,
             },
             data: {
               title: typeForm.form.title,
               description: typeForm.form.description,
-              typeId:typeForm.form.typeId,
-              amount:typeForm.form.amount,
-              expenseMethod:typeForm.form.expenseMethod,
+              typeId: typeForm.form.typeId,
+              amount: typeForm.form.amount,
+              expenseMethod: typeForm.form.expenseMethod,
               updated_by: typeForm.form.created_by,
               updated_at: new Date()
             },
-          }).then(async (res)=>{
-            
+          }).then(async (res) => {
+
             await prisma.transactions.deleteMany({
-              where:{
+              where: {
                 expenseId: res.id,
                 campusId: Number(typeForm.form.campusId)
               },
-            }).then(async (resDel)=>{
+            }).then(async (resDel) => {
               await prisma.transactions.create({
                 data: {
                   campusId: Number(typeForm.form.campusId),
@@ -2021,10 +2046,10 @@ export class AccountingController {
             await prisma.user.findUnique({
               where: {
                 active: 1,
-                id:Number(typeForm.form.created_by),
+                id: Number(typeForm.form.created_by),
                 campusId: Number(typeForm.form.campusId)
               },
-            }).then(async (res)=>{
+            }).then(async (res) => {
               const admins = await prisma.user.findMany({
                 where: {
                   active: 1,
@@ -2032,32 +2057,32 @@ export class AccountingController {
                   campusId: Number(typeForm.form.campusId),
                 },
               });
-              if(admins!==null && admins!==undefined && admins.length>0){
+              if (admins !== null && admins !== undefined && admins.length > 0) {
                 admins.forEach(async (eachUser: any) => {
                   addANotification(Number(typeForm.form.campusId),
-                  Number(eachUser.id),
-                  Number(typeForm.form.created_by),
-                  buildMessage(EXPENSE_UPDATED, typeForm.form.typeName, res.displayName));
+                    Number(eachUser.id),
+                    Number(typeForm.form.created_by),
+                    buildMessage(EXPENSE_UPDATED, typeForm.form.typeName, res.displayName));
                 });
               }
             });
           });
 
-        }else{
+        } else {
           await prisma.expense.create({
             data: {
               campusId: typeForm.form.campusId,
               title: typeForm.form.title,
               description: typeForm.form.description,
-              typeId:typeForm.form.typeId,
-              amount:typeForm.form.amount,
-              expenseMethod:typeForm.form.expenseMethod,
+              typeId: typeForm.form.typeId,
+              amount: typeForm.form.amount,
+              expenseMethod: typeForm.form.expenseMethod,
               created_by: typeForm.form.created_by,
               created_at: new Date(),
               updated_by: typeForm.form.created_by,
               updated_at: new Date()
             },
-          }).then(async (res)=>{
+          }).then(async (res) => {
             await prisma.transactions.create({
               data: {
                 campusId: Number(typeForm.form.campusId),
@@ -2074,10 +2099,10 @@ export class AccountingController {
             await prisma.user.findUnique({
               where: {
                 active: 1,
-                id:Number(typeForm.form.created_by),
+                id: Number(typeForm.form.created_by),
                 campusId: Number(typeForm.form.campusId)
               },
-            }).then(async (res)=>{
+            }).then(async (res) => {
               const admins = await prisma.user.findMany({
                 where: {
                   active: 1,
@@ -2085,18 +2110,18 @@ export class AccountingController {
                   campusId: Number(typeForm.form.campusId),
                 },
               });
-              if(admins!==null && admins!==undefined && admins.length>0){
+              if (admins !== null && admins !== undefined && admins.length > 0) {
                 admins.forEach(async (eachUser: any) => {
                   addANotification(Number(typeForm.form.campusId),
-                  Number(eachUser.id),
-                  Number(typeForm.form.created_by),
-                  buildMessage(EXPENSE_ADDED, typeForm.form.typeName, res.displayName));
+                    Number(eachUser.id),
+                    Number(typeForm.form.created_by),
+                    buildMessage(EXPENSE_ADDED, typeForm.form.typeName, res.displayName));
                 });
               }
             });
           });
         }
-        
+
       }
       return res.json({ data: null, status: true, message: 'Expense added' });
     } catch (error) {
@@ -2109,59 +2134,59 @@ export class AccountingController {
     const campusId = Number(req.params.campusId);
     const id = Number(req.params.id);
     const userId = Number(req.params.userId);
-    
+
     await prisma.expense.findUnique({
       where: {
         id: id,
         campusId: campusId
       }
-    }).then(async (expense)=>{
-          
-          //add notification
-          await prisma.user.findUnique({
-            where: {
-              active: 1,
-              id:Number(userId),
-              campusId: Number(campusId)
-            },
-          }).then(async (creator)=>{
-            const admins = await prisma.user.findMany({
-              where: {
-                active: 1,
-                userType: UserType.admin,
-                campusId: Number(campusId),
-              },
-            });
-            if(admins!==null && admins!==undefined && admins.length>0){
-              admins.forEach(async (eachUser: any) => {
-                addANotification(Number(campusId),
-                Number(eachUser.id),
-                Number(creator.id),
-                buildMessage(EXPENSE_TYPE_ADDED, expense.title, creator.displayName));
-              });
-            }
-          });
-          //end add notification
-          
-          //Delete transaction
-         
-          await prisma.transactions.deleteMany({
-            where: {
-              expenseId: id,
-              campusId: campusId
-            }
-          })
-          //End Delete transaction
+    }).then(async (expense) => {
 
-          //Delete expense 
-          await prisma.expense.delete({
-            where: {
-              id: id,
-              campusId: campusId
-            }
-          })
-          //End of Delete expense 
-        });;
+      //add notification
+      await prisma.user.findUnique({
+        where: {
+          active: 1,
+          id: Number(userId),
+          campusId: Number(campusId)
+        },
+      }).then(async (creator) => {
+        const admins = await prisma.user.findMany({
+          where: {
+            active: 1,
+            userType: UserType.admin,
+            campusId: Number(campusId),
+          },
+        });
+        if (admins !== null && admins !== undefined && admins.length > 0) {
+          admins.forEach(async (eachUser: any) => {
+            addANotification(Number(campusId),
+              Number(eachUser.id),
+              Number(creator.id),
+              buildMessage(EXPENSE_TYPE_ADDED, expense.title, creator.displayName));
+          });
+        }
+      });
+      //end add notification
+
+      //Delete transaction
+
+      await prisma.transactions.deleteMany({
+        where: {
+          expenseId: id,
+          campusId: campusId
+        }
+      })
+      //End Delete transaction
+
+      //Delete expense 
+      await prisma.expense.delete({
+        where: {
+          id: id,
+          campusId: campusId
+        }
+      })
+      //End of Delete expense 
+    });;
     return res.json({ status: true, data: null, message: 'Expense deleted successfully' });
   }
 

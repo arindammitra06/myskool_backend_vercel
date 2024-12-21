@@ -51,7 +51,7 @@ export class StudentController {
     const studentID = generateIdsForParentAndStudent(latestUserID.id + 1, 'ST');
     const middleName = studentWithParents.form.middleName !== null && studentWithParents.form.middleName !== undefined ? studentWithParents.form.middleName : '';
 
-    
+
 
     let createdStudentObj;
 
@@ -60,7 +60,8 @@ export class StudentController {
       await prisma.$transaction(async (tx) => {
 
         createdStudentObj = await prisma.user.create({
-          data: {userType: UserType.student,
+          data: {
+            userType: UserType.student,
             firstName: studentWithParents.form.firstName,
             middleName: middleName,
             lastName: studentWithParents.form.lastName,
@@ -381,8 +382,6 @@ export class StudentController {
                 campusId: Number(studentWithParents.form.campusId),
                 feePlanId: Number(studentWithParents.form.feePlanId),
                 active: 1,
-                classId: Number(studentWithParents.form.classId),
-                sectionId: Number(studentWithParents.form.sectionId),
                 updated_by: studentWithParents.updated_by,
                 updated_at: new Date(),
                 created_by: studentWithParents.created_by,
@@ -452,6 +451,426 @@ export class StudentController {
 
   }
 
+
+  public async bulkLoadStudents(req: Request, res: Response) {
+    const formContent: any = req.body;
+    let existingStudents = [];
+    const institute = await prisma.institute.findFirst();
+    let parentPermission: Permission = await getPermissionByName('Parent');
+    const password = generator.generate({
+      length: 10,
+      numbers: true,
+      symbols: true
+    });
+    const encryptedPassword = encrypt(password);
+    //console.log(password);
+    let latestInvoiceObj = await prisma.mYAALInvoices.findFirst({
+      orderBy: {
+        id: 'desc',
+      },
+      take: 1,
+    });
+
+
+    try {
+      if (formContent !== null && formContent !== undefined) {
+        if (formContent.data !== null && formContent.data !== undefined && formContent.data.length > 0) {
+
+          for (let i = 0; i < formContent.data.length; i++) {
+
+            let classS = await prisma.class.findFirst({
+              where: {
+                campusId: formContent.data[i]['Campus Id'],
+                className: formContent.data[i]['Class'],
+              },
+              take: 1,
+            });
+
+            let section = await prisma.section.findFirst({
+              where: {
+                campusId: formContent.data[i]['Campus Id'],
+                sectionName: formContent.data[i]['Section'],
+              },
+              take: 1,
+            });
+            if (classS !== null && classS !== undefined && section !== null && section !== undefined) {
+              let studentFound = await prisma.user.findFirst({
+                where: {
+                  firstName: formContent.data[i]['First Name'],
+                  lastName: formContent.data[i]['Last Name'],
+                  gender: formContent.data[i]['Gender'],
+                  classId: classS.id,
+                  sectionId: section.id
+                },
+                take: 1,
+              });
+              //Student Exists dont update
+
+              if (studentFound !== null && studentFound !== undefined && studentFound.id !== null && studentFound.id !== undefined) {
+                existingStudents.push(studentFound.displayName);
+              } else {
+                const countOfStudentsInClassAndSection = await prisma.user.count({
+                  where: {
+                    classId: Number(classS.id),
+                    sectionId: Number(section.id),
+                    campusId: Number(formContent.data[i]['Campus Id'])
+                  },
+                });
+                let latestUserID = await prisma.user.findFirst({
+                  orderBy: {
+                    id: 'desc',
+                  },
+                  take: 1,
+                });
+                const studentID = generateIdsForParentAndStudent(latestUserID.id + 1, 'ST');
+
+                await prisma.user.create({
+                  data: {
+                    userType: UserType.student,
+                    campusId: Number(formContent.data[i]['Campus Id']),
+                    firstName: formContent.data[i]['First Name'],
+                    middleName: '',
+                    lastName: formContent.data[i]['Last Name'],
+                    displayName: formContent.data[i]['First Name'] + ' ' + formContent.data[i]['Last Name'],
+                    gender: formContent.data[i]['Gender'],
+                    dateOfBirth: moment(formContent.data[i]['DOB(DD/MM/YYYY)'], 'DD-MM-YYYY').toDate(),
+                    placeOfBirth: formContent.data[i]['Place of Birth'],
+                    homeAddress: formContent.data[i]['Address'],
+                    classId: Number(classS.id),
+                    sectionId: Number(section.id),
+                    admissionDate: moment(formContent.data[i]['Admission Date(DD/MM/YYYY)'], 'DD-MM-YYYY').toDate(),
+                    active: 1,
+                    rollNumber: Number(countOfStudentsInClassAndSection + 1) as never,
+                    idCardNumber: studentID,
+                    updated_by: formContent.currentUserId,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    created_by: formContent.currentUserId,
+                    password: encryptedPassword,
+                    parentsNames: formContent.data[i]['Father Name'] + ' , ' + formContent.data[i]['Mother Name'],
+
+                  },
+                }).then(async (ceratedStudentResponse) => {
+
+
+                  if (ceratedStudentResponse !== null && ceratedStudentResponse !== undefined && ceratedStudentResponse.id !== null) {
+
+
+                    //create Student User Permission
+                    const createUserPermission = await prisma.userPermission.create({
+                      data: {
+                        userId: Number(ceratedStudentResponse.id),
+                        permissionId: Number(5),
+                        active: 1,
+                        campusId: Number(formContent.data[i]['Campus Id']),
+                        updated_at: new Date(),
+                        updated_by: Number(formContent.currentUserId),
+                        created_at: new Date(),
+                        created_by: Number(formContent.currentUserId)
+                      },
+                    });
+
+                    //Send Email and SMS and notification
+                    //Add notification
+                    addANotification(Number(formContent.data[i]['Campus Id']),
+                      Number(ceratedStudentResponse.id),
+                      Number(formContent.currentUserId),
+                      USER_CREATED + ceratedStudentResponse.displayName);
+
+                    const newEntry = await prisma.user.findUnique({
+                      where: {
+                        id: Number(ceratedStudentResponse.id),
+                        campusId: Number(formContent.data[i]['Campus Id'])
+                      },
+                      include: {
+                        class: true,
+                        section: true,
+                        campus: {
+                          include: {
+                            institute: {
+                              include: {
+                                session: true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }).then((value) => {
+                      //console.log(value)
+                      sendSms('Admission SMS',
+                        {
+                          student_name: value.displayName,
+                          parent_1: value.parentsNames,
+                          parent_1_phone: value.mobile,
+                          parent_2: value.parentsNames,
+                          parent_2_phone: value.mobile,
+                          roll_no: value.rollNoProcessed,
+                          student_id_card: value.idCardNumber,
+                          institute_name: value.campus.institute.instituteName,
+                          institute_campus: value.campus.campusName,
+                          class_name: value.class.className,
+                          section_name: value.section.sectionName,
+                          session: value.campus.institute.session.session,
+                          campusId: value.campus.id,
+                          loggedInUserId: Number(formContent.currentUserId),
+                          studentOrTeacherId: null,
+                          classId: value.class.id,
+                          sectionId: value.section.id,
+                        },
+                        [
+                          '+919836618119'
+                        ]);
+
+                      sendEmail('Admission Email',
+                        {
+                          student_name: value.displayName,
+                          parent_1: value.parentsNames,
+                          parent_1_phone: value.mobile,
+                          parent_2: value.parentsNames,
+                          parent_2_phone: value.mobile,
+                          roll_no: value.rollNoProcessed,
+                          student_id_card: value.idCardNumber,
+                          institute_name: value.campus.institute.instituteName,
+                          institute_campus: value.campus.campusName,
+                          class_name: value.class.className,
+                          section_name: value.section.sectionName,
+                          session: value.campus.institute.session.session,
+                          campusId: value.campus.id,
+                          loggedInUserId: Number(formContent.currentUserId),
+                          studentOrTeacherId: null,
+                          classId: value.class.id,
+                          sectionId: value.section.id,
+                        },
+                        [
+                          {
+                            name: formContent.data[i]['Father Name'],
+                            email: formContent.data[i]['Father Email']
+                          },
+                          {
+                            name: formContent.data[i]['Mother Name'],
+                            email: formContent.data[i]['Mother Email']
+                          }
+                        ]
+                      );
+                    });
+
+
+                    const fatherId = generateIdsForParentAndStudent(latestUserID.id + 2, 'P1');
+                    const motherId = generateIdsForParentAndStudent(latestUserID.id + 3, 'P2');
+
+
+
+                    //Create Parents and their relationship
+                    const parent1Present = await prisma.user.findFirst({
+                      where: {
+                        CNIC: formContent.data[i]['Father Govt ID'],
+                        campusId: Number(formContent.data[i]['Campus Id'])
+                      },
+                    })
+                    if (parent1Present !== null && parent1Present !== undefined) {
+                      console.log('Parent 1 already exists --' + parent1Present.displayName + ', Hence mapping to student');
+
+                      await prisma.parentChildRelation.create({
+                        data: {
+                          parentId: parent1Present.id,
+                          childrenId: ceratedStudentResponse.id,
+                        },
+                      });
+                    } else {
+
+                      const parent1 = await prisma.user.create({
+                        data: {
+                          userType: UserType.parent,
+                          firstName: formContent.data[i]['Father Name'].split(' ').slice(0, -1).join(' '),
+                          middleName: '',
+                          lastName: formContent.data[i]['Father Name'].split(' ').slice(-1).join(' '),
+                          displayName: formContent.data[i]['Father Name'],
+                          citizenship: null,
+                          gender: Gender.Male,
+                          CNIC: formContent.data[i]['Father Govt ID'],
+                          idProofPhoto: formContent.data[i]['Father Govt ID'],
+                          email: formContent.data[i]['Father Email'],
+                          mobile: formContent.data[i]['Father Mobile'] !== null && formContent.data[i]['Father Mobile'] !== undefined
+                            && String(formContent.data[i]['Father Mobile']).startsWith('+') ? String(formContent.data[i]['Father Mobile']) : '+' + String(formContent.data[i]['Father Mobile']),
+                          parentType: ParentType.Father,
+                          idCardNumber: fatherId,
+                          updated_by: formContent.currentUserId,
+                          created_by: formContent.currentUserId,
+                          password: encryptedPassword,
+                          campusId: Number(formContent.data[i]['Campus Id']),
+                          active: 1,
+                        },
+                      });
+                      //create Parent 1 User Permission
+                      await prisma.userPermission.create({
+                        data: {
+                          userId: Number(parent1.id),
+                          permissionId: parentPermission.id,
+                          active: 1,
+                          campusId: Number(formContent.data[i]['Campus Id']),
+                          updated_at: new Date(),
+                          updated_by: Number(formContent.currentUserId),
+                          created_at: new Date(),
+                          created_by: Number(formContent.currentUserId)
+                        },
+                      });
+
+                      await prisma.parentChildRelation.create({
+                        data: {
+                          parentId: parent1.id,
+                          childrenId: ceratedStudentResponse.id,
+                        },
+                      });
+
+                      //Create Parent 1 Family Credit
+                      await prisma.familyCredit.create({
+                        data: {
+                          userId: Number(parent1.id),
+                          availableCredit: 0,
+                          campusId: Number(formContent.data[i]['Campus Id']),
+                          updated_at: new Date(),
+                          updated_by: Number(formContent.currentUserId),
+                          created_at: new Date(),
+                          created_by: Number(formContent.currentUserId)
+                        },
+                      });
+
+                      // Send account creation email for parent 1
+                      sendAccountCreationEmail(
+                        institute,
+                        Number(formContent.data[i]['Campus Id']),
+                        parent1,
+                        formContent.currentUserId,
+                        parent1.idCardNumber,
+                        password);
+
+                      //Add notification
+                      addANotification(Number(formContent.data[i]['Campus Id']),
+                        Number(parent1.id),
+                        Number(formContent.currentUserId),
+                        USER_CREATED + parent1.displayName);
+
+                    }
+
+
+
+                    const parent2Present = await prisma.user.findFirst({
+                      where: {
+                        CNIC: formContent.data[i]['Mother Govt ID'],
+                        campusId: Number(formContent.data[i]['Campus Id'])
+                      },
+                    });
+
+
+                    if (parent2Present !== null && parent2Present !== undefined) {
+
+                      console.log('Parent 2 already exists --' + parent2Present.displayName + ', Hence mapping to student');
+
+                      await prisma.parentChildRelation.create({
+                        data: {
+                          parentId: parent2Present.id,
+                          childrenId: ceratedStudentResponse.id,
+                        },
+                      });
+                    } else {
+                      const parent2 = await prisma.user.create({
+                        data: {
+                          userType: UserType.parent,
+                          firstName: formContent.data[i]['Mother Name'].split(' ').slice(0, -1).join(' '),
+                          middleName: '',
+                          lastName: formContent.data[i]['Mother Name'].split(' ').slice(-1).join(' '),
+                          displayName: formContent.data[i]['Mother Name'],
+                          citizenship: null,
+                          gender: Gender.Female,
+                          CNIC: formContent.data[i]['Mother Govt ID'],
+                          idProofPhoto: formContent.data[i]['Mother Govt ID'],
+                          email: formContent.data[i]['Mother Email'],
+                          mobile: formContent.data[i]['Mother Mobile'] !== null && formContent.data[i]['Mother Mobile'] !== undefined
+                            && String(formContent.data[i]['Mother Mobile']).startsWith('+') ? String(formContent.data[i]['Mother Mobile']) : '+' + String(formContent.data[i]['Mother Mobile']),
+                          parentType: ParentType.Mother,
+                          idCardNumber: motherId,
+                          updated_by: formContent.currentUserId,
+                          created_by: formContent.currentUserId,
+                          password: encryptedPassword,
+                          campusId: Number(formContent.data[i]['Campus Id']),
+                          active: 1,
+                        },
+                      });
+                      //create Parent 2 User Permission
+                      await prisma.userPermission.create({
+                        data: {
+                          userId: Number(parent2.id),
+                          permissionId: parentPermission.id,
+                          active: 1,
+                          campusId: Number(formContent.data[i]['Campus Id']),
+                          updated_at: new Date(),
+                          updated_by: Number(formContent.currentUserId),
+                          created_at: new Date(),
+                          created_by: Number(formContent.currentUserId)
+                        },
+                      });
+                      await prisma.parentChildRelation.create({
+                        data: {
+                          parentId: parent2.id,
+                          childrenId: ceratedStudentResponse.id,
+                        },
+                      });
+
+                      // Send account creation email for parent 1
+                      sendAccountCreationEmail(
+                        institute,
+                        Number(formContent.data[i]['Campus Id']),
+                        parent2,
+                        formContent.currentUserId,
+                        parent2.idCardNumber,
+                        password);
+
+                      //Add notification
+                      addANotification(Number(formContent.data[i]['Campus Id']),
+                        Number(parent2.id),
+                        Number(formContent.currentUserId),
+                        USER_CREATED + parent2.displayName);
+
+
+                    }
+
+                    await prisma.admissionRecord.create({
+                      data: {
+                        userId: ceratedStudentResponse.id,
+                        campusId: Number(formContent.data[i]['Campus Id']),
+                        admissionComments: 'Student Admitted as Bulk Import',
+                        rollNumber: String(countOfStudentsInClassAndSection + 1) as never,
+                        active: 1,
+                        ongoingSessionId: institute.sessionId,
+                        updated_by: formContent.currentUserId,
+                        created_by: formContent.currentUserId,
+                      },
+                    });
+
+                  } else {
+                    return res.json({ status: false, data: null, message: 'Failed to add student. Try later.' });
+                  }
+                });
+              }
+
+
+            } else {
+              return res.json({ data: null, status: false, message: `Class ${formContent.data[i]['Class']} or Section ${formContent.data[i]['Section']} not found. Please correct before uploading.` });
+            }
+          }
+        } else {
+          return res.json({ data: null, status: false, message: 'No data to upload' });
+        }
+
+      }
+      return res.json({ data: null, status: true, message: 'Bulk Student Admission Completed' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: true, data: null })
+    }
+  }
+
+
   public async updateStudent(req: Request, res: Response) {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
@@ -514,6 +933,12 @@ export class StudentController {
 
   public async transferStudentCampus(req: Request, res: Response) {
     const input: any = req.body;
+    const institute = await prisma.institute.findFirst({
+      include: {
+        session: true,
+      }
+    });
+
 
     const student = await prisma.user.findUnique({
       where: {
@@ -541,7 +966,14 @@ export class StudentController {
           updated_at: new Date()
         },
         include: {
-          campus: true, parent: true,
+          campus: true,
+          class: true,
+          section: true,
+          parent: {
+            include: {
+              parent: true
+            }
+          },
         }
       }).then((studentNew) => {
         //Add notification
@@ -551,21 +983,68 @@ export class StudentController {
           `Student ${studentNew.displayName} has been transferred to ${studentNew.campus.campusName}`);
 
         if (studentNew.parent !== null && studentNew.parent !== undefined && studentNew.parent.length > 0) {
-          studentNew.parent.forEach((eachParent: any) => {
-            addANotification(
-              Number(input.form.campusIdTo),
-              Number(eachParent.parentId),
-              Number(input.form.updated_by),
+          studentNew.parent.forEach((eachParent) => {
+            
+              addANotification(Number(input.form.campusIdTo), Number(eachParent.parentId), Number(input.form.updated_by),
               `Student ${studentNew.displayName} has been transferred to ${studentNew.campus.campusName}`);
+              
+              sendSms('Student Transfer Complete',
+                {
+                  campusId: Number(input.form.campusIdTo),
+                  student_name: studentNew.displayName,
+                  parent_1: eachParent.parent.displayName,
+                  parent_1_phone: eachParent.parent.mobile,
+                  parent_2: eachParent.parent.displayName,
+                  parent_2_phone: eachParent.parent.mobile,
+                  roll_no: studentNew.rollNoProcessed,
+                  student_id_card: studentNew.idCardNumber,
+                  institute_name: institute.instituteName,
+                  institute_campus: studentNew.campus.campusName,
+                  class_name: studentNew.class.className,
+                  section_name: studentNew.section.sectionName,
+                  session: institute.session.session,
+                  loggedInUserId: Number(input.form.updated_by),
+                  studentOrTeacherId: null,
+                  classId: studentNew.class.id,
+                  sectionId: studentNew.class.id,
+                },
+                [
+                  eachParent.parent.mobile
+                ]);
+
+              sendEmail('Student Transfer Complete',
+                {
+                  campusId: Number(input.form.campusIdTo),
+                  student_name: studentNew.displayName,
+                  parent_1: eachParent.parent.displayName,
+                  parent_1_phone: eachParent.parent.mobile,
+                  parent_2: eachParent.parent.displayName,
+                  parent_2_phone: eachParent.parent.mobile,
+                  roll_no: studentNew.rollNoProcessed,
+                  student_id_card: studentNew.idCardNumber,
+                  institute_name: institute.instituteName,
+                  institute_campus: studentNew.campus.campusName,
+                  class_name: studentNew.class.className,
+                  section_name: studentNew.section.sectionName,
+                  session: institute.session.session,
+                  loggedInUserId: Number(input.form.updated_by),
+                  studentOrTeacherId: null,
+                  classId: studentNew.class.id,
+                  sectionId: studentNew.class.id,
+                },
+                [
+                  {
+                    name: eachParent.parent.displayName,
+                    email: eachParent.parent.email
+                  },
+                ]
+              );  
           });
         }
 
       });
 
-
-
       return res.json({ status: true, data: updatedstudent, message: 'Student Transfer Successful' });
-
     } catch (error) {
       console.error(error);
       return res.json({ status: false, data: student, message: 'Failed to transfer student' });
@@ -608,7 +1087,7 @@ export class StudentController {
             section: true
           }
         }).then((studentNew) => {
-          
+
           //Add notification
           addANotification(Number(input.form.campusId),
             Number(studentNew.id),
@@ -648,9 +1127,9 @@ export class StudentController {
           },
         });
 
-        if(studentsToPromote!==null && studentsToPromote!==undefined && studentsToPromote.length>0){
+        if (studentsToPromote !== null && studentsToPromote !== undefined && studentsToPromote.length > 0) {
           studentsToPromote.forEach(async (eachStudent: any) => {
-            
+
             await prisma.user.update({
               where: {
                 id: eachStudent.id
@@ -661,7 +1140,7 @@ export class StudentController {
                 updated_by: Number(input.form.updated_by),
                 updated_at: new Date()
               },
-              include:{
+              include: {
                 campus: true,
                 class: true,
                 section: true,
@@ -952,27 +1431,27 @@ export class StudentController {
           }
         }
       }).then(async (value) => {
-        
+
         const notifyingStaff = await prisma.user.findMany({
           where: {
             active: 1,
             userType: {
-              in: [UserType.admin,UserType.staff,UserType.accountant,]
+              in: [UserType.admin, UserType.staff, UserType.accountant,]
             },
             campusId: Number(studentWithParents.form.campusId)
           },
         });
 
-        if(notifyingStaff!==null && notifyingStaff!==undefined && notifyingStaff.length>0){
+        if (notifyingStaff !== null && notifyingStaff !== undefined && notifyingStaff.length > 0) {
           notifyingStaff.forEach(async (eachStaff: any) => {
             addANotification(Number(studentWithParents.form.campusId),
-            Number(eachStaff.id),
+              Number(eachStaff.id),
               Number(studentWithParents.form.created_by),
-                `A new admission enquiry has been created by ${value.parentFullName} for ${value.displayName} with id ${value.id}`);
+              `A new admission enquiry has been created by ${value.parentFullName} for ${value.displayName} with id ${value.id}`);
 
           });
         }
-        
+
 
         sendSms('Admission Enquiry',
           {
@@ -1080,15 +1559,15 @@ export class StudentController {
             const notifyingStaff = await prisma.user.findUnique({
               where: {
                 active: 1,
-                id:Number(studentWithParents.form.userId),
+                id: Number(studentWithParents.form.userId),
                 campusId: Number(studentWithParents.form.campusId)
               },
             });
-    
+
             addANotification(Number(studentWithParents.form.campusId),
-                Number(notifyingStaff.id),
-                  Number(studentWithParents.form.created_by),
-                    `A new admission enquiry has been approved by ${notifyingStaff.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
+              Number(notifyingStaff.id),
+              Number(studentWithParents.form.created_by),
+              `A new admission enquiry has been approved by ${notifyingStaff.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
 
 
             const newEntry = await prisma.campus.findUnique({
@@ -1103,8 +1582,8 @@ export class StudentController {
                 }
               }
             }).then((value) => {
-              
-              
+
+
               sendSms('Admission Enquiry Processed',
                 {
                   student_name: admissionQuery.displayName,
@@ -1191,16 +1670,16 @@ export class StudentController {
         const notifyingStaff = await prisma.user.findUnique({
           where: {
             active: 1,
-            id:Number(studentWithParents.form.userId),
+            id: Number(studentWithParents.form.userId),
             campusId: Number(studentWithParents.form.campusId)
           },
         });
 
 
         addANotification(Number(studentWithParents.form.campusId),
-        Number(notifyingStaff.id),
+          Number(notifyingStaff.id),
           Number(studentWithParents.form.created_by),
-            `A admission enquiry is being processed by ${notifyingStaff.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
+          `A admission enquiry is being processed by ${notifyingStaff.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
 
 
 
@@ -1314,18 +1793,18 @@ export class StudentController {
           updated_at: new Date()
         }
       }).then(async (admissionQuery) => {
-        
+
         const notifyingStaff = await prisma.user.findUnique({
           where: {
             active: 1,
-            id:Number(userId),
+            id: Number(userId),
             campusId: Number(campusId)
           },
-        }).then((res)=>{
+        }).then((res) => {
           addANotification(Number(campusId),
-          Number(userId),
             Number(userId),
-              `A admission enquiry is rejected by ${res.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
+            Number(userId),
+            `A admission enquiry is rejected by ${res.displayName} for ${admissionQuery.displayName} with id ${admissionQuery.id}`);
         });
 
 
@@ -1341,8 +1820,8 @@ export class StudentController {
             }
           }
         }).then(async (value) => {
-          
-              
+
+
           sendSms('Admission Enquiry Processed',
             {
               student_name: admissionQuery.displayName,
@@ -1473,7 +1952,7 @@ export class StudentController {
     const sectionId = Number(req.params.sectionId);
     const userId = Number(req.params.userId);
     let ratingCalc = 0;
-    
+
     const rating = await prisma.studentRatings.findMany({
       where: {
         campusId: Number(campusId),
@@ -1481,28 +1960,28 @@ export class StudentController {
         classId: Number(classId),
         sectionId: Number(sectionId),
       },
-      orderBy:{
+      orderBy: {
         updated_at: 'desc'
       },
       include: {
         ratingFromUser: true
       },
     });
-    if(rating!==null && rating!==undefined && rating.length>0){
+    if (rating !== null && rating !== undefined && rating.length > 0) {
       let total = 0;
       rating.forEach((each: any) => {
         total = total + each.rating;
       });
-      ratingCalc = total/(rating.length);
+      ratingCalc = total / (rating.length);
     }
-    return res.json({ status: true, data: {rating: rating, ratingCalc: ratingCalc}, message: 'Ratings fetched' });
+    return res.json({ status: true, data: { rating: rating, ratingCalc: ratingCalc }, message: 'Ratings fetched' });
   }
 
 
   public async saveStudentRating(req: Request, res: Response) {
     const input: any = req.body;
     console.log(input)
-    
+
     try {
       await prisma.studentRatings.findFirst({
         where: {
@@ -1512,49 +1991,49 @@ export class StudentController {
           sectionId: Number(input.form.sectionId),
           ratingFrom: Number(input.form.currentUserId),
         },
-      }).then(async (rating)=>{
-          if(rating!==null && rating!==undefined){
-            
-            await prisma.studentRatings.update({
-              where:{
-                id:rating.id,
-                campusId: Number(input.form.campusId),
-              },
-              data: {
-                rating:Number(input.form.rating),
-                previousRating:rating.rating,
-                previousComments:rating.comments,
-                comments:input.form.comment,
-                updated_by: Number(input.form.currentUserId),
-                updated_at: new Date()
-              },
-            });
-            return res.json({ status: true, data: null, message: 'Feedback updated' });
-          }else{
-            await prisma.studentRatings.create({
-              data: {
-                campusId: Number(input.form.campusId),
-                userId: Number(input.form.studentId),
-                classId: Number(input.form.classId),
-                sectionId: Number(input.form.sectionId),
-                ratingFrom: Number(input.form.currentUserId),
-                rating:Number(input.form.rating),
-                previousRating:0,
-                previousComments:'',
-                comments:input.form.comment,
-                created_by: Number(input.form.currentUserId),
-                created_at: new Date(),
-                updated_by: Number(input.form.currentUserId),
-                updated_at: new Date()
-              },
-            });
+      }).then(async (rating) => {
+        if (rating !== null && rating !== undefined) {
 
-            return res.json({ status: true, data: null, message: 'Feedback added' });
-          }
+          await prisma.studentRatings.update({
+            where: {
+              id: rating.id,
+              campusId: Number(input.form.campusId),
+            },
+            data: {
+              rating: Number(input.form.rating),
+              previousRating: rating.rating,
+              previousComments: rating.comments,
+              comments: input.form.comment,
+              updated_by: Number(input.form.currentUserId),
+              updated_at: new Date()
+            },
+          });
+          return res.json({ status: true, data: null, message: 'Feedback updated' });
+        } else {
+          await prisma.studentRatings.create({
+            data: {
+              campusId: Number(input.form.campusId),
+              userId: Number(input.form.studentId),
+              classId: Number(input.form.classId),
+              sectionId: Number(input.form.sectionId),
+              ratingFrom: Number(input.form.currentUserId),
+              rating: Number(input.form.rating),
+              previousRating: 0,
+              previousComments: '',
+              comments: input.form.comment,
+              created_by: Number(input.form.currentUserId),
+              created_at: new Date(),
+              updated_by: Number(input.form.currentUserId),
+              updated_at: new Date()
+            },
+          });
+
+          return res.json({ status: true, data: null, message: 'Feedback added' });
+        }
       });
 
-      
-      
+
+
 
     } catch (error) {
       console.error(error);
@@ -1562,139 +2041,129 @@ export class StudentController {
     }
   }
 
-  // public async createAdmissionInquiry(req: Request, res: Response) {
 
-  //   const studentWithParents: any = req.body;
-  //   const middleName = studentWithParents.form.middleName !== null && studentWithParents.form.middleName !== undefined ? studentWithParents.form.middleName : '';
+  public async getStudentsByStudentPatialNameOrId(req: Request, res: Response) {
 
-  //   let newInquiry;
+    const parentDetails: any = req.body;
+    console.log(parentDetails);
 
-  //   try {
+    let students = [];
+    let ids: any[] = [];
+    let idsAsArray = [];
+    try {
 
-  //     newInquiry = await prisma.admissionRequestOrInquiries.create({
-  //       data: {
-  //         isFromApp: studentWithParents.form.isFromApp === undefined ? 0 : 1,
-  //         firstName: studentWithParents.form.firstName,
-  //         middleName: middleName,
-  //         lastName: studentWithParents.form.lastName,
-  //         displayName: studentWithParents.form.firstName + ' ' + middleName + ' ' + studentWithParents.form.lastName,
-  //         gender: studentWithParents.form.gender,
-  //         dateOfBirth: moment(studentWithParents.form.dateOfBirth, 'DD-MM-YYYY').toDate(),
-  //         placeOfBirth: studentWithParents.form.placeOfBirth,
-  //         location: studentWithParents.form.location,
-  //         classId: Number(studentWithParents.form.classId),
-  //         campusId: Number(studentWithParents.form.campusId),
-  //         previousSchool: studentWithParents.form.previousSchool,
-  //         admissionDate: moment(studentWithParents.form.admissionDate, 'DD-MM-YYYY').toDate(),
-  //         parentFullName: studentWithParents.form.parentFullName,
-  //         active: 1,
-  //         IDorCNIC: studentWithParents.form.IDorCNIC,
-  //         email: studentWithParents.form.email,
-  //         mobile: studentWithParents.form.mobile,
-  //         comments: studentWithParents.form.comments,
-  //         updated_by: Number(studentWithParents.form.updated_by),
-  //         created_by: Number(studentWithParents.form.created_by),
-  //         created_at: new Date(),
-  //         updated_at: new Date()
-  //       },
-  //       include: {
-  //         class: true,
-  //         campus: {
-  //           include: {
-  //             institute: {
-  //               include: {
-  //                 session: true
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }).then(async (value) => {
-        
-  //       const notifyingStaff = await prisma.user.findMany({
-  //         where: {
-  //           active: 1,
-  //           userType: {
-  //             in: [UserType.admin,UserType.staff,UserType.accountant,]
-  //           },
-  //           campusId: Number(studentWithParents.form.campusId)
-  //         },
-  //       });
+      if (parentDetails !== null && parentDetails !== undefined && parentDetails.id !== null && parentDetails.id !== undefined) {
+        students = await prisma.user.findMany({
+          where: {
+            campusId: Number(parentDetails.campusId),
+            userType: UserType.student,
+            id: {
+              in: [parentDetails.id]
+            }
+          },
+          include: {
+            campus: true,
+            Attendance: {
+              include: {
+                class: true,
+                section: true
+              }
+            },
+            class: true,
+            section: true,
+            MYAALInvoices: {
+              include: {
+                class: true,
+                section: true,
+              }
+            },
+            Leaves: {
+              include: {
+                LeaveDates: true
+              }
+            },
+            StudentFees: {
+              include: {
+                feePlan: true
+              }
+            },
+            Result: {
+              include: {
+                exam: true,
+                class: true,
+                section: true,
+                session: true,
+                gradeDivision: true
+              }
+            }
+          },
+        });
+      } else if (parentDetails !== null && parentDetails !== undefined && parentDetails.partialName !== null && parentDetails.partialName !== undefined) {
+        ids = await prisma.$queryRawUnsafe(`SELECT id from myskool.User where UPPER(displayName) like ('%${parentDetails.partialName.toUpperCase()}%') and userType='student'`);
+        console.log(ids);
+        if (ids !== null && ids !== undefined && ids.length > 0) {
+          console.log(ids);
+          for (let i = 0; i < ids.length; i++) {
+            idsAsArray.push(ids[i].id);
+          }
 
-  //       if(notifyingStaff!==null && notifyingStaff!==undefined && notifyingStaff.length>0){
-  //         notifyingStaff.forEach(async (eachStaff: any) => {
-  //           addANotification(Number(studentWithParents.form.campusId),
-  //           Number(eachStaff.id),
-  //             Number(studentWithParents.form.created_by),
-  //               `A new admission enquiry has been created by ${value.parentFullName} for ${value.displayName} with id ${value.id}`);
+          students = await prisma.user.findMany({
+            where: {
+              campusId: Number(parentDetails.campusId),
+              userType: UserType.student,
+              id: {
+                in: idsAsArray
+              }
+            },
+            include: {
+              campus: true,
+              Attendance: {
+                include: {
+                  class: true,
+                  section: true
+                }
+              },
+              class: true,
+              section: true,
+              MYAALInvoices: {
+                include: {
+                  class: true,
+                  section: true,
+                }
+              },
+              Leaves: {
+                include: {
+                  LeaveDates: true
+                }
+              },
+              StudentFees: {
+                include: {
+                  feePlan: true
+                }
+              },
+              Result: {
+                include: {
+                  exam: true,
+                  class: true,
+                  section: true,
+                  session: true,
+                  gradeDivision: true
+                }
+              }
+            },
+          });
+        }
 
-  //         });
-  //       }
-        
-
-  //       sendSms('Admission Enquiry',
-  //         {
-  //           student_name: value.displayName,
-  //           parent_1: value.parentFullName,
-  //           parent_1_phone: value.mobile,
-  //           parent_2: value.parentFullName,
-  //           parent_2_phone: value.mobile,
-  //           roll_no: 'N/A',
-  //           student_id_card: 'N/A',
-  //           institute_name: value.campus.institute.instituteName,
-  //           institute_campus: value.campus.campusName,
-  //           class_name: value.class.className,
-  //           section_name: 'Not Assigned',
-  //           session: value.campus.institute.session.session,
-  //           campusId: value.campus.id,
-  //           loggedInUserId: Number(studentWithParents.form.created_by),
-  //           studentOrTeacherId: null,
-  //           classId: value.class.id,
-  //           sectionId: null,
-  //         },
-  //         [
-  //           '+919836618119'
-  //         ]);
-
-  //       sendEmail('Admission Enquiry',
-  //         {
-  //           student_name: value.displayName,
-  //           parent_1: value.parentFullName,
-  //           parent_1_phone: value.mobile,
-  //           parent_2: value.parentFullName,
-  //           parent_2_phone: value.mobile,
-  //           roll_no: 'N/A',
-  //           student_id_card: 'N/A',
-  //           institute_name: value.campus.institute.instituteName,
-  //           institute_campus: value.campus.campusName,
-  //           class_name: value.class.className,
-  //           section_name: 'Not Assigned',
-  //           session: value.campus.institute.session.session,
-  //           campusId: value.campus.id,
-  //           loggedInUserId: Number(studentWithParents.form.created_by),
-  //           studentOrTeacherId: null,
-  //           classId: value.class.id,
-  //           sectionId: null,
-  //         },
-  //         [
-  //           {
-  //             name: value.parentFullName,
-  //             email: studentWithParents.form.email
-  //           }
-  //         ]
-  //       );
-  //     });
+      }
 
 
+      return res.json({ status: true, data: students, message: 'Search completed' });
+    } catch (err) {
+      console.log(err);
+      return res.json({ status: false, data: null, message: 'Failed to fetch students. Try later.' });
+    }
+  }
 
-  //     return res.json({ status: true, data: newInquiry, message: 'Enquiry added' });
-
-  //   } catch (err) {
-  //     console.log(err);
-  //     return res.json({ status: false, data: null, message: 'Failed to add. Try later.' });
-  //   }
-
-  // }
 
 
 }

@@ -3,6 +3,7 @@ import { studentControllerInstance } from '../controllers';
 
 const StudentRouter = Router();
 StudentRouter.post("/createStudent", studentControllerInstance.createStudent);
+StudentRouter.post("/bulkLoadStudents", studentControllerInstance.bulkLoadStudents);
 StudentRouter.post("/transferStudentCampus", studentControllerInstance.transferStudentCampus);
 StudentRouter.post("/promoteStudent", studentControllerInstance.promoteStudent);
 StudentRouter.get("/getAllStudents/:campusId", studentControllerInstance.getAllStudents);
@@ -19,4 +20,5 @@ StudentRouter.get("/fetchAdmissionFormStats/:campusId", studentControllerInstanc
 StudentRouter.post("/updateStudent/:campusId/:id", studentControllerInstance.updateStudent);
 StudentRouter.get("/getStudingRatingAndComments/:campusId/:classId/:sectionId/:userId", studentControllerInstance.getStudingRatingAndComments);
 StudentRouter.post("/saveStudentRating", studentControllerInstance.saveStudentRating);
+StudentRouter.post("/getStudentsByStudentPatialNameOrId", studentControllerInstance.getStudentsByStudentPatialNameOrId);
 export default StudentRouter;

@@ -4,10 +4,10 @@ import { EmailTemplate, FileType, Holidays, MessageType, TimeTable, User, UserTy
 import jwt from 'jsonwebtoken';
 import { addANotification, buildTheme, getBlankMonthWiseHolidayList, getCurrencySymbol, getIsoDay, processTimeTableJsonData } from "../../../../../../shared/helpers/utils/generic.utils";
 import moment from "moment";
-import { changeAccountResetStatus, getEmailTemplateByName, sendEmailCommon } from "../../../../../../shared/helpers/notifications/notifications";
+import { changeAccountResetStatus, getEmailTemplateByName, sendEmail, sendEmailCommon, sendSms } from "../../../../../../shared/helpers/notifications/notifications";
 import resetPasswordTemplate from "../../../../../../emails/reset-password";
 import { v4 as uuidv4 } from 'uuid';
-import { buildMessage, LEAVE_REQUEST_APP_REJ, LEAVE_REQUESTED, PRODUCT_CATEGORY_ADDED, UPDATE_MASTER_NOTIFICATION, USER_CREATED } from "../../../../../../shared/constants/notification.constants";
+import { buildMessage, LEAVE_REQUEST_APP_REJ, LEAVE_REQUESTED, NEW_HOMEWORK_ADDED, PRODUCT_CATEGORY_ADDED, UPDATE_MASTER_NOTIFICATION, USER_CREATED } from "../../../../../../shared/constants/notification.constants";
 const fs = require('fs');
 
 export class MasterController {
@@ -818,7 +818,11 @@ export class MasterController {
       where: {
         campusId: campusId
       },
+      orderBy: {
+        name: 'asc'
+      }
     });
+    
     return res.json({ status: true, data: smsTemplates, message: 'Templates retrieved' });
   }
 
@@ -865,6 +869,9 @@ export class MasterController {
       where: {
         campusId: campusId
       },
+      orderBy: {
+        name: 'asc'
+      }
     });
     return res.json({ status: true, data: emailTemplate, message: 'Templates retrieved' });
   }
@@ -916,6 +923,9 @@ export class MasterController {
               lte: moment(formvalues.form.endDate, 'DD-MM-YYYY').toDate(),
             }
           },
+          orderBy: {
+            created_at: 'desc'
+          }
         });
       }
       return res.json({ data: history, status: true, message: 'History fetched' });
@@ -941,6 +951,9 @@ export class MasterController {
               lte: moment(formvalues.form.endDate, 'DD-MM-YYYY').toDate(),
             }
           },
+          orderBy: {
+            created_at: 'desc'
+          }
         });
       }
       return res.json({ data: history, status: true, message: 'History fetched' });
@@ -1361,6 +1374,117 @@ export class MasterController {
             updated_by: homeworkform.form.created_by,
             updated_at: new Date()
           },
+        }).then(async (homeworkItem)=>{
+          const institute = await prisma.institute.findFirst({
+            include: {
+              session: true,
+            }
+          });
+
+
+          const studentsInClass = await prisma.user.findMany({
+            where: {
+              active: 1,
+              userType: UserType.student,
+              campusId: homeworkform.form.campusId,
+              classId: homeworkform.form.classId,
+              sectionId: homeworkform.form.sectionId,
+            },
+            include:{
+              campus: true,
+              class:true,
+              section: true,
+              parent: {
+                include: {
+                  parent: true
+                }
+              }
+            }
+          });
+
+          if(studentsInClass!==null && studentsInClass!==undefined && studentsInClass.length>0){
+            for(let i = 0;i<studentsInClass.length;i++){
+              //add a notification for student profile
+              addANotification(Number(homeworkform.form.campusId),
+                      Number(studentsInClass[i].id),
+                      Number(homeworkform.form.created_by),
+                      buildMessage(NEW_HOMEWORK_ADDED,moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toString()));
+
+
+
+              if(studentsInClass[i].parent!==null && studentsInClass[i].parent!==undefined && studentsInClass[i].parent.length>0){
+                for(let j = 0;j<studentsInClass[i].parent.length;j++){
+                  if(studentsInClass[i].parent[j].parent!==null && studentsInClass[i].parent[j].parent!==undefined &&
+                    studentsInClass[i].parent[j].parent.email!==null && studentsInClass[i].parent[j].parent.email!==undefined
+                  ){
+
+                     //add a notification for Parent profile
+                    addANotification(Number(homeworkform.form.campusId),
+                      Number(studentsInClass[i].parent[j].parent.id),
+                      Number(homeworkform.form.created_by),
+                      buildMessage(NEW_HOMEWORK_ADDED,moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toString()));
+
+
+                    sendSms('Homework SMS',
+                      {
+                        campusId: homeworkform.form.campusId,
+                        student_name: studentsInClass[i].displayName,
+                        parent_1: studentsInClass[i].parent[j].parent.displayName,
+                        parent_1_phone: studentsInClass[i].parent[j].parent.mobile,
+                        parent_2: studentsInClass[i].parent[j].parent.displayName,
+                        parent_2_phone: studentsInClass[i].parent[j].parent.mobile,
+                        roll_no: studentsInClass[i].rollNoProcessed,
+                        student_id_card: studentsInClass[i].idCardNumber,
+                        institute_name: institute.instituteName,
+                        institute_campus: studentsInClass[i].campus.campusName,
+                        class_name: studentsInClass[i].class.className,
+                        section_name: studentsInClass[i].section.sectionName,
+                        session: institute.session.session,
+                        loggedInUserId: Number(homeworkform.form.created_by),
+                        studentOrTeacherId: null,
+                        classId: homeworkform.form.classId,
+                        sectionId: homeworkform.form.sectionId,
+                        diary:  homeworkform.form.homeworkData.substring(0,8)+'...'
+                      },
+                      [
+                        studentsInClass[i].parent[j].parent.mobile
+                      ]);
+      
+                    sendEmail('Homework Email',
+                      {
+                        student_name: studentsInClass[i].displayName,
+                        parent_1: studentsInClass[i].parent[j].parent.displayName,
+                        parent_1_phone: studentsInClass[i].parent[j].parent.mobile,
+                        parent_2: studentsInClass[i].parent[j].parent.displayName,
+                        parent_2_phone: studentsInClass[i].parent[j].parent.mobile,
+                        roll_no: studentsInClass[i].rollNoProcessed,
+                        student_id_card: studentsInClass[i].idCardNumber,
+                        institute_name: institute.instituteName,
+                        institute_campus: studentsInClass[i].campus.campusName,
+                        class_name: studentsInClass[i].class.className,
+                        section_name: studentsInClass[i].section.sectionName,
+                        session: institute.session.session,
+                        campusId: homeworkform.form.campusId,
+                        loggedInUserId: Number(homeworkform.form.created_by),
+                        studentOrTeacherId: null,
+                        classId: homeworkform.form.classId,
+                        sectionId: homeworkform.form.sectionId,
+                        diary:  homeworkform.form.homeworkData.substring(0,8)+'...'
+                      },
+                      [
+                        {
+                          name: studentsInClass[i].parent[j].parent.displayName,
+                          email: studentsInClass[i].parent[j].parent.email
+                        },
+                      ]
+                    );
+                  }
+                }
+              }
+
+             
+            }
+          }
         });
       }
       return res.json({ data: null, status: true, message: 'Engagement added' });
@@ -1910,6 +2034,11 @@ export class MasterController {
           in: leaveForm.form.userType === 'student' ? [UserType.student] : [UserType.staff, UserType.accountant, UserType.admin]
         },
       },
+      orderBy: [
+        {
+          updated_at: 'desc',
+        },
+      ],
       include: {
         campus: true,
         LeaveDates: {
@@ -1951,6 +2080,97 @@ export class MasterController {
         leaves.id + '',
         leaveForm.status,
         leaveForm.rejectApproveReason));
+  
+    let fetchedLeave = await prisma.leaves.findUnique({
+        where: {
+          id: Number(leaveForm.id),
+          campusId: Number(leaveForm.campusId),
+        },
+        include:{
+          user: true,
+          LeaveDates: {
+            orderBy: [
+              {
+                date: 'asc',
+              },
+            ],
+          },
+        }
+      }).then(async (fetchedLeave)=> {
+        const institute = await prisma.institute.findFirst({
+          include: {
+            session: true,
+          }
+        });
+        const updater = await prisma.user.findUnique({
+          where: {
+            id: Number(leaveForm.updatedBy),
+            campusId: Number(leaveForm.campusId),
+          }
+        });
+        sendSms('Leave Request',
+          {
+            campusId: Number(leaveForm.campusId),
+            student_name: fetchedLeave.user.displayName,
+            parent_1: '',
+            parent_1_phone: '',
+            parent_2: '',
+            parent_2_phone: '',
+            roll_no: fetchedLeave.user.rollNoProcessed,
+            student_id_card: fetchedLeave.user.idCardNumber,
+            institute_name: institute.instituteName,
+            institute_campus: '',
+            class_name: '',
+            section_name: '',
+            session: institute.session.session,
+            loggedInUserId: Number(leaveForm.updatedBy),
+            studentOrTeacherId: null,
+            classId: -1,
+            sectionId: -1,
+            student_leave_start: fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length>0 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :'',
+            student_leave_end:fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length===1 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :
+                              fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length>1 ? moment(fetchedLeave.LeaveDates[fetchedLeave.LeaveDates.length-1].date).format('DD-MM-YYYY') :'',
+            student_leave_approved_by:updater.displayName,
+            student_leave_status:leaveForm.status === 'Approve' ?'approved' :'rejected'
+          },
+          [
+            fetchedLeave.user.mobile
+          ]);
+
+        sendEmail('Leave Request',
+          {
+            campusId: Number(leaveForm.campusId),
+            student_name: fetchedLeave.user.displayName,
+            parent_1: '',
+            parent_1_phone: '',
+            parent_2: '',
+            parent_2_phone: '',
+            roll_no: fetchedLeave.user.rollNoProcessed,
+            student_id_card: fetchedLeave.user.idCardNumber,
+            institute_name: institute.instituteName,
+            institute_campus: '',
+            class_name: '',
+            section_name: '',
+            session: institute.session.session,
+            loggedInUserId: Number(leaveForm.updatedBy),
+            studentOrTeacherId: null,
+            classId: -1,
+            sectionId: -1,
+            student_leave_start: fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length>0 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :'',
+            student_leave_end:fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length===1 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :
+                              fetchedLeave.LeaveDates!==null && fetchedLeave.LeaveDates!==undefined && fetchedLeave.LeaveDates.length>1 ? moment(fetchedLeave.LeaveDates[fetchedLeave.LeaveDates.length-1].date).format('DD-MM-YYYY') :'',
+            student_leave_approved_by:updater.displayName,
+            student_leave_status:leaveForm.status === 'Approve' ?'approved' :'rejected'
+          },
+          [
+            {
+              name: fetchedLeave.user.displayName,
+              email: fetchedLeave.user.email
+            },
+          ]
+        );
+      });
+        
 
     return res.json({ status: true, data: leaves, message: leaveForm.status === 'Approve' ? 'Leave Request Approved' : 'Leave Request Rejected' });
   }

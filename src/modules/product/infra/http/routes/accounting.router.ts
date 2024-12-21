@@ -36,6 +36,7 @@ AccountingRouter.delete("/deleteExpense/:campusId/:id/:userId", accountingContro
 
 
 AccountingRouter.post("/addProduct", accountingControllerInstance.addProduct);
+AccountingRouter.post("/bulkLoadProduct", accountingControllerInstance.bulkLoadProduct);
 AccountingRouter.delete("/deleteProduct/:campusId/:id/:userId", accountingControllerInstance.deleteProduct);
 AccountingRouter.post("/changeProductStatus", accountingControllerInstance.changeProductStatus);
 AccountingRouter.post("/recordACashPayment", accountingControllerInstance.recordACashPayment);

@@ -208,8 +208,15 @@ export class ClassSectionController {
       },
       include: {
         Section: {
+          where:{
+              active: 1
+          },
           include: {
-            subjects: true,
+            subjects: {
+              where:{
+                active: 1
+              }
+            },
             TeachersInSection:{
               include:{
                 teacher: true
@@ -218,7 +225,11 @@ export class ClassSectionController {
           }
         },
         campus: true,
-        User: true,
+        User: {
+          where:{
+            active: 1
+          }
+        },
       },
     });
 
@@ -483,8 +494,16 @@ export class ClassSectionController {
         include: {
           class: true,
           campus: true,
-          User: true,
-          subjects: true,
+          User: {
+            where:{
+              active: 1
+            }
+          },
+          subjects: {
+            where:{
+              active: 1
+            }
+          },
           TeachersInSection: {
             include:{
               teacher: true
@@ -502,8 +521,16 @@ export class ClassSectionController {
         include: {
           class: true,
           campus: true,
-          User: true,
-          subjects: true,
+          User: {
+            where:{
+              active: 1
+            }
+          },
+          subjects: {
+            where:{
+              active: 1
+            }
+          },
           TeachersInSection: {
             include:{
               teacher: true
