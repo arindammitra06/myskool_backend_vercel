@@ -290,6 +290,7 @@ model Campus {
   Exam                        Exam[]
   SubjectMarksTimeTable       SubjectMarksTimeTable[]
   Result                      Result[]
+  RequestParentAccount        RequestParentAccount[]
 }
 
 model DefaultImageSetting {
@@ -485,6 +486,7 @@ model User {
   StudentToEngagements  StudentToEngagements[]
   SubjectMarksTimeTable SubjectMarksTimeTable[]
   Result                Result[]
+  RequestParentAccount  RequestParentAccount[]
 }
 
 model ParentChildRelation {
@@ -800,18 +802,18 @@ model EmailTemplate {
 }
 
 model EmailHistory {
-  id              Int           @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   campusId        Int
-  campus          Campus        @relation(fields: [campusId], references: [id])
-  active          Int           @default(1) @db.TinyInt
-  emailTemplateId Int
-  emailTemplate   EmailTemplate @relation(fields: [emailTemplateId], references: [id])
-  name            String?       @db.VarChar(255)
-  tos             String?       @db.VarChar(255)
-  subject         String?       @db.VarChar(255)
-  body            String?       @db.LongText
+  campus          Campus         @relation(fields: [campusId], references: [id])
+  active          Int            @default(1) @db.TinyInt
+  emailTemplateId Int?
+  emailTemplate   EmailTemplate? @relation(fields: [emailTemplateId], references: [id])
+  name            String?        @db.VarChar(255)
+  tos             String?        @db.VarChar(255)
+  subject         String?        @db.VarChar(255)
+  body            String?        @db.LongText
   created_by      Int
-  created_at      DateTime      @default(now()) @db.DateTime(6)
+  created_at      DateTime       @default(now()) @db.DateTime(6)
 }
 
 model SMSTemplate {
@@ -1483,4 +1485,23 @@ model Result {
   updated_by      Int
   created_at      DateTime       @default(now()) @db.DateTime(6)
   updated_at      DateTime       @default(now()) @db.DateTime(6)
+}
+
+model RequestParentAccount {
+  id             Int            @id @default(autoincrement())
+  campusId       Int
+  campus         Campus         @relation(fields: [campusId], references: [id])
+  studentId      Int?
+  student        User?          @relation(fields: [studentId], references: [id])
+  parentFullname String         @db.VarChar(255)
+  parentEmailId  String         @db.VarChar(255)
+  parentMobile   String         @db.VarChar(255)
+  parentGovtId   String         @db.VarChar(255)
+  parentType     ParentType?    @default(NA_PARENTTYPE)
+  approvalStatus ApprovalStatus @default(Pending)
+  reason         String
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime       @default(now()) @db.DateTime(6)
+  updated_at     DateTime       @default(now()) @db.DateTime(6)
 }

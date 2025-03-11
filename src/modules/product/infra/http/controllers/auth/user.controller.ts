@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../../../../../shared/db-client";
-import { addANotification, buildTheme, decrypt, encrypt, getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils";
+import { addANotification, buildTheme, decrypt, encrypt, getDateForMatching, getMenuCategory, MenuIcons, sortUsersBy } from "../../../../../../shared/helpers/utils/generic.utils";
 import { AbsenseStatus, AttendanceType, FeeStatus, Section, UserType } from "@prisma/client";
 import { systemAppThemes } from "../../../../../../shared/helpers/utils/app-themes";
 import { AttendanceSheetModel } from "../../../../../../shared/models/attendance.model";
@@ -79,6 +79,21 @@ export class UserController {
         campus: true,
         class: true,
       },
+      orderBy: [
+        {
+          class: {
+            numericName: 'asc'
+          },
+        },
+        {
+          section: {
+            sectionName: 'asc'
+          }
+        },
+        {
+          rollNumber : 'asc'
+        }
+      ],
     });
     return res.json({ status: true, data: users, message: '' });
   }
@@ -420,6 +435,7 @@ export class UserController {
     const parmaspassed: any = req.body.params;
     const idCardNumber = parmaspassed.idCardNumber;
     const password = parmaspassed.password;
+    let returnObj;
     let user;
     try {
 
@@ -473,9 +489,12 @@ export class UserController {
             },
           },
         });
+
+
+
+
     } catch (error) {
       console.error(error);
-
       return res.json({ status: false, data: null, message: 'User/Password not found' });
     }
 
@@ -493,6 +512,10 @@ export class UserController {
         }
       });
       user['childrenProcessed'] = childrenProcessed;
+    }
+    if(user!==null && user!==undefined){
+      returnObj = getMenuCategory(user);
+     // console.log(returnObj);
     }
 
     if (user !== null && user !== undefined && user.themeName !== null && user.themeName !== undefined) {
@@ -518,12 +541,12 @@ export class UserController {
       }
     }
 
-    return res.json({ status: true, currentUser: user, message: 'Login successful' });
+    return res.json({ status: true, data: {currentUser: user, otherParams: returnObj}, message: 'Login successful' });
   }
 
+  
   public async resetMyPassword(req: Request, res: Response) {
     const parmaspassed: any = req.body;
-    console.log(parmaspassed)
     const idCardNumber = parmaspassed.form.idCardNumber;
     const newPassword = parmaspassed.form.newPassword;
     const otp = parmaspassed.secretCode;
@@ -666,7 +689,6 @@ export class UserController {
 
       },
     });
-    console.log(permissions);
     return res.json({ status: true, data: permissions, message: 'User Roles retrieved' });
   }
 

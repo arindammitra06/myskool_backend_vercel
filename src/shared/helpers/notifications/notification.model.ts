@@ -1,10 +1,8 @@
 export type NotificationModel = {
                 current_date?:string;
                 student_name?:string;
-                parent_1?:string;
-                parent_1_phone?:string;
-                parent_2?:string;
-                parent_2_phone?:string;
+                parent_name?:string;
+                parent_phone?:string;
                 roll_no?:string;
                 student_id_card?:string;
                 student_fee?:string;
@@ -40,6 +38,7 @@ export type NotificationModel = {
                 sectionId?: number;
                 extra_content?: string;
                 admission_status?:string;
+                approval_status?:string;
 }
 
 export type SendToAndFrom = {

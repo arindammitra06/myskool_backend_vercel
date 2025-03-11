@@ -1,4 +1,4 @@
-import { Permission, TimeTable } from '@prisma/client';
+import { Gender, Permission, TimeTable } from '@prisma/client';
 import * as crypto from 'crypto';
 import { prisma } from '../../db-client';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,6 +57,75 @@ export function getUniqueValues(arr: any[], key: string, field : string): any[] 
 }
 function objectExists(arr: any[], prop: string, value: any): boolean {
   return arr.some(obj => obj[prop] === value);
+}
+
+export function getGenderByRelation(relation:string): string {
+  if(relation==='NA_PARENTTYPE'){
+    return Gender.Others;
+  }else if(relation==='BrotherInLaw'){
+    return Gender.Male;
+  }
+  else if(relation==='Aunt'){
+    return Gender.Female;
+  }
+  else if(relation==='Cousin'){
+    return Gender.Others;
+  }
+  else if(relation==='Daughter'){
+    return Gender.Female;
+  }
+  else if(relation==='DaughterInLaw'){
+    return Gender.Female;
+  }
+  else if(relation==='GrandMother'){
+    return Gender.Female;
+  }
+  else if(relation==='Mother'){
+    return Gender.Female;
+  }else if(relation==='MotherInLaw'){
+    return Gender.Female;
+  }
+  else if(relation==='Sister'){
+    return Gender.Female;
+  }
+  else if(relation==='SisterInLaw'){
+    return Gender.Female;
+  }
+  else if(relation==='Wife'){
+    return Gender.Female;
+  }
+  else if(relation==='Wife'){
+    return Gender.Female;
+  }
+  else if(relation==='LegalGuardian'){
+    return Gender.Others;
+  }
+  else if(relation==='Father'){
+    return Gender.Male;
+  }
+  else if(relation==='FatherInLaw'){
+    return Gender.Male;
+  }
+  else if(relation==='GrandFather'){
+    return Gender.Male;
+  }
+  else if(relation==='Husband'){
+    return Gender.Male;
+  }
+  else if(relation==='Nephew'){
+    return Gender.Male;
+  }
+  else if(relation==='Son'){
+    return Gender.Male;
+  }
+  else if(relation==='SonInLaw'){
+    return Gender.Male;
+  }
+  else if(relation==='Uncle'){
+    return Gender.Male;
+  }
+ 
+
 }
 
 
@@ -139,6 +208,15 @@ export function getDateForMatching(i: number, month: number, year: number) {
   let monthProc = month < 10 ? '0' + month : month;
   return date + '-' + monthProc + '-' + year;
 }
+
+export function sortUsersBy(list: any[], property: string) {
+  return list.sort((a, b) => {
+     return a[property] >= b[property]
+        ? 1
+        : -1
+  })
+}
+
 
 
 export function buildFontSize(value: number) {
@@ -334,3 +412,159 @@ export async function getPermissionByName(name: string) {
 
   return permission;
 }
+export const MenuIcons : Map<string, string> = 
+    new Map([
+        ["Dashboard", "IconDashboard"],
+        ["My Profile", "IconUser"],
+        ["Admissions Management", "IconDoorEnter"],
+        ["Student Management", "IconBuildingBank"],
+        ["Parent Management", "IconMasksTheater"],
+        ["Staff Management", "IconTemplate"],
+        ["Accountants", "IconSquareRoot2"],
+        ["Classes & Sections", "IconSchool"],
+        ["Subjects", "IconBook"],
+        ["Manage Attendance", "IconBellSchool"],
+        ["Salary Management", "IconCash"],
+        ["Accounting", "IconMathSymbols"],
+        ["Stock & Inventory", "IconBooks"],
+        ["Exam & Tests", "IconTextGrammar"],
+        ["Reports", "IconChartPie"],
+        ["Notifications", "IconBell"],
+        ["Online Classes", "IconWifi"],
+        ["Timetable", "IconCalendarTime"],
+        ["Expense Management", "IconLicense"],
+        ["Certification", "IconCertificate"],
+        ["Study Material", "IconPencilCog"],
+        ["Leave Management", "IconLuggage"],
+        ["Settings", "IconVip"],
+        ["ID Cards", "IconIdBadge"],
+        ["Incoming Messages", "IconMessageReply"],
+        ["Assignments", "IconHomeEdit"],
+
+    ]);
+
+    export function getMenuCategory(currentUser: any) {
+        let returnObj=  {};
+        let menuMap = new Map<number, any>([]);
+        let isFirstMenuOpen = true;
+        let dashboardUrl = null;
+        
+        if (currentUser !== null && currentUser !== undefined &&
+          currentUser.userPermissions !== null && currentUser.userPermissions !== undefined && currentUser.userPermissions.length > 0) {
+          currentUser.userPermissions.forEach((userPerm: any) => {
+            
+            
+            if (userPerm !== null && userPerm !== undefined && userPerm.active === 1
+              && userPerm.permission !== null && userPerm.permission !== undefined && userPerm.permission.active === 1
+              && userPerm.permission.MenuCategoryPermissions !== null && userPerm.permission.MenuCategoryPermissions !== undefined && userPerm.permission.MenuCategoryPermissions.length > 0) {
+      
+              //process menus
+              userPerm.permission.MenuCategoryPermissions.forEach((menuCat: any) => {
+      
+                if (menuCat !== null && menuCat !== undefined && menuCat.active === 1 && menuCat.menuCategory !== null
+                  && menuCat.menuCategory !== undefined && menuCat.menuCategory.active === 1) {
+                  let pushObj:any={};
+                  pushObj.id = menuCat.menuCategory.id;
+                  pushObj.initiallyOpened = false;
+                  pushObj.label = menuCat.menuCategory.label;
+                  pushObj.order = menuCat.menuCategory.orderKey;
+                  pushObj.route = menuCat.menuCategory.route;
+                  //console.log(menuCat.menuCategory.label+' - '+ MenuIcons.get(menuCat.menuCategory.label));
+                  pushObj.icon = MenuIcons.get(menuCat.menuCategory.label);
+                  pushObj.description = menuCat.menuCategory.description;
+                  menuMap.set(menuCat.menuCategory.id, pushObj);
+      
+                }
+              });
+      
+              //process sub menus
+              if (userPerm.permission.MenuItemPermissions !== null && userPerm.permission.MenuItemPermissions !== undefined && userPerm.permission.MenuItemPermissions.length > 0) {
+                userPerm.permission.MenuItemPermissions.forEach((menuItems: any) => {
+      
+                  if (menuItems !== null && menuItems !== undefined && menuItems.active === 1 && menuItems.menuItem !== null
+                    && menuItems.menuItem !== undefined && menuItems.menuItem.active === 1) {
+                    let category = menuMap.get(menuItems.menuItem.categoryId);
+      
+                    if (category !== null && category !== undefined) {
+                      let links = category.links;
+                      if (links !== null && links !== undefined) {
+      
+                        let pushItem :any = {};
+                        pushItem.id = menuItems.menuItem.id;
+                        pushItem.label = menuItems.menuItem.label;
+                        pushItem.order = menuItems.menuItem.orderKey;
+                        pushItem.route = menuItems.menuItem.route;
+                        pushItem.description = menuItems.menuItem.description;
+                        links.push(pushItem);
+      
+                      } else {
+                        let itemsArray: any[] = [];
+      
+                        let pushItem :any = {};
+                        pushItem.id = menuItems.menuItem.id;
+                        pushItem.label = menuItems.menuItem.label;
+                        pushItem.order = menuItems.menuItem.orderKey;
+                        pushItem.route = menuItems.menuItem.route;
+                        pushItem.description = menuItems.menuItem.description;
+                        itemsArray.push(pushItem);
+                        category.links = itemsArray;
+                      }
+                    }
+      
+                  }
+                });
+              }
+      
+              //Dashboard Url
+              dashboardUrl = userPerm.permission.dashboardUrl;
+            }
+          });
+        }
+      
+        let menusAsArray = Array.from(menuMap.values());
+        let sortedMap = sortUsersBy(menusAsArray, 'order');
+        if (sortedMap !== null && sortedMap !== undefined && sortedMap.length > 0) {
+          sortedMap.forEach((itemRevisited: any, index: number) => {
+            
+            //setting initial page
+            if(index===0){
+              if(itemRevisited.route===''){
+                if(itemRevisited.links !== null && itemRevisited.links !== undefined && itemRevisited.links.length > 0){
+                  //console.log(itemRevisited.links);
+                  let sortedLinks = itemRevisited.links.sort((a, b) => a.order - b.order);
+                  if(sortedLinks!==null && sortedLinks!==undefined && sortedLinks.length>0){
+                    returnObj["firstPage"] = "/home/"+sortedLinks[0].route;
+                  }else{
+                    returnObj["firstPage"] = "/home/"+itemRevisited.links[0].route;
+                  }
+                  
+                }
+              }else if(itemRevisited.route==='home'){
+                returnObj["firstPage"] = "/"+itemRevisited.route;
+              }else{
+                returnObj["firstPage"] = "/home/"+itemRevisited.route;
+              }
+            }
+          
+            if (itemRevisited !== null && itemRevisited !== undefined && itemRevisited.links !== null
+              && itemRevisited.links !== undefined && itemRevisited.links.length > 0) {
+              let links = itemRevisited.links;
+              
+              const uniqueLinks = links.filter((value, index) => {
+                const _value = JSON.stringify(value);
+                return index === links.findIndex(obj => {
+                  return JSON.stringify(obj) === _value;
+                });
+              });
+              let sortedLinks = sortUsersBy(uniqueLinks, 'order');
+              itemRevisited.links = sortedLinks;
+              itemRevisited.initiallyOpened = isFirstMenuOpen;
+              isFirstMenuOpen = false;
+      
+            }
+          });
+        }
+        returnObj["menus"] = sortedMap;
+        returnObj["dashboardUrl"] =dashboardUrl;
+        return returnObj;
+      }

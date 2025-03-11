@@ -4,7 +4,7 @@ import { EmailTemplate, FileType, Holidays, MessageType, TimeTable, User, UserTy
 import jwt from 'jsonwebtoken';
 import { addANotification, buildTheme, getBlankMonthWiseHolidayList, getCurrencySymbol, getIsoDay, processTimeTableJsonData } from "../../../../../../shared/helpers/utils/generic.utils";
 import moment from "moment";
-import { changeAccountResetStatus, getEmailTemplateByName, sendEmail, sendEmailCommon, sendSms } from "../../../../../../shared/helpers/notifications/notifications";
+import { changeAccountResetStatus, getEmailTemplateByName, sendAdhocEmail, sendEmail, sendEmailCommon, sendSms } from "../../../../../../shared/helpers/notifications/notifications";
 import resetPasswordTemplate from "../../../../../../emails/reset-password";
 import { v4 as uuidv4 } from 'uuid';
 import { buildMessage, LEAVE_REQUEST_APP_REJ, LEAVE_REQUESTED, NEW_HOMEWORK_ADDED, PRODUCT_CATEGORY_ADDED, UPDATE_MASTER_NOTIFICATION, USER_CREATED } from "../../../../../../shared/constants/notification.constants";
@@ -877,6 +877,34 @@ export class MasterController {
   }
 
 
+  public async sendAdhocNotification(req: Request, res: Response) {
+    const emailContent: any = req.body;
+    try {
+      let emails  = [];
+      
+      if (emailContent !== null && emailContent !== undefined && emailContent.sendToUsers !== null && emailContent.sendToUsers !== undefined && emailContent.sendToUsers.length>0) {
+        emailContent.sendToUsers.forEach(async (element: any) => {
+          //send out app notification
+          addANotification(Number(emailContent.campusId),
+                      Number(element.original.id),
+                      Number(emailContent.userId),
+                      emailContent.subject);
+
+          emails.push({
+            name: element.original.displayName,
+            email: element.original.email
+          });
+        });
+          //send out emails
+          sendAdhocEmail(Number(emailContent.campusId),Number(emailContent.userId), emailContent.subject, emailContent.body, emails );
+      }
+      return res.json({ data: null, status: true, message: 'Notifications have been sent' });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message, status: false, data: null })
+    }
+  }
+
   public async saveEmailTemplates(req: Request, res: Response) {
     const emailTemplates: any = req.body;
     try {
@@ -1429,10 +1457,8 @@ export class MasterController {
                       {
                         campusId: homeworkform.form.campusId,
                         student_name: studentsInClass[i].displayName,
-                        parent_1: studentsInClass[i].parent[j].parent.displayName,
-                        parent_1_phone: studentsInClass[i].parent[j].parent.mobile,
-                        parent_2: studentsInClass[i].parent[j].parent.displayName,
-                        parent_2_phone: studentsInClass[i].parent[j].parent.mobile,
+                        parent_name: studentsInClass[i].parent[j].parent.displayName,
+                        parent_phone: studentsInClass[i].parent[j].parent.mobile,
                         roll_no: studentsInClass[i].rollNoProcessed,
                         student_id_card: studentsInClass[i].idCardNumber,
                         institute_name: institute.instituteName,
@@ -1453,10 +1479,8 @@ export class MasterController {
                     sendEmail('Homework Email',
                       {
                         student_name: studentsInClass[i].displayName,
-                        parent_1: studentsInClass[i].parent[j].parent.displayName,
-                        parent_1_phone: studentsInClass[i].parent[j].parent.mobile,
-                        parent_2: studentsInClass[i].parent[j].parent.displayName,
-                        parent_2_phone: studentsInClass[i].parent[j].parent.mobile,
+                        parent_name: studentsInClass[i].parent[j].parent.displayName,
+                        parent_phone: studentsInClass[i].parent[j].parent.mobile,
                         roll_no: studentsInClass[i].rollNoProcessed,
                         student_id_card: studentsInClass[i].idCardNumber,
                         institute_name: institute.instituteName,
@@ -1656,11 +1680,7 @@ export class MasterController {
       },
       include: {
         campus: true,
-        engagement: {
-          where: {
-            classId :engagemntForm.classId,
-          }
-        }
+        engagement: true
       },
       orderBy: {
         updated_at: 'desc'
@@ -2112,10 +2132,8 @@ export class MasterController {
           {
             campusId: Number(leaveForm.campusId),
             student_name: fetchedLeave.user.displayName,
-            parent_1: '',
-            parent_1_phone: '',
-            parent_2: '',
-            parent_2_phone: '',
+            parent_name: '',
+            parent_phone: '',
             roll_no: fetchedLeave.user.rollNoProcessed,
             student_id_card: fetchedLeave.user.idCardNumber,
             institute_name: institute.instituteName,
@@ -2141,10 +2159,8 @@ export class MasterController {
           {
             campusId: Number(leaveForm.campusId),
             student_name: fetchedLeave.user.displayName,
-            parent_1: '',
-            parent_1_phone: '',
-            parent_2: '',
-            parent_2_phone: '',
+            parent_name: '',
+            parent_phone: '',
             roll_no: fetchedLeave.user.rollNoProcessed,
             student_id_card: fetchedLeave.user.idCardNumber,
             institute_name: institute.instituteName,
@@ -2364,7 +2380,6 @@ export class MasterController {
 
   public async updateMasterNotification(req: Request, res: Response) {
     const form: any = req.body;
-    console.log(form)
 
     let notification = await prisma.notifications.update({
       where: {

@@ -33,6 +33,7 @@ MasterRouter.post("/getSmsHistory", masterControllerInstance.getSmsHistory);
 MasterRouter.get("/getAllEmailTemplates/:campusId", masterControllerInstance.getAllEmailTemplates);
 MasterRouter.post("/saveEmailTemplates", masterControllerInstance.saveEmailTemplates);
 MasterRouter.post("/getEmailHistory", masterControllerInstance.getEmailHistory);
+MasterRouter.post("/sendAdhocNotification", masterControllerInstance.sendAdhocNotification);
 
 MasterRouter.get("/getNoticesByType/:campusId/:active/:type", masterControllerInstance.getNoticesByType);
 MasterRouter.post("/addANotice", masterControllerInstance.addANotice);

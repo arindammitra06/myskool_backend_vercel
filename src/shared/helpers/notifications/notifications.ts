@@ -119,27 +119,15 @@ function evaluateVariables(messageBody: string,keywords: string,  model : Notifi
                         break; 
                     } 
                     //Parent
-                    case '$parent_1': { 
-                        if(model!==null && model!==undefined && model.parent_1!==null && model.parent_1!==undefined){
-                            messageBody = messageBody.replaceAll("$parent_1",model.parent_1);
+                    case '$parent_name': { 
+                        if(model!==null && model!==undefined && model.parent_name!==null && model.parent_name!==undefined){
+                            messageBody = messageBody.replaceAll("$parent_name",model.parent_name);
                         } 
                         break; 
                     } 
-                    case '$parent_1_phone': { 
-                        if(model!==null && model!==undefined && model.parent_1_phone!==null && model.parent_1_phone!==undefined){
-                            messageBody = messageBody.replaceAll("$parent_1_phone",model.parent_1_phone);
-                        } 
-                        break; 
-                    } 
-                    case '$parent_2': { 
-                        if(model!==null && model!==undefined && model.parent_2!==null && model.parent_2!==undefined){
-                            messageBody = messageBody.replaceAll("$parent_2",model.parent_2);
-                        } 
-                        break; 
-                    } 
-                    case '$parent_2_phone': { 
-                        if(model!==null && model!==undefined && model.parent_2_phone!==null && model.parent_2_phone!==undefined){
-                            messageBody = messageBody.replaceAll("$parent_2_phone",model.parent_2_phone);
+                    case '$parent_phone': { 
+                        if(model!==null && model!==undefined && model.parent_phone!==null && model.parent_phone!==undefined){
+                            messageBody = messageBody.replaceAll("$parent_phone",model.parent_phone);
                         } 
                         break; 
                     } 
@@ -184,6 +172,13 @@ function evaluateVariables(messageBody: string,keywords: string,  model : Notifi
                         } 
                         break; 
                     }
+                    case '$approval_status': { 
+                        if(model!==null && model!==undefined && model.approval_status!==null && model.approval_status!==undefined){
+                            messageBody = messageBody.replaceAll("$approval_status",model.approval_status);
+                        } 
+                        break; 
+                    }
+
                     case '$selected_day': { 
                         if(model!==null && model!==undefined && model.selected_day!==null && model.selected_day!==undefined){
                             messageBody = messageBody.replaceAll("$selected_day",model.selected_day);
@@ -362,6 +357,13 @@ export async function sendEmail(name: string, model: NotificationModel,  tos: Se
         subject = evaluateVariables(subject, template.keywords ,model);
         //send email common function
         sendEmailCommon(currentInstitute, subject, messageBody, tos, name, model.campusId, template.id, model.loggedInUserId);
+    }
+}
+
+export async function sendAdhocEmail(campusId, loggedInUserId, subject: string, body:string,  tos: SendToAndFrom[]) {
+    let currentInstitute = await getInstituteDetails();
+    if(subject!==null && subject!==undefined && body!==null && body!==undefined){
+        sendEmailCommon(currentInstitute, subject, body, tos, "ADHOC", campusId, null, loggedInUserId);
     }
 }
 
