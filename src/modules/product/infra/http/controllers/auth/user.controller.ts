@@ -437,6 +437,7 @@ export class UserController {
     const password = parmaspassed.password;
     let returnObj;
     let user;
+    console.log(parmaspassed)
     try {
 
       user = await prisma.user
@@ -540,7 +541,8 @@ export class UserController {
         }
       }
     }
-
+    console.log(user);
+    console.log(returnObj);
     return res.json({ status: true, data: {currentUser: user, otherParams: returnObj}, message: 'Login successful' });
   }
 
