@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
-import { ApprovalStatus, FeeStatus, FeeType, Gender, ParentType, PaymentType, Prisma, SalaryPlanBreakup, TransactionSource, TransactionType, UserType } from '@prisma/client';
-import generator from 'generate-password-ts';
-import { addANotification, encrypt, generateIdsForParentAndStudent, generateInvoiceNumber, generatePaySlipNumber, getARandomAlphanumericID, getCurrencySymbol } from "../../../../../../shared/helpers/utils/generic.utils";
+import { ApprovalStatus, FeeStatus, FeeType, PaymentType, PaySlip, SalaryPlan, SalaryPlanBreakup, TransactionSource, TransactionType, UserType } from '@prisma/client';
+import { addANotification, calculateMonthlyTDS_NewRegime, generatePaySlipNumber, getARandomAlphanumericID, getBonusByEmployeeId, getCurrencySymbol, getFinancialYearIdByDate, getTdsDeductedTillNow, getTotalBonusPaidForEmployee } from "../../../../../../shared/helpers/utils/generic.utils";
 import { prisma } from "../../../../../../shared/db-client";
-import moment from "moment";
-import { sendAccountCreationEmail } from "../../../../../../shared/helpers/notifications/notifications";
 import { v4 as uuidv4 } from 'uuid';
-import { buildMessage, LEAVE_REQUEST_APP_REJ, LOAN_REQUEST_CREATED, LOAN_REQUEST_STATUS } from "../../../../../../shared/constants/notification.constants";
+import { buildMessage, LOAN_REQUEST_CREATED, LOAN_REQUEST_STATUS } from "../../../../../../shared/constants/notification.constants";
+import { sendPaymentViaRazorpayX } from "../../../../../../shared/services/razorpayXService";
 
 
 
@@ -35,7 +33,7 @@ export class SalaryController {
           label: salaryPlans[i].name
             + ' (Monthly: ' + getCurrencySymbol('en-US',
               institute !== null && institute !== undefined && institute.currency !== null && institute.currency !== undefined
-                ? institute.currency : 'INR') + salaryPlans[i].monthlySalary + ' )'
+                ? institute.currency : 'INR') + salaryPlans[i].monthlyInhand + ' )'
         });
       }
     }
@@ -55,9 +53,10 @@ export class SalaryController {
       include: {
         PaySlip: {
           include: {
-
+            financialYear: true,
             user: {
               include: {
+                BankInformation: true,
                 campus: true,
                 EmployeeSalary: {
                   include: {
@@ -93,6 +92,59 @@ export class SalaryController {
   }
 
 
+  public async getAllUnpaidPayslipsForEmployee(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const userId = Number(req.params.userId);
+
+    const employees = await prisma.user.findUnique({
+      where: {
+        id: Number(userId),
+        campusId: Number(campusId)
+      },
+      include: {
+        PaySlip: {
+          where:{ 
+            slipStatus: FeeStatus.Unpaid
+          },
+          include: {
+            financialYear: true,
+            user: {
+              include: {
+                campus: true,
+                EmployeeSalary: {
+                  include: {
+                    salaryPlan: {
+                      include: {
+                        SalaryPlanBreakup: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          orderBy: {
+            updated_at: 'desc',
+          },
+        },
+        EmployeeSalary: {
+          include: {
+            salaryPlan: {
+              include: {
+                SalaryPlanBreakup: true
+              }
+            }
+          }
+        },
+        campus: true,
+        class: true,
+        BankInformation: true
+      },
+    });
+
+    return res.json({ status: true, data: employees, message: employees.PaySlip!==null && employees.PaySlip!==undefined && employees.PaySlip.length>0 ? 'Unpaid Payslips fetched' : 'No Unpaid Payslips'});
+  }
+
   public async getActiveSalaryPlans(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
 
@@ -127,7 +179,7 @@ export class SalaryController {
         campusId: campusId,
         isYearly: 0,
         breakupname: 'Basic',
-        amount: 8000.00,
+        amount: 400000.00,
         type: "MONTHLY"
       },
       {
@@ -135,17 +187,8 @@ export class SalaryController {
         salaryPlanId: 0,
         isYearly: 0,
         campusId: campusId,
-        breakupname: 'Additional',
-        amount: 4000.00,
-        type: "YEARLY"
-      },
-      {
-        id: uuidv4(),
-        salaryPlanId: 0,
-        isYearly: 1,
-        campusId: campusId,
-        breakupname: 'Yearly Travel Allowance',
-        amount: 1000.00,
+        breakupname: 'HRA',
+        amount: 200000.00,
         type: "MONTHLY"
       },
       {
@@ -153,9 +196,36 @@ export class SalaryController {
         salaryPlanId: 0,
         isYearly: 1,
         campusId: campusId,
-        breakupname: 'Yearly Bonus',
-        amount: 1000.00,
-        type: "YEARLY"
+        breakupname: 'Other Allowance',
+        amount: 100000.00,
+        type: "MONTHLY"
+      },
+      {
+        id: uuidv4(),
+        salaryPlanId: 0,
+        isYearly: 1,
+        campusId: campusId,
+        breakupname: 'PF',
+        amount: 96000.00,
+        type: "MONTHLY"
+      },
+      {
+        id: uuidv4(),
+        salaryPlanId: 0,
+        isYearly: 1,
+        campusId: campusId,
+        breakupname: 'Gratuity',
+        amount: 19240.00,
+        type: "MONTHLY"
+      },
+      {
+        id: uuidv4(),
+        salaryPlanId: 0,
+        isYearly: 1,
+        campusId: campusId,
+        breakupname: 'Professional Tax',
+        amount: 3000.00,
+        type: "MONTHLY"
       },
     ];
 
@@ -495,7 +565,7 @@ export class SalaryController {
   public async createLoanRequest(req: Request, res: Response) {
 
     const formData: any = req.body;
-    
+
     try {
 
       const loanRequests = await prisma.loanRequest.create({
@@ -506,8 +576,8 @@ export class SalaryController {
           reason: formData.form.reason,
           totalLoan: Number(formData.form.loanAmount),
           monthlyAmt: Number(formData.form.monthlyAmount),
-          created_by:Number(formData.form.currentUserId),
-          updated_by:Number(formData.form.currentUserId),
+          created_by: Number(formData.form.currentUserId),
+          updated_by: Number(formData.form.currentUserId),
           created_at: new Date(),
           updated_at: new Date()
         },
@@ -574,10 +644,11 @@ export class SalaryController {
 
   public async addUpdateSalaryPlan(req: Request, res: Response) {
     const formData: any = req.body;
-
+    console.log(formData);
     try {
       if (formData !== null && formData !== undefined) {
         if (formData.feeId !== null && formData.feeId !== undefined) {
+
           //delete existing fee breakups
           await prisma.salaryPlanBreakup.deleteMany({
             where: {
@@ -587,21 +658,31 @@ export class SalaryController {
           });
           let monthlyAmount = 0;
           let yearlyAmount = 0;
-          let deductableMnthlyAmount = 0;
+          let employegratuity = 0;
+          let employerPf = 0;
+          let employeePf = 0;
+          let professionalTax = 0;
 
           //Update fee id
           if (formData.feeBreakUp !== null && formData.feeBreakUp !== undefined && formData.feeBreakUp.length > 0) {
 
             for (let i = 0; i < formData.feeBreakUp.length; i++) {
               let element: SalaryPlanBreakup = formData.feeBreakUp[i];
+              yearlyAmount = Number(yearlyAmount) + Number(element.amount);
 
-              if (element.type === 'YEARLY') {
-                yearlyAmount = Number(yearlyAmount) + Number(element.amount);
-              } else if (element.type === 'DEDUCTABLE') {
-                deductableMnthlyAmount = Number(deductableMnthlyAmount) + Number(element.amount);
-              } else if (element.type === 'MONTHLY') {
-                monthlyAmount = Number(monthlyAmount) + Number(element.amount);
+              if (element.breakupname === 'PF') {
+                employeePf = Number(element.amount / 24);
+                employerPf = Number(element.amount / 24);
+                monthlyAmount = monthlyAmount + employeePf;
+              } else if (element.breakupname === 'Gratuity') {
+                employegratuity = Number(element.amount / 12);
+              } else if (element.breakupname === 'Professional Tax') {
+                professionalTax = Number(element.amount / 12);
+              } else {
+                monthlyAmount = Number(monthlyAmount) + Number(element.amount / 12);
               }
+
+
               await prisma.salaryPlanBreakup.create({
                 data: {
                   salaryPlanId: Number(formData.feeId),
@@ -614,36 +695,51 @@ export class SalaryController {
             }
           }
 
-          let salaryPlan = await prisma.salaryPlan.update({
+          await prisma.salaryPlan.update({
             where: {
               campusId: Number(formData.campusId),
               id: Number(formData.feeId),
             },
             data: {
               name: formData.feeName,
-              monthlySalary: Number(monthlyAmount),
-              yearlySalary: Number(yearlyAmount),
-              monthlydeductables: Number(deductableMnthlyAmount),
+              monthlyInhand: Number(monthlyAmount),
+              yearlyPackage: Number(yearlyAmount),
+              professionalTaxMonthly: Number(professionalTax),
+              employeePFMonthly: Number(employeePf),
+              employerPFMonthly: Number(employerPf),
+              gratuityMonthly: Number(employegratuity),
               updated_by: formData.created_by,
               updated_at: new Date()
             },
           });
 
           return res.json({ data: null, status: true, message: 'Salary Plan updated' });
+
+
+
         } else {
           let monthlyAmount = 0;
           let yearlyAmount = 0;
-          let deductableMnthlyAmount = 0;
+          let employegratuity = 0;
+          let employerPf = 0;
+          let employeePf = 0;
+          let professionalTax = 0;
 
           if (formData.feeBreakUp !== null && formData.feeBreakUp !== undefined && formData.feeBreakUp.length > 0) {
             for (let i = 0; i < formData.feeBreakUp.length; i++) {
               let element = formData.feeBreakUp[i];
-              if (element.type === 'YEARLY') {
-                yearlyAmount = Number(yearlyAmount) + Number(element.amount);
-              } else if (element.type === 'DEDUCTABLE') {
-                deductableMnthlyAmount = Number(deductableMnthlyAmount) + Number(element.amount);
-              } else if (element.type === 'MONTHLY') {
-                monthlyAmount = Number(monthlyAmount) + Number(element.amount);
+              yearlyAmount = Number(yearlyAmount) + Number(element.amount);
+
+              if (element.breakupname === 'PF') {
+                employeePf = Number(element.amount / 24);
+                employerPf = Number(element.amount / 24);
+                monthlyAmount = monthlyAmount + employeePf;
+              } else if (element.breakupname === 'Gratuity') {
+                employegratuity = Number(element.amount / 12);
+              } else if (element.breakupname === 'Professional Tax') {
+                professionalTax = Number(element.amount / 12);
+              } else {
+                monthlyAmount = Number(monthlyAmount) + Number(element.amount / 12);
               }
             }
           }
@@ -653,9 +749,12 @@ export class SalaryController {
               active: 1,
               campusId: Number(formData.campusId),
               name: formData.feeName,
-              monthlySalary: Number(monthlyAmount),
-              yearlySalary: Number(yearlyAmount),
-              monthlydeductables: Number(deductableMnthlyAmount),
+              monthlyInhand: Number(monthlyAmount),
+              yearlyPackage: Number(yearlyAmount),
+              professionalTaxMonthly: Number(professionalTax),
+              employeePFMonthly: Number(employeePf),
+              employerPFMonthly: Number(employerPf),
+              gratuityMonthly: Number(employegratuity),
               created_by: formData.created_by,
               created_at: new Date(),
               updated_by: formData.created_by,
@@ -744,6 +843,7 @@ export class SalaryController {
         },
         include: {
           campus: true,
+          BankInformation: true,
           EmployeeSalary: {
             where: {
               campusId: Number(formData.campusId),
@@ -753,6 +853,7 @@ export class SalaryController {
               salaryPlan: true,
             }
           },
+          EmployeeLoan: true,
           PaySlip: {
             where: {
               campusId: Number(formData.campusId),
@@ -841,12 +942,61 @@ export class SalaryController {
   }
 
 
+  public async deletePayslip(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const campusId = Number(req.params.campusId);
+    const userId = Number(req.params.userId);
+    console.log('In Payslip by ID : ' + id);
+
+    const payslip = await prisma.paySlip.findUnique({
+      where: {
+        id: id,
+        campusId: campusId
+      },
+    })
+
+    if (!payslip) {
+      return res.json({ status: false, data: payslip, message: 'Unable to find payslip' });
+    }
+
+
+    try {
+      await prisma.paySlip.delete({
+        where: {
+          id: id,
+          campusId: campusId
+        },
+      });
+
+      await prisma.allBonusInfo.deleteMany({
+        where: {
+          paySlipId: id,
+          campusId: campusId
+        },
+      });
+
+      return res.json({ status: true, data: null, message: 'Payslip deleted with bonus record (if any)' });
+
+
+    } catch (error) {
+      console.error(error);
+      return res.json({ status: false, data: null, message: error.message });
+    }
+
+
+  }
+
+
+
   public async generateSalaryPayslipForEmployees(req: Request, res: Response) {
 
     const formData: any = req.body;
     let employeesWithoutSalaryPlanSelected = [];
     let paySlipIdsGenerated = [];
     let singleInvoiceGenerate: boolean = false;
+    //find the financial Year
+
+    let financialYearId = await getFinancialYearIdByDate(Number(formData.year), Number(formData.month) + 1);
 
     let latestPaySlipObj = await prisma.paySlip.findFirst({
       orderBy: {
@@ -860,7 +1010,8 @@ export class SalaryController {
       if (formData.employees !== null && formData.employees !== undefined && formData.employees.length > 0) {
 
         for (let i = 0; i < formData.employees.length; i++) {
-          let employeeEach: any = formData.employees[i].original;
+          let employeeEach: any = formData.employees[i];
+
 
           if (employeeEach !== null && employeeEach !== undefined) {
 
@@ -874,75 +1025,93 @@ export class SalaryController {
               if (activeStudentFeeObj !== null && activeStudentFeeObj !== undefined && activeStudentFeeObj.length === 0) {
                 employeesWithoutSalaryPlanSelected.push(employeeEach.displayName);
               } else {
-                let salaryPlanActive = activeStudentFeeObj[0].salaryPlan;
+
+                let bonus = getBonusByEmployeeId(employeeEach.id, formData.bonusValues);
+                console.log('bonus: ', bonus)
+
+                let salaryPlanActive: SalaryPlan = activeStudentFeeObj[0].salaryPlan;
                 paySlipIdsGenerated.push(employeeEach.displayName);
                 latestPaySlipID = latestPaySlipID + 1;
+
                 const paySlipNumber = generatePaySlipNumber(latestPaySlipID);
 
                 //Active Student fee present 
                 //Use this to generate the rest
-                if (formData.salaryType === 'MONTHLY') {
-                  let amt = Number(salaryPlanActive.monthlySalary) - Number(salaryPlanActive.monthlydeductables);
 
-                  await prisma.paySlip.create({
-                    data: {
-                      userId: employeeEach.id,
-                      invoiceNumber: paySlipNumber,
-                      campusId: Number(formData.campusId),
-                      slipStatus: FeeStatus.Unpaid,
-                      slipType: FeeType.MONTHLY,
-                      year: Number(formData.year),
-                      month: Number(formData.month),
-                      amount: Number(amt),
-                      updated_by: formData.curretUserId,
-                      updated_at: new Date(),
-                      created_by: formData.curretUserId,
-                      created_at: new Date()
-                    },
-                  });
-                  singleInvoiceGenerate = true;
+                let taxPaidTillDate = await getTdsDeductedTillNow(employeeEach.id, financialYearId);
+
+                let totalBonusTillDate = await getTotalBonusPaidForEmployee(employeeEach.id, financialYearId);
 
 
-                } else if (formData.salaryType === 'YEARLY') {
-
-                  await prisma.paySlip.create({
-                    data: {
-                      userId: employeeEach.id,
-                      invoiceNumber: paySlipNumber,
-                      campusId: Number(formData.campusId),
-                      slipStatus: FeeStatus.Unpaid,
-                      slipType: FeeType.YEARLY,
-                      year: Number(formData.year),
-                      month: Number(formData.month),
-                      amount: Number(salaryPlanActive.yearlySalary),
-                      updated_by: formData.curretUserId,
-                      updated_at: new Date(),
-                      created_by: formData.curretUserId,
-                      created_at: new Date()
-                    },
-                  });
-                  singleInvoiceGenerate = true;
-
-                } else if (formData.salaryType === 'ADHOC') {
-                  await prisma.paySlip.create({
-                    data: {
-                      userId: employeeEach.id,
-                      invoiceNumber: paySlipNumber,
-                      campusId: Number(formData.campusId),
-                      slipStatus: FeeStatus.Unpaid,
-                      slipType: FeeType.ADHOC,
-                      year: Number(formData.year),
-                      month: Number(formData.month),
-                      amount: Number(formData.adhocAmount),
-                      updated_by: formData.curretUserId,
-                      updated_at: new Date(),
-                      created_by: formData.curretUserId,
-                      created_at: new Date()
-                    },
-                  });
-                  singleInvoiceGenerate = true;
-
+                //get all deducatbles
+                let emis = 0;
+                if (employeeEach.EmployeeLoan !== null && employeeEach.EmployeeLoan !== undefined && employeeEach.EmployeeLoan.length > 0) {
+                  if (employeeEach.EmployeeLoan[0].remainingSum > 0) {
+                    emis = employeeEach.EmployeeLoan[0].remainingSum >= employeeEach.EmployeeLoan[0].monthlyAmt ? employeeEach.EmployeeLoan[0].monthlyAmt : employeeEach.EmployeeLoan[0].remainingSum;
+                  }
                 }
+                console.log('emis :', emis);;
+                console.log('taxPaidTillDate :', taxPaidTillDate);
+
+                const payslipAmt = await calculateMonthlyTDS_NewRegime({
+                  currentMonth: Number(formData.month) + 1,
+                  monthlyInhand: salaryPlanActive.monthlyInhand,
+                  bonusThisMonth: bonus,
+                  expectedTotalBonus: totalBonusTillDate + bonus,
+                  professionalTaxMonthly: salaryPlanActive.professionalTaxMonthly,
+                  employeePFMonthly: salaryPlanActive.employeePFMonthly,
+                  tdsPaidTillNow: taxPaidTillDate,
+                  financialYear: financialYearId,
+                });
+
+                console.log(payslipAmt);
+
+                const paySlipCreated = await prisma.paySlip.create({
+                  data: {
+                    userId: employeeEach.id,
+                    invoiceNumber: paySlipNumber,
+                    campusId: Number(formData.campusId),
+                    slipStatus: FeeStatus.Unpaid,
+                    slipType: FeeType.MONTHLY,
+                    year: Number(formData.year),
+                    month: Number(formData.month),
+                    amount: Number(payslipAmt.netPay),
+                    amountBeforeDeductables: Number(payslipAmt.amountBeforeDeductables),
+                    professionalTaxMonthly: Number(salaryPlanActive.professionalTaxMonthly),
+                    gratuityMonthly: Number(salaryPlanActive.gratuityMonthly),
+                    employeePFMonthly: Number(salaryPlanActive.employeePFMonthly),
+                    employerPFMonthly: Number(salaryPlanActive.employerPFMonthly),
+                    emis: Number(emis),
+                    tax: payslipAmt.tdsThisMonth,
+                    bonus: Number(bonus),
+                    updated_by: formData.curretUserId,
+                    updated_at: new Date(),
+                    created_by: formData.curretUserId,
+                    created_at: new Date(),
+                    financialYearId: financialYearId
+                  },
+                });
+
+                //add to bonus if available
+                if (bonus !== null && bonus !== undefined && Number(bonus) > 0) {
+                  console.log('Saving bonus amount for future reconciliation: - ', bonus);
+
+                  await prisma.allBonusInfo.create({
+                    data: {
+                      userId: employeeEach.id,
+                      campusId: Number(formData.campusId),
+                      financialYearId: Number(financialYearId),
+                      paySlipId: paySlipCreated.id,
+                      year: Number(formData.year),
+                      month: Number(formData.month),
+                      amount: Number(bonus),
+                      created_by: formData.curretUserId,
+                      created_at: new Date(),
+                    },
+                  });
+                }
+                singleInvoiceGenerate = true;
+
               }
             }
           }
@@ -966,5 +1135,214 @@ export class SalaryController {
       return res.json({ status: false, data: null, message: 'Some error occured. Try later.' });
     }
   }
+
+
+  public async paySalaryToEmployees(req: Request, res: Response) {
+
+    const formData: any = req.body;
+    console.log(formData)
+    let countOfInvoicesPaid = 0;
+    let oneInvoicePaid = false;
+    let employeesWithoutBankInfo = [];
+    let employeesWithBankInfo = [];
+
+    if (formData !== null && formData !== undefined && formData.employees !== null && formData.employees !== undefined && formData.employees.length > 0) {
+      for (let i = 0; i < formData.employees.length; i++) {
+        let employee = formData.employees[i];
+
+        if (employee !== null && employee !== undefined && employee.id !== null && employee.id !== undefined
+          && employee !== null && employee !== undefined && employee.BankInformation !== null && employee.BankInformation !== undefined && employee.BankInformation.length === 1) {
+          employeesWithBankInfo.push(employee);
+        } else {
+          employeesWithoutBankInfo.push(employee);
+        }
+      }
+    } else {
+      return res.json({ status: false, data: null, message: 'No employee selected.' });
+    }
+
+
+    if (employeesWithoutBankInfo !== null && employeesWithoutBankInfo !== undefined && employeesWithoutBankInfo.length > 0) {
+      return res.json({ status: false, data: null, message: 'Bank account not linked. Payment cancelled' });
+    } else if (employeesWithBankInfo !== null && employeesWithBankInfo !== undefined && employeesWithBankInfo.length > 0) {
+
+      console.log(employeesWithBankInfo);
+
+      for (let k = 0; k < employeesWithBankInfo.length; k++) {
+        let employee = employeesWithBankInfo[k];
+
+        if (employee !== null && employee !== undefined && employee.id !== null && employee.id !== undefined
+          && employee.PaySlip !== null && employee.PaySlip !== undefined && employee.PaySlip.length > 0) {
+          console.log('Payslips found for employee')
+
+          for (let j = 0; j < employee.PaySlip.length; j++) {
+            let payslip: PaySlip = employee.PaySlip[j];
+
+            if (payslip !== null && payslip !== undefined && payslip.slipStatus === 'Unpaid') {
+              const result = await sendPaymentViaRazorpayX({
+                accountNumber: employee.BankInformation[0].accountNo,
+                ifscCode: employee.BankInformation[0].ifscCode,
+                amount: payslip.amount,
+                employeeName: employee.BankInformation[0].fullName,
+                referenceId: `PAY-${employee.id}-${Date.now()}`,
+                message: `Salary Payment for ${employee.BankInformation[0].fullName} for ${payslip.month}, ${payslip.year}`
+              });
+
+              if (result.success) {
+                console.log('✅ Payment sent:', result.payoutId, result.status);
+                oneInvoicePaid = true;
+                countOfInvoicesPaid = countOfInvoicesPaid + 1;
+
+                await prisma.paySlip.update({
+                  where: {
+                    id: payslip.id,
+                    campusId: payslip.campusId,
+                  },
+                  data: {
+                    slipStatus: FeeStatus.Paid,
+                    updated_by: Number(formData.curretUserId),
+                    updated_at: new Date()
+                  },
+                });
+                await prisma.salaryPaymentRecord.create({
+                  data: {
+                    invoiceNumber: payslip.invoiceNumber,
+                    paySlipId:payslip.id,
+                    campusId: payslip.campusId,
+                    paymentType: PaymentType.Online,
+                    paidAmount:payslip.amount,
+                    paidOn : new Date(),
+                    vendor: "RazorPay",
+                    referenceNo:result.payoutId,
+                    created_by: Number(formData.curretUserId),
+                    created_at: new Date(),
+                    updated_by: Number(formData.curretUserId),
+                    updated_at: new Date()
+                  },
+                });
+
+                
+              } else {
+                console.log('❌ Payment failed:', 'result.message');
+              }
+            }
+
+          }
+
+        }
+      }
+
+
+      if (oneInvoicePaid) {
+        return res.json({ status: false, data: null, message: countOfInvoicesPaid + ' invoice(s) Paid' });
+      } else {
+        return res.json({ status: false, data: null, message: 'No invoices paid.' });
+      }
+
+    }
+
+  }
+
+
+  public async payUnpaidSalariesInBulk(req: Request, res: Response) {
+
+    const formData: any = req.body;
+    let countOfInvoicesPaid = 0;
+    let oneInvoicePaid = false;
+    let employeesWithoutBankInfo = [];
+    let employeesWithBankInfo = [];
+
+    if (formData !== null && formData !== undefined && (formData.payslips === null && formData.payslips === undefined)
+       || (formData.payslips !== null && formData.payslips !== undefined && formData.payslips.length === 0)) {
+      return res.json({ status: false, data: null, message: 'No payslips selected.' });
+    }
+
+
+    if (formData !== null && formData !== undefined && (formData.employee === null && formData.employee === undefined)) {
+      return res.json({ status: false, data: null, message: 'No employee selected.' });
+    }
+
+    if (formData.employee  !== null && formData.employee  !== undefined && 
+          formData.employee.BankInformation !== null && formData.employee.BankInformation !== undefined && formData.employee.BankInformation.length === 1) {
+          employeesWithBankInfo.push(formData.employee);
+        } else {
+          employeesWithoutBankInfo.push(formData.employee);
+   }
+
+
+    if (employeesWithoutBankInfo !== null && employeesWithoutBankInfo !== undefined && employeesWithoutBankInfo.length > 0) {
+      return res.json({ status: false, data: null, message: 'Bank account not linked. Payment cancelled' });
+    } else if (employeesWithBankInfo !== null && employeesWithBankInfo !== undefined && employeesWithBankInfo.length ===1) {
+
+      let currentSelectedEmployee = employeesWithBankInfo[0];
+
+      for (let k = 0; k < formData.payslips.length; k++) {
+        let payslipSelected = formData.payslips[k];
+
+        if (payslipSelected !== null && payslipSelected !== undefined && payslipSelected.id !== null && payslipSelected.id !== undefined) {
+          
+          if (payslipSelected.slipStatus === 'Unpaid') {
+              const result = await sendPaymentViaRazorpayX({
+                accountNumber: currentSelectedEmployee.BankInformation[0].accountNo,
+                ifscCode: currentSelectedEmployee.BankInformation[0].ifscCode,
+                amount: payslipSelected.amount,
+                employeeName: currentSelectedEmployee.BankInformation[0].fullName,
+                referenceId: `PAY-${currentSelectedEmployee.id}-${Date.now()}`,
+                message: `Salary Payment for ${currentSelectedEmployee.BankInformation[0].fullName} for ${payslipSelected.month}, ${payslipSelected.year}`
+              });
+
+              if (result.success) {
+                console.log('✅ Payment sent:', result.payoutId, result.status);
+                oneInvoicePaid = true;
+                countOfInvoicesPaid = countOfInvoicesPaid + 1;
+
+                await prisma.paySlip.update({
+                  where: {
+                    id: payslipSelected.id,
+                    campusId: payslipSelected.campusId,
+                  },
+                  data: {
+                    slipStatus: FeeStatus.Paid,
+                    updated_by: Number(formData.curretUserId),
+                    updated_at: new Date()
+                  },
+                });
+                await prisma.salaryPaymentRecord.create({
+                  data: {
+                    invoiceNumber: payslipSelected.invoiceNumber,
+                    paySlipId:payslipSelected.id,
+                    campusId: payslipSelected.campusId,
+                    paymentType: PaymentType.Online,
+                    paidAmount:payslipSelected.amount,
+                    paidOn : new Date(),
+                    vendor: "RazorPay",
+                    referenceNo:result.payoutId,
+                    created_by: Number(formData.curretUserId),
+                    created_at: new Date(),
+                    updated_by: Number(formData.curretUserId),
+                    updated_at: new Date()
+                  },
+                });
+
+                
+              } else {
+                console.log('❌ Payment failed:', 'result.message');
+              }
+            }
+
+        }
+      }
+
+
+      if (oneInvoicePaid) {
+        return res.json({ status: true, data: null, message: countOfInvoicesPaid + ' invoice(s) Paid' });
+      } else {
+        return res.json({ status: false, data: null, message: 'No invoices paid.' });
+      }
+
+    }
+
+  }
 }
+
 

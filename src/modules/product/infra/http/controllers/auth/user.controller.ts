@@ -91,7 +91,7 @@ export class UserController {
           }
         },
         {
-          rollNumber : 'asc'
+          rollNumber: 'asc'
         }
       ],
     });
@@ -264,6 +264,47 @@ export class UserController {
       return res.status(400).json({ status: true, data: null, message: error.message })
     }
   }
+
+
+  public async updateBankInformation(req: Request, res: Response) {
+    const userData: any = req.body;
+    console.log(userData)
+
+    try {
+
+      await prisma.bankInformation.deleteMany({
+        where: {
+          userId: userData.id,
+          campusId: userData.campusId
+        },
+      });
+
+      await prisma.bankInformation.create({
+        data: {
+          campusId: userData.campusId,
+          userId: userData.id,
+          fullName: userData.fields.fullName,
+          bankName: userData.fields.bankName,
+          accountNo: userData.fields.accountNumber,
+          ifscCode: userData.fields.ifsc,
+          type: userData.fields.bankType,
+          created_by: userData.id,
+          updated_by: userData.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      })
+
+      //Add notification
+      addANotification(Number(userData.campusId), Number(userData.id), Number(userData.id), USER_DETAILS_UPDATED + userData.fields.fullName);
+
+      return res.json({ status: true, data: null, message: `Bank Information. Relogin to see changes.` });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ status: true, data: null, message: error.message })
+    }
+  }
+
 
   public async updateLoggedInUserByFields(req: Request, res: Response) {
     const userData: any = req.body;
@@ -451,7 +492,7 @@ export class UserController {
             campus: true,
             class: true,
             section: true,
-
+            BankInformation: true,
             children: {
               include: {
                 children: {
@@ -514,9 +555,9 @@ export class UserController {
       });
       user['childrenProcessed'] = childrenProcessed;
     }
-    if(user!==null && user!==undefined){
+    if (user !== null && user !== undefined) {
       returnObj = getMenuCategory(user);
-     // console.log(returnObj);
+      // console.log(returnObj);
     }
 
     if (user !== null && user !== undefined && user.themeName !== null && user.themeName !== undefined) {
@@ -543,10 +584,10 @@ export class UserController {
     }
     console.log(user);
     console.log(returnObj);
-    return res.json({ status: true, data: {currentUser: user, otherParams: returnObj}, message: 'Login successful' });
+    return res.json({ status: true, data: { currentUser: user, otherParams: returnObj }, message: 'Login successful' });
   }
 
-  
+
   public async resetMyPassword(req: Request, res: Response) {
     const parmaspassed: any = req.body;
     const idCardNumber = parmaspassed.form.idCardNumber;
@@ -790,7 +831,7 @@ export class UserController {
 
           if (menuCategories !== null && menuCategories.length > 0) {
             menuCategories.forEach(async (id) => {
-              
+
 
               await prisma.menuCategoryPermissions.create({
                 data: {
@@ -1270,7 +1311,7 @@ export class UserController {
             include: {
               Attendance: {
                 include: {
-                  user:  {
+                  user: {
                     where: {
                       active: 1
                     }
@@ -1344,7 +1385,7 @@ export class UserController {
                   },
                   User: {
                     where: {
-                        active: 1
+                      active: 1
                     },
                     include: {
                       _count: true,
@@ -1415,12 +1456,12 @@ export class UserController {
           }
         } else {
           let attendanceActivity = [];
-          
+
           if (user.TeachersInSection !== null && user.TeachersInSection !== undefined && user.TeachersInSection.length > 0) {
             user.TeachersInSection.forEach(async (eachTSection) => {
               if (eachTSection !== null && eachTSection !== undefined && eachTSection.section !== null && eachTSection.section !== undefined) {
-                
-                if(eachTSection.section.Attendance!==null && eachTSection.section.Attendance!==undefined && eachTSection.section.Attendance.length>0){
+
+                if (eachTSection.section.Attendance !== null && eachTSection.section.Attendance !== undefined && eachTSection.section.Attendance.length > 0) {
                   eachTSection.section.Attendance.forEach(async (eachAttendanceActivity) => {
                     if (eachAttendanceActivity !== null && eachAttendanceActivity !== undefined) {
                       let activity = {};
@@ -1428,8 +1469,8 @@ export class UserController {
                       activity["datetime"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
                       attendanceActivity.push(activity);
                     }
-                });
-               }
+                  });
+                }
               }
             });
           }
@@ -1463,7 +1504,7 @@ export class UserController {
 
 
                     if (todaysAttendance !== null && todaysAttendance !== undefined) {
-                     
+
                       if (todaysAttendance.attendanceStatus === "Present") {
                         totalPresent = totalPresent + 1;
                       } else if (todaysAttendance.attendanceStatus === "Absent") {

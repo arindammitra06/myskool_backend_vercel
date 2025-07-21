@@ -1,11 +1,20 @@
 import { Router } from "express";
 import { masterControllerInstance } from '../controllers';
+import upload from "../middlewares/multer";
+
 
 const MasterRouter = Router();
+MasterRouter.post("/uploadImageToImageKit", upload.single("file"), masterControllerInstance.uploadImageToImageKit);
+
+
 MasterRouter.get("/getAllThemes/:campusId/:userId", masterControllerInstance.getAllThemes);
 MasterRouter.post("/saveATheme", masterControllerInstance.saveATheme);
 
 MasterRouter.get("/getAllSessions", masterControllerInstance.getAllSessions);
+MasterRouter.get("/getAllSessionsCompleteData", masterControllerInstance.getAllSessionsCompleteData);
+MasterRouter.get("/getAllFinancialYearsDropdown", masterControllerInstance.getAllFinancialYearsDropdown);
+MasterRouter.get("/getAllFinancialYears", masterControllerInstance.getAllFinancialYears);
+
 MasterRouter.post("/addImagesByType", masterControllerInstance.addImagesByType);
 MasterRouter.get("/getImagesByType/:campusId/:type", masterControllerInstance.getImagesByType);
 MasterRouter.get("/getOnlineMeetings/:campusId", masterControllerInstance.getOnlineMeetings);

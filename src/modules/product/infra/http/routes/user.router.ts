@@ -14,6 +14,7 @@ UserRouter.post("/resetMyPassword", userControllerInstance.resetMyPassword);
 UserRouter.put("/updateUserById/:id", userControllerInstance.updateUser);
 UserRouter.delete("/deleteUserById/:id", userControllerInstance.deleteUser);
 UserRouter.post("/updateUserByFields", userControllerInstance.updateUserByFields);
+UserRouter.post("/updateBankInformation", userControllerInstance.updateBankInformation);
 UserRouter.post("/updateLoggedInUserByFields", userControllerInstance.updateLoggedInUserByFields);
 UserRouter.post("/updateThemeAndPhoto", userControllerInstance.updateThemeAndPhoto);
 UserRouter.post("/updateUserTheme", userControllerInstance.updateUserTheme);

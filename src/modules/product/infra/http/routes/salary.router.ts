@@ -15,10 +15,13 @@ SalaryRouter.post("/getAllEmployeeLoanRequests", salaryControllerInstance.getAll
 SalaryRouter.post("/approveRejectLoanRequest", salaryControllerInstance.approveRejectLoanRequest);
 SalaryRouter.post("/createLoanRequest", salaryControllerInstance.createLoanRequest);
 
-
+SalaryRouter.delete("/deletePayslip/:id/:campusId/:userId", salaryControllerInstance.deletePayslip);
 SalaryRouter.post("/getEmployeesForSalaryGeneration", salaryControllerInstance.getEmployeesForSalaryGeneration);
 SalaryRouter.post("/updateEmployeeSalaryPlan", salaryControllerInstance.updateEmployeeSalaryPlan);
 SalaryRouter.post("/generateSalaryPayslipForEmployees", salaryControllerInstance.generateSalaryPayslipForEmployees);
+SalaryRouter.post("/paySalaryToEmployees", salaryControllerInstance.paySalaryToEmployees);
+SalaryRouter.post("/payUnpaidSalariesInBulk", salaryControllerInstance.payUnpaidSalariesInBulk);
 SalaryRouter.get("/getAllPaySlipsForEmployee/:campusId/:userId", salaryControllerInstance.getAllPaySlipsForEmployee);
+SalaryRouter.get("/getAllUnpaidPayslipsForEmployee/:campusId/:userId", salaryControllerInstance.getAllUnpaidPayslipsForEmployee);
 SalaryRouter.post("/createLoanForEmployee", salaryControllerInstance.createLoanForEmployee);
 export default SalaryRouter;

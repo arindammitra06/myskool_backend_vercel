@@ -70,7 +70,6 @@ export class StaffAccountantController {
       created_by: staffDetails.created_by,
       password: encryptedPassword,
       campusId: Number(staffDetails.form.campusId),
-      colorName: 'studifyblueprimary'
     };
 
 
@@ -203,6 +202,10 @@ export class StaffAccountantController {
           in: [UserType.accountant, UserType.admin, UserType.staff]
         }
       },
+      include: {
+        campus: true,
+        BankInformation: true
+      }
     });
 
     return res.json({ status: true, data: employees, message: '' });

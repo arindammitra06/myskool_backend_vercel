@@ -1,0 +1,9 @@
+sudo openssl genrsa -out /etc/grafana/grafana.key 2048
+sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana.csr
+sudo openssl x509 -req -days 365 -in /etc/grafana/grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
+sudo chown grafana. /etc/grafana/grafana.csr /etc/grafana/grafana.key
+sudo chmod 400 /etc/grafana/grafana.csr /etc/grafana/grafana.key
+--change etc/grafana/grafana.ini
+--change protocol -->https
+--cert_file=/etc/grafana/grafana.crt & cert_key=/etc/grafana/grafana.key
+restart grafana -- sudo systemctl restart grafana-server.service
