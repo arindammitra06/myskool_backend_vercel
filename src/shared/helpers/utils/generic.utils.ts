@@ -300,59 +300,54 @@ function buildRadius(defaultRadius: any) {
     return 15;
   }
 }
+function repeatStringInArray(str: string): string[] {
+  return Array(10).fill(str);
+}
 export function buildTheme(themeObject: any) {
   let primaryswatch: any = generateShades(themeObject.primaryColor);
-  let darkSwatch: any = generateShades(themeObject.schemeColor);
+   
+   let blueswatch: any = generateShades(themeObject.blue);
+   let greenswatch: any = generateShades(themeObject.green);
+   let yellowswatch: any = generateShades(themeObject.yellow);
+   let orangeswatch: any = generateShades(themeObject.orange);
+   let redswatch: any = generateShades(themeObject.red);
+   let actionGreenButtonswatch: any = generateShades(themeObject.actionGreenButton);
+   let secondaryOrangeButtonswatch: any = generateShades(themeObject.secondaryOrangeButton);
 
-  let blueswatch: any = generateShades(themeObject.blue);
-  let greenswatch: any = generateShades(themeObject.green);
-  let yellowswatch: any = generateShades(themeObject.yellow);
-  let orangeswatch: any = generateShades(themeObject.orange);
-  let redswatch: any = generateShades(themeObject.red);
+   let defaultRadius = buildRadius(themeObject.defaultRadius);
 
-  let actionGreenButtonswatch: any = generateShades(themeObject.actionGreenButton);
-  let secondaryOrangeButtonswatch: any = generateShades(themeObject.secondaryOrangeButton);
+   let backg: any = repeatStringInArray(themeObject.backg);
+   let foreg: any = repeatStringInArray(themeObject.foreg);
+   let header: any = repeatStringInArray(themeObject.header);
+   let leftmenu: any = repeatStringInArray(themeObject.leftmenu);
 
-  let defaultRadius = buildRadius(themeObject.defaultRadius);
+   
+   let newTheme: any = {
+      fontFamily: themeObject.fontFamily,
+      primaryShade: { light: 5, dark: 9 },
+      //colorScheme: form.values.lightOrDark as ColorScheme,
+      white: themeObject.white,
+      black: themeObject.black,
+      fontSizes: buildFontSize(themeObject.fontSize),
+      defaultRadius: defaultRadius,
+      colors: {
+         backg: backg,
+         foreg: foreg,
+         header: header,
+         leftmenu: leftmenu,
+         primary: primaryswatch,
+         red: redswatch,
+         orange: orangeswatch,
+         blue: blueswatch,
+         green: greenswatch,
+         yellow: yellowswatch,
+         actionButton: actionGreenButtonswatch,
+         secondaryButton: secondaryOrangeButtonswatch,
+      },
+      primaryColor: 'primary',
 
-
-  let newTheme: any = {
-    fontFamily: themeObject.fontFamily,
-    primaryShade: { light: 5, dark: 9 },
-    colorScheme: themeObject.scheme,
-    white: themeObject.white,
-    black: themeObject.black,
-    defaultRadius: defaultRadius,
-    fontSizes: buildFontSize(themeObject.fontSize),
-    colors: {
-      backg: [
-        themeObject.backg,//light bg
-      ],
-      foreg: [
-        themeObject.foreg,//light panels
-      ],
-      header: [
-        themeObject.header,//light header color
-      ],
-      leftmenu: [
-        themeObject.leftmenu,//light left menu color
-      ],
-      dark: darkSwatch,
-      primary: primaryswatch,
-      red: redswatch,
-      orange: orangeswatch,
-      blue: blueswatch,
-      green: greenswatch,
-      yellow: yellowswatch,
-
-      actionButton: actionGreenButtonswatch,
-      secondaryButton: secondaryOrangeButtonswatch,
-    },
-    primaryColor: 'primary',
-
-  };
-
-  return newTheme;
+   };
+   return newTheme;
 }
 
 

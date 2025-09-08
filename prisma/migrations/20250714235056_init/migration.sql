@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE `PaySlip` ADD COLUMN `employeePFMonthly` DOUBLE NOT NULL DEFAULT 0,
-    ADD COLUMN `employerPFMonthly` DOUBLE NOT NULL DEFAULT 0,
-    ADD COLUMN `gratuityMonthly` DOUBLE NOT NULL DEFAULT 0,
-    ADD COLUMN `professionalTaxMonthly` DOUBLE NOT NULL DEFAULT 0;

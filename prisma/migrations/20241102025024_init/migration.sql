@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `User` ADD COLUMN `leftMenuExpanded` TINYINT NOT NULL DEFAULT 1;

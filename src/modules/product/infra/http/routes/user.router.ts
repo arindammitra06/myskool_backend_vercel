@@ -17,7 +17,7 @@ UserRouter.post("/updateUserByFields", userControllerInstance.updateUserByFields
 UserRouter.post("/updateBankInformation", userControllerInstance.updateBankInformation);
 UserRouter.post("/updateLoggedInUserByFields", userControllerInstance.updateLoggedInUserByFields);
 UserRouter.post("/updateThemeAndPhoto", userControllerInstance.updateThemeAndPhoto);
-UserRouter.post("/updateUserTheme", userControllerInstance.updateUserTheme);
+UserRouter.post("/updateInstituteDefaultTheme", userControllerInstance.updateInstituteDefaultTheme);
 UserRouter.get("/getActiveUsersByType/:campusId/:empType/:classId/:sectionId", userControllerInstance.getActiveUsersByType);
 UserRouter.get("/getAllActiveMenus/:campusId", userControllerInstance.getAllActiveMenus);
 UserRouter.get("/getAllMenusAsCreatersJSON/:campusId", userControllerInstance.getAllMenusAsCreatersJSON);

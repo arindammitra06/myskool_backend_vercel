@@ -45,26 +45,25 @@ export class MasterController {
 
 
   public async getAllThemes(req: Request, res: Response) {
-    const campusId = Number(req.params.campusId);
-    const userId = Number(req.params.userId);
     let themeItems = [];
 
 
     let themes = await prisma.theme.findMany({
       where: {
-        campusId: Number(campusId),
-        userId: userId,
         active: 1
       },
     });
 
     if (themes !== null && themes !== undefined && themes.length > 0) {
+
       themes.forEach(async (element) => {
         let newTheme = buildTheme(element);
 
         if (newTheme !== null && newTheme !== undefined) {
+
           themeItems.push({
             id: element.id,
+            type: element.themeType,
             name: element.themeName,
             primary: element.primaryColor,
             header: element.header,
@@ -76,6 +75,7 @@ export class MasterController {
             actionButton: element.actionGreenButton,
             secondaryButton: element.secondaryOrangeButton
           });
+
         }
       });
     }
@@ -86,24 +86,24 @@ export class MasterController {
 
   public async saveATheme(req: Request, res: Response) {
     const themeData: any = req.body;
-    console.log(themeData)
+
     if (themeData !== null && themeData !== undefined && themeData.form !== null && themeData.form !== undefined) {
+
       const theme = await prisma.theme.findFirst({
         where: {
           themeName: themeData.form.themeName.toUpperCase(),
-          campusId: Number(themeData.campusId),
-          userId: Number(themeData.userId),
         }
       });
 
 
       if (theme !== null && theme !== undefined) {
         //update theme
-        console.log('Theme exists! updating theme');
-        await prisma.theme.update({
+
+        console.log('Theme exists! Updating theme');
+
+        const themeUpdated = await prisma.theme.update({
           where: {
             id: theme.id,
-            campusId: Number(themeData.campusId),
           },
           data: {
             scheme: themeData.form.lightOrDark,
@@ -129,15 +129,26 @@ export class MasterController {
             updated_by: themeData.userId
           },
         });
-        return res.json({ status: true, data: null, message: 'Theme updated' });
+        return res.json({ status: true, data: themeUpdated, message: 'Theme updated' });
+
       } else {
         //add theme
         console.log('Adding new theme');
 
-        await prisma.theme.create({
+        let nextThemeId = 1000;
+
+        const latestThemeObj = await prisma.theme.findFirst({
+          orderBy: { id: 'desc' },
+          take: 1,
+        });
+
+        if (latestThemeObj) {
+          nextThemeId = latestThemeObj.id + 1;
+        }
+
+        const themeUpdated = await prisma.theme.create({
           data: {
-            campusId: Number(themeData.campusId),
-            userId: Number(themeData.userId),
+            id: nextThemeId,
             themeName: themeData.form.themeName.toUpperCase(),
             active: 1,
             scheme: themeData.form.lightOrDark,
@@ -165,7 +176,7 @@ export class MasterController {
             updated_by: themeData.userId
           },
         });
-        return res.json({ status: true, data: null, message: 'Theme saved' });
+        return res.json({ status: true, data: themeUpdated, message: 'Theme saved' });
       }
 
     } else {
@@ -192,7 +203,7 @@ export class MasterController {
   public async getAllSessionsCompleteData(req: Request, res: Response) {
     const sessions = await prisma.sessions.findMany({
     });
-    
+
     return res.json({ status: true, data: sessions, message: 'Sessions fetched' });
   }
 
@@ -716,12 +727,12 @@ export class MasterController {
       if (timetable !== null && timetable !== undefined && timetable.form !== null && timetable.form !== undefined) {
         await prisma.timeTable.create({
           data: {
-            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : timetable.form.classId,
-            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : timetable.form.sectionId,
+            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : Number(timetable.form.classId),
+            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : Number(timetable.form.sectionId),
             year: timetable.form.year,
-            campusId: timetable.form.campusId,
+            campusId: Number(timetable.form.campusId),
             subject: timetable.form.event,
-            ongoingSessionId: timetable.form.sessionId,
+            ongoingSessionId: Number(timetable.form.sessionId),
             active: 1,
             day: '',
             duration: '',
@@ -741,10 +752,10 @@ export class MasterController {
 
         await prisma.holidays.create({
           data: {
-            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : timetable.form.classId,
-            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : timetable.form.sectionId,
-            ongoingSessionId: timetable.form.sessionId,
-            campusId: timetable.form.campusId,
+            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : Number(timetable.form.classId),
+            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : Number(timetable.form.sectionId),
+            ongoingSessionId: Number(timetable.form.sessionId),
+            campusId: Number(timetable.form.campusId),
             name: timetable.form.event,
             active: 1,
             holidayStart: timetable.form.startDate,
@@ -1300,14 +1311,39 @@ export class MasterController {
 
   public async addACampus(req: Request, res: Response) {
     const campusForm: any = req.body;
+    
     try {
-      if (campusForm !== null && campusForm !== undefined) {
+      if (campusForm !== null && campusForm !== undefined &&
+        campusForm.form.campusId !== null && campusForm.form.campusId !== undefined
+      ) {
+
+        await prisma.campus.update({
+          where: {
+            id : campusForm.form.campusId
+          },
+          data: {
+            campusName: campusForm.form.campusName,
+            campusAddress: campusForm.form.campusAddress,
+            campusPhone: campusForm.form.campusPhone,
+            affilicationNumber: campusForm.form.affilicationNumber,
+            fireSafetyClearanceNumber: campusForm.form.fireSafetyClearanceNumber,
+            buildingSafetyCertificate: campusForm.form.buildingSafetyCertificate,
+            updated_by: campusForm.form.created_by,
+            updated_at: new Date()
+          }
+        });
+
+      } else {
+        
         await prisma.campus.create({
           data: {
             active: 1,
             campusName: campusForm.form.campusName,
             campusAddress: campusForm.form.campusAddress,
             campusPhone: campusForm.form.campusPhone,
+            affilicationNumber: campusForm.form.affilicationNumber,
+            fireSafetyClearanceNumber: campusForm.form.fireSafetyClearanceNumber,
+            buildingSafetyCertificate: campusForm.form.buildingSafetyCertificate,
             instituteId: campusForm.form.instituteId,
             created_by: campusForm.form.created_by,
             created_at: new Date(),
@@ -1450,9 +1486,9 @@ export class MasterController {
         await prisma.dailyHomework.create({
           data: {
             active: 1,
-            campusId: homeworkform.form.campusId,
-            classId: homeworkform.form.classId,
-            sectionId: homeworkform.form.sectionId,
+            campusId: Number(homeworkform.form.campusId),
+            classId: Number(homeworkform.form.classId),
+            sectionId: Number(homeworkform.form.sectionId),
             homeworkDate: moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toDate(),
             homeworkData: homeworkform.form.homeworkData,
             created_by: homeworkform.form.created_by,
@@ -1472,9 +1508,9 @@ export class MasterController {
             where: {
               active: 1,
               userType: UserType.student,
-              campusId: homeworkform.form.campusId,
-              classId: homeworkform.form.classId,
-              sectionId: homeworkform.form.sectionId,
+              campusId: Number(homeworkform.form.campusId),
+              classId: Number(homeworkform.form.classId),
+              sectionId: Number(homeworkform.form.sectionId),
             },
             include: {
               campus: true,
@@ -1648,7 +1684,7 @@ export class MasterController {
               campusId: formData.form.campusId
             },
             data: {
-              classId: formData.form.classId,
+              classId: Number(formData.form.classId),
               name: formData.form.name,
               details: formData.details,
               updated_by: formData.form.created_by,
@@ -1660,8 +1696,8 @@ export class MasterController {
           await prisma.engagements.create({
             data: {
               active: 1,
-              campusId: formData.form.campusId,
-              classId: formData.form.classId,
+              campusId: Number(formData.form.campusId),
+              classId: Number(formData.form.classId),
               name: formData.form.name,
               details: formData.details,
               created_by: formData.form.created_by,

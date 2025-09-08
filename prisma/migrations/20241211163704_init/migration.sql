@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE `Attendance` MODIFY `day` VARCHAR(191) NOT NULL,
-    MODIFY `month` VARCHAR(191) NOT NULL,
-    MODIFY `year` VARCHAR(191) NOT NULL;

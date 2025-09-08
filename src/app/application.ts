@@ -27,9 +27,9 @@ export class Application {
 
   protected initialize(): void {
     this.express = express();
-    
-    
-   // this.expressOasGenerator.init(this.express, {});
+
+
+    // this.expressOasGenerator.init(this.express, {});
     this.express.use(cors());
     this.express.use(helmet());
     this.express.use(compression());
@@ -39,7 +39,7 @@ export class Application {
     );
     this.express.use(morgan(MORGAN_FORMAT));
     this.express.use(Routes);
-    this.express.use('/doc', this.swaggerUi.serve, this.swaggerUi.setup(this.swaggerFile))
+    this.express.use('/doc', this.swaggerUi.serve, this.swaggerUi.setup(this.swaggerFile));
     //this.connectDatabase();
   }
 }

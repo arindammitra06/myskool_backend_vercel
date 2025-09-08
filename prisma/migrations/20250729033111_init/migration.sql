@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Institute` ADD COLUMN `dateFormat` VARCHAR(255) NOT NULL DEFAULT 'MM/DD/YYYY';

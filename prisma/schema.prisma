@@ -43,39 +43,61 @@ model Sessions {
 }
 
 model Institute {
-  id                  Int              @id @default(autoincrement())
-  instituteName       String           @db.VarChar(255)
-  instituteSignature  String           @db.VarChar(255)
-  instituteCode       String?          @db.VarChar(255)
-  address             String           @db.VarChar(255)
-  phone               String           @db.VarChar(255)
-  email               String           @db.VarChar(255)
-  currency            String           @db.VarChar(255)
-  sessionId           Int?
-  feeDuesDays         Int?
-  allowOnlineClass    Int              @default(0)
-  jitsiAppID          String?          @db.VarChar(255)
-  themeColor          String?          @db.VarChar(255)
-  logo                String           @db.VarChar(255)
-  headerImage         String           @db.VarChar(255)
-  schoolLeavingCertId Int              @default(1)
-  characterCertId     Int              @default(4)
-  dobCertId           Int              @default(6)
-  created_by          Int
-  updated_by          Int
-  created_at          DateTime         @default(now()) @db.DateTime(6)
-  updated_at          DateTime         @default(now()) @db.DateTime(6)
-  emailApiKey         String?          @db.VarChar(255)
-  emailFromId         String?          @db.VarChar(255)
-  emailFromName       String?          @db.VarChar(255)
-  SMSApiKey           String?          @db.VarChar(255)
-  allowEmail          Int              @default(0)
-  allowSMS            Int              @default(0)
-  Campus              Campus[]
-  session             Sessions?        @relation(fields: [sessionId], references: [id])
-  PaymentDetails      PaymentDetails[]
-  financialYearId     Int?
-  financialYear       FinancialYear?   @relation(fields: [financialYearId], references: [id])
+  id                        Int              @id @default(autoincrement())
+  instituteName             String           @db.VarChar(255)
+  instituteSignature        String           @db.VarChar(255)
+  instituteCode             String?          @db.VarChar(255)
+  address                   String           @db.VarChar(255)
+  phone                     String           @db.VarChar(255)
+  email                     String           @db.VarChar(255)
+  currency                  String           @db.VarChar(255)
+  sessionId                 Int?
+  feeDuesDays               Int?
+  allowOnlineClass          Int              @default(0)
+  jitsiAppID                String?          @db.VarChar(255)
+  logo                      String           @db.VarChar(255)
+  headerImage               String           @db.VarChar(255)
+  schoolLeavingCertId       Int              @default(1)
+  characterCertId           Int              @default(4)
+  dobCertId                 Int              @default(6)
+  created_by                Int
+  updated_by                Int
+  created_at                DateTime         @default(now()) @db.DateTime(6)
+  updated_at                DateTime         @default(now()) @db.DateTime(6)
+  emailApiKey               String?          @db.VarChar(255)
+  emailFromId               String?          @db.VarChar(255)
+  emailFromName             String?          @db.VarChar(255)
+  SMSApiKey                 String?          @db.VarChar(255)
+  allowEmail                Int              @default(0)
+  allowSMS                  Int              @default(0)
+  Campus                    Campus[]
+  session                   Sessions?        @relation(fields: [sessionId], references: [id])
+  PaymentDetails            PaymentDetails[]
+  financialYearId           Int?
+  financialYear             FinancialYear?   @relation(fields: [financialYearId], references: [id])
+  themeId                   Int?
+  theme                     Theme?           @relation(fields: [themeId], references: [id])
+  dateTimeFormat            String           @default("MM/DD/YYYY hh:mm A") @db.VarChar(255)
+  dateFormat                String           @default("MM/DD/YYYY") @db.VarChar(255)
+  tagline                   String?          @db.VarChar(255)
+  affiliation               String?          @db.VarChar(255)
+  mediumOfInstruction       String?          @db.VarChar(255)
+  establishmentYear         String?          @db.VarChar(255)
+  websiteUrl                String?          @db.VarChar(255)
+  principal                 String?          @db.VarChar(255)
+  vicePrincipal             String?          @db.VarChar(255)
+  adminHeadInCharge         String?          @db.VarChar(255)
+  adminEmailOrPhone         String?          @db.VarChar(255)
+  workingDays               String?          @db.VarChar(255)
+  classLevels               String?          @db.VarChar(255)
+  sectionsPerClass          String?          @db.VarChar(255)
+  curriculumSubjectsOffered String?          @db.VarChar(255)
+  gradingSystem             String?          @db.VarChar(255)
+  examinationPattern        String?          @db.VarChar(255)
+  affilicationNumber        String?          @db.VarChar(255)
+  fireSafetyClearanceNumber String?          @db.VarChar(255)
+  buildingSafetyCertificate String?          @db.VarChar(255)
+  studentTeacherRatio       String?          @db.VarChar(255)
 
   @@index([sessionId], map: "Institute_sessionId_fkey")
 }
@@ -86,6 +108,9 @@ model Campus {
   campusAddress               String                        @db.VarChar(255)
   campusPhone                 String                        @db.VarChar(255)
   active                      Int                           @default(1) @db.TinyInt
+  affilicationNumber          String?                       @db.VarChar(255)
+  fireSafetyClearanceNumber   String?                       @db.VarChar(255)
+  buildingSafetyCertificate   String?                       @db.VarChar(255)
   instituteId                 Int
   created_by                  Int
   updated_by                  Int
@@ -146,7 +171,6 @@ model Campus {
   Subject                     Subject[]
   SubjectMarksTimeTable       SubjectMarksTimeTable[]
   TeachersInSection           TeachersInSection[]
-  Theme                       Theme[]
   TimeTable                   TimeTable[]
   Transactions                Transactions[]
   TransportRoutes             TransportRoutes[]
@@ -293,8 +317,8 @@ model User {
   gender                Gender                  @default(Male)
   dateOfBirth           DateTime?               @db.Date
   placeOfBirth          String?                 @db.VarChar(255)
-  photo                 String?                 @db.VarChar(255)
-  thumbnailUrl          String?                 @db.VarChar(255)
+  photo                 String?                 @db.VarChar(4000)
+  thumbnailUrl          String?                 @db.VarChar(4000)
   active                Int                     @default(1) @db.TinyInt
   campusId              Int
   homeAddress           String?                 @db.VarChar(500)
@@ -331,8 +355,6 @@ model User {
   onlineClassesId       Int?
   resetPasswordCode     String?                 @db.VarChar(255)
   resetPasswordFlag     Int                     @default(1) @db.TinyInt
-  isUserTheme           Int                     @default(0)
-  themeName             String                  @default("LIGHT") @db.VarChar(255)
   leftMenuExpanded      Int                     @default(1) @db.TinyInt
   emergencyContact      String?                 @db.VarChar(255)
   AdmissionRecord       AdmissionRecord[]
@@ -356,7 +378,6 @@ model User {
   StudentToEngagements  StudentToEngagements[]
   SubjectMarksTimeTable SubjectMarksTimeTable[]
   TeachersInSection     TeachersInSection[]
-  Theme                 Theme[]
   Transactions          Transactions[]
   campus                Campus                  @relation(fields: [campusId], references: [id])
   class                 Class?                  @relation(fields: [classId], references: [id])
@@ -1301,39 +1322,34 @@ model AccessPermission {
 }
 
 model Theme {
-  id                    Int      @id @default(autoincrement())
-  campusId              Int
-  active                Int      @default(1) @db.TinyInt
-  themeName             String   @db.VarChar(255)
-  scheme                String   @db.VarChar(255)
-  schemeColor           String   @db.VarChar(255)
-  fontFamily            String   @db.VarChar(255)
+  id                    Int         @id
+  active                Int         @default(1) @db.TinyInt
+  themeType             ThemeType   @default(System)
+  themeName             String      @db.VarChar(255)
+  scheme                String      @db.VarChar(255)
+  schemeColor           String?     @db.VarChar(255)
+  fontFamily            String      @db.VarChar(255)
   fontSize              Int?
-  primaryColor          String   @db.VarChar(255)
-  actionGreenButton     String   @db.VarChar(255)
-  secondaryOrangeButton String   @db.VarChar(255)
-  blue                  String   @db.VarChar(255)
-  red                   String   @db.VarChar(255)
-  orange                String   @db.VarChar(255)
-  yellow                String   @db.VarChar(255)
-  green                 String   @db.VarChar(255)
-  backg                 String   @db.VarChar(255)
-  foreg                 String   @db.VarChar(255)
-  header                String   @db.VarChar(255)
-  leftmenu              String   @db.VarChar(255)
-  white                 String   @db.VarChar(255)
-  black                 String   @db.VarChar(255)
+  primaryColor          String      @db.VarChar(255)
+  actionGreenButton     String      @db.VarChar(255)
+  secondaryOrangeButton String      @db.VarChar(255)
+  blue                  String      @db.VarChar(255)
+  red                   String      @db.VarChar(255)
+  orange                String      @db.VarChar(255)
+  yellow                String      @db.VarChar(255)
+  green                 String      @db.VarChar(255)
+  backg                 String      @db.VarChar(255)
+  foreg                 String      @db.VarChar(255)
+  header                String      @db.VarChar(255)
+  leftmenu              String      @db.VarChar(255)
+  white                 String?     @db.VarChar(255)
+  black                 String?     @db.VarChar(255)
   created_by            Int
   updated_by            Int
-  created_at            DateTime @default(now()) @db.DateTime(6)
-  updated_at            DateTime @default(now()) @db.DateTime(6)
-  userId                Int?
-  defaultRadius         Int      @default(5)
-  campus                Campus   @relation(fields: [campusId], references: [id])
-  user                  User?    @relation(fields: [userId], references: [id])
-
-  @@index([campusId], map: "Theme_campusId_fkey")
-  @@index([userId], map: "Theme_userId_fkey")
+  created_at            DateTime    @default(now()) @db.DateTime(6)
+  updated_at            DateTime    @default(now()) @db.DateTime(6)
+  defaultRadius         Int         @default(5)
+  Institute             Institute[]
 }
 
 model StockCategory {
@@ -1808,6 +1824,11 @@ enum PaymentType {
   Online
   Wallet
   Credit
+}
+
+enum ThemeType {
+  System
+  User
 }
 
 enum ExamType {

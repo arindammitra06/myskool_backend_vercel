@@ -18,14 +18,13 @@ export class StaffAccountantController {
     const staffDetails: any = req.body;
     const empType = String(req.params.empType);
     const institute = await prisma.institute.findFirst();
-
+    
     const password = generator.generate({
       length: 10,
       numbers: true,
       symbols: true
     });
     const encryptedPassword = encrypt(password);
-    console.log(password);
 
 
     let latestUserID = await prisma.user.findFirst({
@@ -214,7 +213,7 @@ export class StaffAccountantController {
   public async getEmployeeLoanStatus(req: Request, res: Response) {
 
     const formData: any = req.body;
-    console.log(formData)
+
     try {
 
       const employee = await prisma.user.findUnique({
@@ -307,7 +306,6 @@ export class StaffAccountantController {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
     const userId = Number(req.params.userId);
-    console.log('Indelete staff accountant : ' + id);
     const user = await prisma.user.findUnique({
       where: {
         id: id,

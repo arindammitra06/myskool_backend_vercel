@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `User` MODIFY `themeName` VARCHAR(255) NOT NULL DEFAULT 'LIGHT';

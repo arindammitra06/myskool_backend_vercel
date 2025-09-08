@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `PaySlip` ADD COLUMN `bonus` DOUBLE NOT NULL DEFAULT 0;

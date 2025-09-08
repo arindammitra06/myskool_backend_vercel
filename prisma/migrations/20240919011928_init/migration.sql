@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `Theme` ADD COLUMN `defaultRadius` INTEGER NOT NULL DEFAULT 5;

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `MYAALInvoices` ALTER COLUMN `paidOn` DROP DEFAULT;

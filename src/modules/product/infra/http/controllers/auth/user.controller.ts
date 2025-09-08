@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
 import { prisma } from "../../../../../../shared/db-client";
-import { addANotification, buildTheme, decrypt, encrypt, getDateForMatching, getMenuCategory, MenuIcons, sortUsersBy } from "../../../../../../shared/helpers/utils/generic.utils";
-import { AbsenseStatus, AttendanceType, FeeStatus, Section, UserType } from "@prisma/client";
+import { addANotification, buildTheme, encrypt, getMenuCategory } from "../../../../../../shared/helpers/utils/generic.utils";
+import { FeeStatus, UserType } from "@prisma/client";
 import { systemAppThemes } from "../../../../../../shared/helpers/utils/app-themes";
-import { AttendanceSheetModel } from "../../../../../../shared/models/attendance.model";
 import moment from "moment";
-import { ROLE_DELETED, ROLE_UPDATES, USER_DELETED, USER_DETAILS_UPDATED, USER_PASSWORD_RESET, USER_PERMISSION_MODIFIED, USER_PHOTO_UPDATED, USER_THEME_UPDATED } from "../../../../../../shared/constants/notification.constants";
+import { buildMessage, ROLE_DELETED, ROLE_UPDATES, SYSTEM_THEME_UPDATED, USER_DELETED, USER_DETAILS_UPDATED, USER_PASSWORD_RESET, USER_PERMISSION_MODIFIED, USER_PHOTO_UPDATED, USER_THEME_UPDATED } from "../../../../../../shared/constants/notification.constants";
 
 
 
@@ -191,37 +190,42 @@ export class UserController {
     }
   }
 
-  public async updateUserTheme(req: Request, res: Response) {
-    const userData: any = req.body;
+  public async updateInstituteDefaultTheme(req: Request, res: Response) {
+    const themeInfo: any = req.body;
+    console.log(themeInfo);
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: Number(userData.id),
-        campusId: Number(userData.campusId),
-      },
-    });
-    if (!user) {
-      return res.status(404).json({ status: false, data: null, message: `The user with the id "${userData.id}" not found.` })
-    }
+
+
 
     try {
-      const updatedUser = await prisma.user.update({
-        where: {
-          id: Number(userData.id),
-          campusId: Number(userData.campusId),
-        },
-        data: {
-          themeName: userData.themeName.toUpperCase(),
-          isUserTheme: userData.isUserTheme,
-          updated_at: new Date(),
-          updated_by: Number(userData.id)
-        },
-      })
+      const institute = await prisma.institute.findFirst();
 
-      //Add notification
-      addANotification(Number(userData.campusId), Number(userData.id), Number(userData.id), USER_THEME_UPDATED + userData.themeName);
+      if (institute) {
+        console.log('Updaing theme for institute ', institute.instituteName);
+        await prisma.institute.update({
+          where: {
+            id: institute.id,
+          },
+          data: {
+            themeId: Number(themeInfo.themeId),
+            updated_at: new Date(),
+            updated_by: Number(themeInfo.currentUserId)
+          },
+        });
+        console.log('Updaing Completed to Theme ID',themeInfo.themeId);
 
-      return res.json({ status: true, data: null, message: "" });
+        //Add notification
+        addANotification(
+          Number(1),
+          Number(themeInfo.currentUserId),
+          Number(themeInfo.currentUserId),
+          buildMessage(SYSTEM_THEME_UPDATED, themeInfo.currentUserId));
+
+        return res.json({ status: true, data: null, message: "System theme updated" });
+      }else{
+        return res.json({ status: false, data: null, message: "Found no institute" });
+      }
+
     } catch (error) {
       console.error(error);
 
@@ -478,7 +482,8 @@ export class UserController {
     const password = parmaspassed.password;
     let returnObj;
     let user;
-    console.log(parmaspassed)
+    console.log(parmaspassed);
+    console.log(encrypt(String(password)))
     try {
 
       user = await prisma.user
@@ -540,8 +545,9 @@ export class UserController {
       return res.json({ status: false, data: null, message: 'User/Password not found' });
     }
 
+    console.log(user)
     if (!user) {
-      return res.json({ status: false, currentUser: null, message: 'User/Password not found' });
+      return res.json({ status: false, data: { currentUser: user, otherParams: null }, message: 'User/Password not found' });
     }
 
 
@@ -560,28 +566,6 @@ export class UserController {
       // console.log(returnObj);
     }
 
-    if (user !== null && user !== undefined && user.themeName !== null && user.themeName !== undefined) {
-      if (user.isUserTheme === 1) {
-        let themeFound = await prisma.theme
-          .findFirst({
-            where: {
-              themeName: String(user.themeName),
-              userId: Number(user.id),
-              campusId: Number(user.campusId),
-            }
-          });
-        if (themeFound !== null && themeFound !== undefined) {
-          let newTheme = buildTheme(themeFound);
-          user['themeObjProcessed'] = newTheme;
-        }
-
-      } else {
-        let themeObj = systemAppThemes.filter(item => item.key === user.themeName);
-        if (themeObj !== null && themeObj !== undefined && themeObj.length > 0) {
-          user['themeObjProcessed'] = themeObj[0].value;
-        }
-      }
-    }
     console.log(user);
     console.log(returnObj);
     return res.json({ status: true, data: { currentUser: user, otherParams: returnObj }, message: 'Login successful' });
@@ -1445,8 +1429,14 @@ export class UserController {
             user.campus.Attendance.forEach(async (eachAttendanceActivity) => {
               if (eachAttendanceActivity !== null && eachAttendanceActivity !== undefined) {
                 let activity = {};
-                activity["message"] = eachAttendanceActivity.user.displayName + ' (' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + ") was checked in";
-                activity["datetime"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                activity["displayName"] = eachAttendanceActivity.user.displayName;
+                activity["photo"] = eachAttendanceActivity.user.photo;
+                activity["message"] = ' of ' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + " was checked in"
+                activity["date"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                activity["time"] = eachAttendanceActivity.recordStartTime;
+                activity["attendanceType"] = eachAttendanceActivity.attendanceType;
+                activity["attendanceStatus"] = eachAttendanceActivity.attendanceStatus;
+                activity["dayStatus"] = eachAttendanceActivity.dayStatus;
                 attendanceActivity.push(activity);
               }
             })
@@ -1454,6 +1444,7 @@ export class UserController {
           } else {
             overviewDate["latest-activity"] = [];
           }
+
         } else {
           let attendanceActivity = [];
 
@@ -1465,8 +1456,14 @@ export class UserController {
                   eachTSection.section.Attendance.forEach(async (eachAttendanceActivity) => {
                     if (eachAttendanceActivity !== null && eachAttendanceActivity !== undefined) {
                       let activity = {};
-                      activity["message"] = eachAttendanceActivity.user.displayName + ' (' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + ") was checked in";
-                      activity["datetime"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                      activity["displayName"] = eachAttendanceActivity.user.displayName;
+                      activity["photo"] = eachAttendanceActivity.user.photo;
+                      activity["message"] = ' of ' + eachAttendanceActivity.class.className + ", " + eachAttendanceActivity.section.sectionName + " was checked in"
+                      activity["date"] = eachAttendanceActivity.attendanceDateProcessed + " - " + eachAttendanceActivity.recordStartTime;
+                      activity["time"] = eachAttendanceActivity.recordStartTime;
+                      activity["attendanceType"] = eachAttendanceActivity.attendanceType;
+                      activity["attendanceStatus"] = eachAttendanceActivity.attendanceStatus;
+                      activity["dayStatus"] = eachAttendanceActivity.dayStatus;
                       attendanceActivity.push(activity);
                     }
                   });

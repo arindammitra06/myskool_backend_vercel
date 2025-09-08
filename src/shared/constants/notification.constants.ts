@@ -1,5 +1,7 @@
 import { configService } from "nest-shared";
 
+export const SYSTEM_THEME_UPDATED = "System theme is updated by {1}";
+
 //User related
 export const USER_THEME_UPDATED = "User theme is updated to ";
 export const USER_DETAILS_UPDATED = "Profile info has been updated for ";
