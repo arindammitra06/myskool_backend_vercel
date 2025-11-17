@@ -667,11 +667,11 @@ export class MasterController {
       if (timetable !== null && timetable !== undefined && timetable.form !== null && timetable.form !== undefined) {
         await prisma.timeTable.create({
           data: {
-            classId: timetable.form.classId,
-            sectionId: timetable.form.sectionId,
-            campusId: timetable.form.campusId,
+            classId: Number(timetable.form.classId),
+            sectionId: Number(timetable.form.sectionId),
+            campusId: Number(timetable.form.campusId),
             subject: timetable.form.event,
-            ongoingSessionId: timetable.form.sessionId,
+            ongoingSessionId: Number(timetable.form.sessionId),
             year: year + '',
             active: 1,
             day: '',
@@ -683,9 +683,9 @@ export class MasterController {
             isRecurring: 0,
             bgcolor: timetable.form.color,
             color: timetable.form.color,
-            created_by: timetable.form.created_by,
+            created_by: Number(timetable.form.created_by),
             created_at: new Date(),
-            updated_by: timetable.form.updated_by,
+            updated_by: Number(timetable.form.updated_by),
             updated_at: new Date()
           },
         });
@@ -693,17 +693,17 @@ export class MasterController {
         if (timetable.form.addToLeave === '1') {
           await prisma.holidays.create({
             data: {
-              classId: timetable.form.classId,
-              sectionId: timetable.form.sectionId,
-              campusId: timetable.form.campusId,
+              classId: Number(timetable.form.classId),
+              sectionId: Number(timetable.form.sectionId),
+              campusId: Number(timetable.form.campusId),
               name: timetable.form.event,
-              ongoingSessionId: timetable.form.sessionId,
+              ongoingSessionId: Number(timetable.form.sessionId),
               active: 1,
               holidayStart: timetable.form.startDate,
               holidayEnd: timetable.form.endDate,
-              created_by: timetable.form.created_by,
+              created_by: Number(timetable.form.created_by),
               created_at: new Date(),
-              updated_by: timetable.form.updated_by,
+              updated_by: Number(timetable.form.updated_by),
               updated_at: new Date()
             },
           });

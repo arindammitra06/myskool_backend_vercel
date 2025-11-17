@@ -290,8 +290,8 @@ export class ClassSectionController {
       } else {
         const createSectionS = await prisma.section.create({
           data: {
-            campusId: sectionS.form.campusId,
-            classId: sectionS.form.classId,
+            campusId: Number(sectionS.form.campusId),
+            classId: Number(sectionS.form.classId),
             sectionName: sectionS.form.sectionName,
             created_at:new Date(),
             created_by:sectionS.form.updated_by,
