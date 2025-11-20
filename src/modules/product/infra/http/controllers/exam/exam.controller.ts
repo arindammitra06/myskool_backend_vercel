@@ -273,11 +273,11 @@ export class ExamController {
               sessionId: Number(formData.sessionId),
               examName: formData.examName,
               description: formData.description,
-              gradeId: formData.gradeId,
+              gradeId:  Number(formData.gradeId),
               type: ExamType[ formData.examType],
-              created_by:formData.userId,
+              created_by: Number(formData.userId),
               created_at: new Date(),
-              updated_by: formData.userId,
+              updated_by:  Number(formData.userId),
               updated_at: new Date()
             },
           });
@@ -299,8 +299,8 @@ export class ExamController {
     
     await prisma.exam.delete({
       where: {
-        id: id,
-        campusId: campusId
+        id: Number(id),
+        campusId: Number(campusId)
       }
     });
     
@@ -314,8 +314,8 @@ export class ExamController {
     
     await prisma.subjectMarksTimeTable.delete({
       where: {
-        id: id,
-        campusId: campusId
+        id: Number(id),
+        campusId: Number(campusId)
       }
     });
     
@@ -614,7 +614,7 @@ export class ExamController {
   public async saveExamMarks(req: Request, res: Response) {
     const formData: any = req.body.form;
     const details: any = req.body.details;
-    
+    console.log(formData)
     try {
       if (formData !== null && formData !== undefined && details !== null && details !== undefined && details.length>0) {
         

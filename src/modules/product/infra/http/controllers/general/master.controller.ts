@@ -1,34 +1,68 @@
-import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
-import { EmailTemplate, FileType, Holidays, MessageType, TimeTable, User, UserType } from "@prisma/client";
+import { Request, Response } from 'express';
+import { prisma } from '../../../../../../shared/db-client';
+import {
+  EmailTemplate,
+  FileType,
+  Holidays,
+  MessageType,
+  TimeTable,
+  User,
+  UserType,
+} from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { addANotification, buildTheme, getBlankMonthWiseHolidayList, getCurrencySymbol, getIsoDay, processTimeTableJsonData } from "../../../../../../shared/helpers/utils/generic.utils";
-import moment from "moment";
-import { changeAccountResetStatus, getEmailTemplateByName, sendAdhocEmail, sendEmail, sendEmailCommon, sendSms } from "../../../../../../shared/helpers/notifications/notifications";
-import resetPasswordTemplate from "../../../../../../emails/reset-password";
+import {
+  addANotification,
+  buildTheme,
+  getBlankMonthWiseHolidayList,
+  getCurrencySymbol,
+  getIsoDay,
+  processTimeTableJsonData,
+} from '../../../../../../shared/helpers/utils/generic.utils';
+import moment from 'moment';
+import {
+  changeAccountResetStatus,
+  getEmailTemplateByName,
+  sendAdhocEmail,
+  sendEmail,
+  sendEmailCommon,
+  sendSms,
+} from '../../../../../../shared/helpers/notifications/notifications';
+import resetPasswordTemplate from '../../../../../../emails/reset-password';
 import { v4 as uuidv4 } from 'uuid';
-import { buildMessage, LEAVE_REQUEST_APP_REJ, LEAVE_REQUESTED, NEW_HOMEWORK_ADDED, PRODUCT_CATEGORY_ADDED, UPDATE_MASTER_NOTIFICATION, USER_CREATED } from "../../../../../../shared/constants/notification.constants";
-import { uploadImageToImageKit } from "../../../../../../shared/helpers/utils/uploadImageToImageKit";
+import {
+  buildMessage,
+  LEAVE_REQUEST_APP_REJ,
+  LEAVE_REQUESTED,
+  NEW_HOMEWORK_ADDED,
+  PRODUCT_CATEGORY_ADDED,
+  UPDATE_MASTER_NOTIFICATION,
+  USER_CREATED,
+} from '../../../../../../shared/constants/notification.constants';
+import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit';
 const fs = require('fs');
-
 
 interface MulterMemoryRequest extends Request {
   file: Express.Multer.File;
 }
 
 export class MasterController {
-
   public async uploadImageToImageKit(req: MulterMemoryRequest, res: Response) {
     try {
-      console.log(req)
+      console.log(req);
       const { file } = req;
 
       if (!file) {
-        return res.json({ status: false, data: null, message: 'File upload error' });
+        return res.json({
+          status: false,
+          data: null,
+          message: 'File upload error',
+        });
       }
 
-      const uploadResponse = await uploadImageToImageKit(file.buffer, uuidv4() + req.file.originalname);
-
+      const uploadResponse = await uploadImageToImageKit(
+        file.buffer,
+        uuidv4() + req.file.originalname
+      );
 
       res.json({
         status: true,
@@ -36,31 +70,29 @@ export class MasterController {
         url: uploadResponse.url,
         thumbnailUrl: uploadResponse.thumbnailUrl,
       });
-
     } catch (error) {
-      return res.json({ status: false, data: null, message: 'File upload error' });
+      return res.json({
+        status: false,
+        data: null,
+        message: 'File upload error',
+      });
     }
   }
-
-
 
   public async getAllThemes(req: Request, res: Response) {
     let themeItems = [];
 
-
     let themes = await prisma.theme.findMany({
       where: {
-        active: 1
+        active: 1,
       },
     });
 
     if (themes !== null && themes !== undefined && themes.length > 0) {
-
       themes.forEach(async (element) => {
         let newTheme = buildTheme(element);
 
         if (newTheme !== null && newTheme !== undefined) {
-
           themeItems.push({
             id: element.id,
             type: element.themeType,
@@ -73,13 +105,11 @@ export class MasterController {
             theme: newTheme,
             largerFont: element.fontSize !== 0 ? true : false,
             actionButton: element.actionGreenButton,
-            secondaryButton: element.secondaryOrangeButton
+            secondaryButton: element.secondaryOrangeButton,
           });
-
         }
       });
     }
-
 
     return res.json({ status: true, data: themeItems, message: '' });
   }
@@ -87,14 +117,17 @@ export class MasterController {
   public async saveATheme(req: Request, res: Response) {
     const themeData: any = req.body;
 
-    if (themeData !== null && themeData !== undefined && themeData.form !== null && themeData.form !== undefined) {
-
+    if (
+      themeData !== null &&
+      themeData !== undefined &&
+      themeData.form !== null &&
+      themeData.form !== undefined
+    ) {
       const theme = await prisma.theme.findFirst({
         where: {
           themeName: themeData.form.themeName.toUpperCase(),
-        }
+        },
       });
-
 
       if (theme !== null && theme !== undefined) {
         //update theme
@@ -126,11 +159,14 @@ export class MasterController {
             white: themeData.form.white,
             black: themeData.form.black,
             updated_at: new Date(),
-            updated_by: themeData.userId
+            updated_by: themeData.userId,
           },
         });
-        return res.json({ status: true, data: themeUpdated, message: 'Theme updated' });
-
+        return res.json({
+          status: true,
+          data: themeUpdated,
+          message: 'Theme updated',
+        });
       } else {
         //add theme
         console.log('Adding new theme');
@@ -173,58 +209,217 @@ export class MasterController {
             created_at: new Date(),
             updated_at: new Date(),
             created_by: themeData.userId,
-            updated_by: themeData.userId
+            updated_by: themeData.userId,
           },
         });
-        return res.json({ status: true, data: themeUpdated, message: 'Theme saved' });
+        return res.json({
+          status: true,
+          data: themeUpdated,
+          message: 'Theme saved',
+        });
       }
-
     } else {
-      return res.json({ status: false, data: null, message: 'Nothing to save' });
+      return res.json({
+        status: false,
+        data: null,
+        message: 'Nothing to save',
+      });
     }
   }
-
 
   //Get All Sesssions as SelectItem
 
   public async getAllSessions(req: Request, res: Response) {
-    const sessions = await prisma.sessions.findMany({
-    });
+    const sessions = await prisma.sessions.findMany({});
     let sessionSelectItems = [];
 
     if (sessions !== null && sessions !== undefined && sessions.length > 0) {
       sessions.forEach(async (element) => {
-        sessionSelectItems.push({ label: element.session, value: element.id })
+        sessionSelectItems.push({ label: element.session, value: element.id });
       });
     }
     return res.json({ status: true, data: sessionSelectItems, message: '' });
   }
 
   public async getAllSessionsCompleteData(req: Request, res: Response) {
-    const sessions = await prisma.sessions.findMany({
-    });
+    const sessions = await prisma.sessions.findMany({});
 
-    return res.json({ status: true, data: sessions, message: 'Sessions fetched' });
+    return res.json({
+      status: true,
+      data: sessions,
+      message: 'Sessions fetched',
+    });
   }
 
-
   public async getAllFinancialYearsDropdown(req: Request, res: Response) {
-    const financialYear = await prisma.financialYear.findMany({
-    });
+    const financialYear = await prisma.financialYear.findMany({});
     let financialYearSelectItems = [];
 
-    if (financialYear !== null && financialYear !== undefined && financialYear.length > 0) {
+    if (
+      financialYear !== null &&
+      financialYear !== undefined &&
+      financialYear.length > 0
+    ) {
       financialYear.forEach(async (element) => {
-        financialYearSelectItems.push({ label: element.financialYear, value: element.id })
+        financialYearSelectItems.push({
+          label: element.financialYear,
+          value: element.id,
+        });
       });
     }
-    return res.json({ status: true, data: financialYearSelectItems, message: '' });
+    return res.json({
+      status: true,
+      data: financialYearSelectItems,
+      message: '',
+    });
   }
 
   public async getAllFinancialYears(req: Request, res: Response) {
     const financialYear = await prisma.financialYear.findMany();
-    return res.json({ status: true, data: financialYear, message: 'Financial Years fetched' });
+    return res.json({
+      status: true,
+      data: financialYear,
+      message: 'Financial Years fetched',
+    });
   }
+
+  public async deleteFinancialYear(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.financialYear.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Financial Year deleted successfully',
+    });
+  }
+
+  public async addUpdateFinancialYear(req: Request, res: Response) {
+    const settings: any = req.body.form;
+    console.log(settings);
+    try {
+      if (
+        settings !== null &&
+        settings !== undefined &&
+        settings.id !== null &&
+        settings.id !== undefined
+      ) {
+        await prisma.financialYear.update({
+          where: {
+            id: settings.id,
+          },
+          data: {
+            financialYear: settings.financialYear,
+          },
+        });
+      } else {
+        await prisma.financialYear.create({
+          data: {
+            financialYear: settings.financialYear,
+          },
+        });
+      }
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Financial Year info saved',
+      });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
+    }
+  }
+
+
+  public async deleteSession(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.sessions.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Session deleted successfully',
+    });
+  }
+
+  public async addUpdateSession(req: Request, res: Response) {
+  const settings = req.body.form;
+    console.log(settings)
+  try {
+    if (!settings) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid request data",
+        data: null,
+      });
+    }
+
+    const {
+      id,
+      session,
+      campusId,
+      startMonth,
+      startYear,
+      endMonth,
+      endYear
+    } = settings;
+
+    if (id) {
+      // ---- UPDATE SESSION ----
+      await prisma.sessions.update({
+        where: { id: Number(id) },
+        data: {
+          session: session,
+          campusId: Number(campusId),
+          startMonth: Number(startMonth),
+          startYear : Number(startYear),
+          endMonth : Number(endMonth),
+          endYear : Number(endYear),
+        },
+      });
+    } else {
+      // ---- CREATE SESSION ----
+      await prisma.sessions.create({
+        data: {
+          session: session,
+          campusId: Number(campusId),
+          startMonth: Number(startMonth),
+          startYear : Number(startYear),
+          endMonth : Number(endMonth),
+          endYear : Number(endYear),
+        },
+      });
+    }
+
+    return res.json({
+      data: null,
+      status: true,
+      message: "Session info saved",
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(400).json({
+      message: error.message,
+      status: false,
+      data: null,
+    });
+  }
+}
+
 
   //ID Card Images Folder
 
@@ -232,9 +427,18 @@ export class MasterController {
     const settings: any = req.body;
     console.log(settings);
     try {
-      if (settings !== null && settings !== undefined && Array.isArray(settings)) {
+      if (
+        settings !== null &&
+        settings !== undefined &&
+        Array.isArray(settings)
+      ) {
         settings.forEach(async (element) => {
-          if (element !== null && element !== undefined && element.id !== null && element.id !== undefined) {
+          if (
+            element !== null &&
+            element !== undefined &&
+            element.id !== null &&
+            element.id !== undefined
+          ) {
             await prisma.defaultImageSetting.update({
               where: {
                 id: element.id,
@@ -247,12 +451,10 @@ export class MasterController {
                 type: element.type,
                 forUser: element.forUser,
                 updated_by: element.updated_by,
-                updated_at: new Date()
+                updated_at: new Date(),
               },
             });
-
           } else {
-
             await prisma.defaultImageSetting.create({
               data: {
                 campusId: element.campusId,
@@ -261,21 +463,20 @@ export class MasterController {
                 type: element.type,
                 forUser: element.forUser,
                 created_by: element.created_by,
-                updated_by: element.updated_by
+                updated_by: element.updated_by,
               },
             });
-
           }
         });
-
       }
       return res.json({ data: null, status: true, message: 'Settings saved' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async getImagesByType(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -288,12 +489,14 @@ export class MasterController {
       },
       include: {
         campus: true,
-
       },
     });
 
-
-    return res.json({ status: true, data: settings, message: 'Settings fetched' });
+    return res.json({
+      status: true,
+      data: settings,
+      message: 'Settings fetched',
+    });
   }
 
   //Online Meetings
@@ -310,14 +513,16 @@ export class MasterController {
       include: {
         campus: true,
         class: true,
-        section: true
+        section: true,
       },
     });
 
-
-    return res.json({ status: true, data: meeting, message: 'Meetings fetched' });
+    return res.json({
+      status: true,
+      data: meeting,
+      message: 'Meetings fetched',
+    });
   }
-
 
   public async getOnlineMeetingsByClassSection(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -334,14 +539,16 @@ export class MasterController {
       include: {
         campus: true,
         class: true,
-        section: true
+        section: true,
       },
     });
 
-
-    return res.json({ status: true, data: meeting, message: 'Meetings fetched' });
+    return res.json({
+      status: true,
+      data: meeting,
+      message: 'Meetings fetched',
+    });
   }
-
 
   public async saveOnlineMeeting(req: Request, res: Response) {
     const data: any = req.body;
@@ -350,59 +557,66 @@ export class MasterController {
       const savedClass = await prisma.onlineClasses.create({
         data: data.form,
       });
-      return res.json({ data: savedClass, status: true, message: 'Online Class saved' });
+      return res.json({
+        data: savedClass,
+        status: true,
+        message: 'Online Class saved',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async generateOnlineToken(req: Request, res: Response) {
     const tokenData: any = req.body;
 
     if (!tokenData) {
-      return res.status(400).json({ status: false, data: null, message: 'Token data is required' });
+      return res
+        .status(400)
+        .json({ status: false, data: null, message: 'Token data is required' });
     }
 
-    const now = new Date()
-
+    const now = new Date();
 
     var privateKey = fs.readFileSync(process.env.JITSU_PRIVATE_KEY_PATH);
 
-    const jwtToken = jwt.sign({
-      aud: 'jitsi',
-      context: {
-        user: {
-          id: tokenData.context.user.id,
-          name: tokenData.context.user.name,
-          avatar: tokenData.context.user.avatar,
-          email: tokenData.context.user.email,
-          moderator: tokenData.context.user.moderator,
+    const jwtToken = jwt.sign(
+      {
+        aud: 'jitsi',
+        context: {
+          user: {
+            id: tokenData.context.user.id,
+            name: tokenData.context.user.name,
+            avatar: tokenData.context.user.avatar,
+            email: tokenData.context.user.email,
+            moderator: tokenData.context.user.moderator,
+          },
+          features: {
+            livestreaming: 'true',
+            recording: 'true',
+            transcription: 'true',
+            'outbound-call': 'true',
+          },
         },
-        features: {
-          livestreaming: 'true',
-          recording: 'true',
-          transcription: 'true',
-          "outbound-call": 'true'
-        }
+        iss: 'chat',
+        room: tokenData.context.room,
+        sub: process.env.JITSU_APP_ID,
+        exp: '2hr',
+        nbf: Math.round(new Date().getTime() / 1000) - 10,
       },
-      iss: 'chat',
-      room: tokenData.context.room,
-      sub: process.env.JITSU_APP_ID,
-      exp: "2hr",
-      nbf: (Math.round((new Date).getTime() / 1000) - 10)
-    }, privateKey, { algorithm: 'RS256', header: { kid: process.env.JITSU_API_KEY } })
-
+      privateKey,
+      { algorithm: 'RS256', header: { kid: process.env.JITSU_API_KEY } }
+    );
 
     console.log(jwtToken);
-
 
     return res.json({ status: true, data: jwtToken, message: '' });
   }
 
   //List of Values
-
 
   public async getLOVByUniqueKey(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -412,12 +626,11 @@ export class MasterController {
       where: {
         campusId: Number(campusId),
         uniqueKey: uniqueKey,
-        active: 1
+        active: 1,
       },
     });
     return res.json({ status: true, data: lov, message: '' });
   }
-
 
   public async getLOVByGroupName(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -428,22 +641,24 @@ export class MasterController {
       where: {
         campusId: Number(campusId),
         groupName: groupName,
-        active: 1
+        active: 1,
       },
     });
     return res.json({ status: true, data: lovs, message: '' });
   }
-
 
   public async createOrUpdateLovs(req: Request, res: Response) {
     const lovs: any = req.body;
     console.log(lovs);
     try {
       if (lovs !== null && lovs !== undefined && Array.isArray(lovs)) {
-
         lovs.forEach(async (element) => {
-          if (element !== null && element !== undefined && element.id !== null && element.id !== undefined) {
-
+          if (
+            element !== null &&
+            element !== undefined &&
+            element.id !== null &&
+            element.id !== undefined
+          ) {
             await prisma.listOfValues.update({
               where: {
                 id: element.id,
@@ -458,12 +673,10 @@ export class MasterController {
                 description: element.desc,
                 active: element.active,
                 updated_by: element.updated_by,
-                updated_at: new Date()
+                updated_at: new Date(),
               },
             });
-
           } else {
-
             await prisma.listOfValues.create({
               data: {
                 campusId: element.campusId,
@@ -479,15 +692,15 @@ export class MasterController {
                 created_at: new Date(),
               },
             });
-
           }
         });
-
       }
       return res.json({ data: null, status: true, message: 'Saved' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -502,7 +715,7 @@ export class MasterController {
     //get Recurring timetable
     let session = await prisma.sessions.findUnique({
       where: {
-        id: sessionId
+        id: sessionId,
       },
       include: {
         campus: true,
@@ -516,7 +729,7 @@ export class MasterController {
         sectionId: Number(sectionId),
         ongoingSessionId: Number(sessionId),
         active: 1,
-        isRecurring: 0
+        isRecurring: 0,
       },
       include: {
         campus: true,
@@ -532,7 +745,7 @@ export class MasterController {
         sectionId: null,
         ongoingSessionId: Number(sessionId),
         active: 1,
-        isRecurring: 0
+        isRecurring: 0,
       },
       include: {
         campus: true,
@@ -540,8 +753,6 @@ export class MasterController {
         section: true,
       },
     });
-
-
 
     if (timtables !== null && timtables !== undefined && timtables.length > 0) {
       timtables.forEach(async (eachItem) => {
@@ -553,12 +764,16 @@ export class MasterController {
           textColor: 'white',
           start: eachItem.start,
           end: eachItem.end,
-          isRecurring: false
+          isRecurring: false,
         });
       });
     }
 
-    if (Leavestimtables !== null && Leavestimtables !== undefined && Leavestimtables.length > 0) {
+    if (
+      Leavestimtables !== null &&
+      Leavestimtables !== undefined &&
+      Leavestimtables.length > 0
+    ) {
       Leavestimtables.forEach(async (eachItem) => {
         data.push({
           title: eachItem.subject,
@@ -568,51 +783,84 @@ export class MasterController {
           textColor: 'white',
           start: eachItem.start,
           end: eachItem.end,
-          isRecurring: false
+          isRecurring: false,
         });
       });
     }
     //END get Recurring timetable
 
-    return res.json({ status: true, data: { data: data, session: session }, message: 'Calendar retrieved' });
+    return res.json({
+      status: true,
+      data: { data: data, session: session },
+      message: 'Calendar retrieved',
+    });
   }
-
-
-
 
   public async saveTimeTable(req: Request, res: Response) {
     const timetable: any = req.body;
 
     try {
-      if (timetable !== null && timetable !== undefined && timetable.form !== null && timetable.form !== undefined &&
-        timetable.events !== null && timetable.events !== undefined && Array.isArray(timetable.events) && timetable.events.length > 0) {
-
+      if (
+        timetable !== null &&
+        timetable !== undefined &&
+        timetable.form !== null &&
+        timetable.form !== undefined &&
+        timetable.events !== null &&
+        timetable.events !== undefined &&
+        Array.isArray(timetable.events) &&
+        timetable.events.length > 0
+      ) {
         let session = await prisma.sessions.findUnique({
           where: {
-            id: Number(timetable.form.sessionId)
+            id: Number(timetable.form.sessionId),
           },
           include: {
             campus: true,
           },
         });
         if (session !== null && session !== undefined) {
-          const startDate = new Date(session.startYear + '-' + session.startMonth + '-01');
-          const endDate = new Date(session.endYear + '-' + (session.endMonth + 1) + '-01');
-          const allDays = getAllDaysBetweenDates(startDate, endDate, getIsoDay(timetable.form.day));
+          const startDate = new Date(
+            session.startYear + '-' + session.startMonth + '-01'
+          );
+          const endDate = new Date(
+            session.endYear + '-' + (session.endMonth + 1) + '-01'
+          );
+          const allDays = getAllDaysBetweenDates(
+            startDate,
+            endDate,
+            getIsoDay(timetable.form.day)
+          );
           if (allDays !== null && allDays !== undefined && allDays.length > 0) {
             for (let i = 0; i < allDays.length; i++) {
               timetable.events.forEach(async (event) => {
                 if (event !== null && event !== undefined) {
                   console.log('Parsing event :---' + event.subjectValue);
-                  console.log(moment("2019-01-19 " + event.startTime, 'YYYY-MM-DD HH:mm'));
-                  console.log(moment("2019-01-19 " + event.endTime, 'YYYY-MM-DD HH:mm'))
+                  console.log(
+                    moment('2019-01-19 ' + event.startTime, 'YYYY-MM-DD HH:mm')
+                  );
+                  console.log(
+                    moment('2019-01-19 ' + event.endTime, 'YYYY-MM-DD HH:mm')
+                  );
 
                   var duration = moment.duration(
-                    moment("2019-01-19 " + event.endTime, 'YYYY-MM-DD HH:mm').diff(moment("2019-01-19 " + event.startTime, 'YYYY-MM-DD HH:mm')));
+                    moment(
+                      '2019-01-19 ' + event.endTime,
+                      'YYYY-MM-DD HH:mm'
+                    ).diff(
+                      moment(
+                        '2019-01-19 ' + event.startTime,
+                        'YYYY-MM-DD HH:mm'
+                      )
+                    )
+                  );
 
-                  const formatted = moment.utc(duration.asMilliseconds()).format('HH:mm');
+                  const formatted = moment
+                    .utc(duration.asMilliseconds())
+                    .format('HH:mm');
                   console.log('Formatted Time Duration:-' + formatted);
-                  var startTimeAndDate = moment(allDays[i] + ' ' + event.startTime);
+                  var startTimeAndDate = moment(
+                    allDays[i] + ' ' + event.startTime
+                  );
                   var endTimeAndDate = moment(allDays[i] + ' ' + event.endTime);
 
                   await prisma.timeTable.create({
@@ -636,7 +884,7 @@ export class MasterController {
                       created_by: timetable.form.created_by,
                       created_at: new Date(),
                       updated_by: timetable.form.updated_by,
-                      updated_at: new Date()
+                      updated_at: new Date(),
                     },
                   });
                   console.log('Saved Event :---' + event.endTime);
@@ -649,10 +897,11 @@ export class MasterController {
       return res.json({ data: null, status: true, message: 'Event added' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async saveAdhocTimeTable(req: Request, res: Response) {
     const timetable: any = req.body;
@@ -664,7 +913,12 @@ export class MasterController {
     const institute = await prisma.institute.findFirst();
 
     try {
-      if (timetable !== null && timetable !== undefined && timetable.form !== null && timetable.form !== undefined) {
+      if (
+        timetable !== null &&
+        timetable !== undefined &&
+        timetable.form !== null &&
+        timetable.form !== undefined
+      ) {
         await prisma.timeTable.create({
           data: {
             classId: Number(timetable.form.classId),
@@ -686,7 +940,7 @@ export class MasterController {
             created_by: Number(timetable.form.created_by),
             created_at: new Date(),
             updated_by: Number(timetable.form.updated_by),
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
 
@@ -704,19 +958,19 @@ export class MasterController {
               created_by: Number(timetable.form.created_by),
               created_at: new Date(),
               updated_by: Number(timetable.form.updated_by),
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
         }
-
       }
       return res.json({ data: null, status: true, message: 'Event added' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async saveHoliday(req: Request, res: Response) {
     const timetable: any = req.body;
@@ -724,11 +978,25 @@ export class MasterController {
     const institute = await prisma.institute.findFirst();
 
     try {
-      if (timetable !== null && timetable !== undefined && timetable.form !== null && timetable.form !== undefined) {
+      if (
+        timetable !== null &&
+        timetable !== undefined &&
+        timetable.form !== null &&
+        timetable.form !== undefined
+      ) {
         await prisma.timeTable.create({
           data: {
-            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : Number(timetable.form.classId),
-            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : Number(timetable.form.sectionId),
+            classId:
+              timetable.form.classId === null ||
+              (timetable.form.classId !== null && timetable.form.classId === '')
+                ? null
+                : Number(timetable.form.classId),
+            sectionId:
+              timetable.form.sectionId === null ||
+              (timetable.form.sectionId !== null &&
+                timetable.form.sectionId === '')
+                ? null
+                : Number(timetable.form.sectionId),
             year: timetable.form.year,
             campusId: Number(timetable.form.campusId),
             subject: timetable.form.event,
@@ -746,14 +1014,23 @@ export class MasterController {
             created_by: timetable.form.created_by,
             created_at: new Date(),
             updated_by: timetable.form.updated_by,
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
 
         await prisma.holidays.create({
           data: {
-            classId: timetable.form.classId === null || (timetable.form.classId !== null && timetable.form.classId === '') ? null : Number(timetable.form.classId),
-            sectionId: timetable.form.sectionId === null || (timetable.form.sectionId !== null && timetable.form.sectionId === '') ? null : Number(timetable.form.sectionId),
+            classId:
+              timetable.form.classId === null ||
+              (timetable.form.classId !== null && timetable.form.classId === '')
+                ? null
+                : Number(timetable.form.classId),
+            sectionId:
+              timetable.form.sectionId === null ||
+              (timetable.form.sectionId !== null &&
+                timetable.form.sectionId === '')
+                ? null
+                : Number(timetable.form.sectionId),
             ongoingSessionId: Number(timetable.form.sessionId),
             campusId: Number(timetable.form.campusId),
             name: timetable.form.event,
@@ -763,21 +1040,18 @@ export class MasterController {
             created_by: timetable.form.created_by,
             created_at: new Date(),
             updated_by: timetable.form.updated_by,
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
-
       }
       return res.json({ data: null, status: true, message: 'Event added' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
-
-
-
 
   public async deleteTimeTableEvent(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -790,9 +1064,12 @@ export class MasterController {
         id: id,
       },
     });
-    return res.json({ status: true, data: null, message: 'Refresh page to see change' });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Refresh page to see change',
+    });
   }
-
 
   public async getAllHolidays(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -801,8 +1078,7 @@ export class MasterController {
     const sectionId = req.params.sectionId;
     let holidays = [];
     let designatedholidaysToRender = getBlankMonthWiseHolidayList();
-    console.log(req.params)
-
+    console.log(req.params);
 
     let commonHolidays = await prisma.holidays.findMany({
       where: {
@@ -820,8 +1096,12 @@ export class MasterController {
     });
     holidays = holidays.concat(commonHolidays);
 
-    if (classId !== null && sectionId !== null && classId !== '0' && sectionId !== '0') {
-
+    if (
+      classId !== null &&
+      sectionId !== null &&
+      classId !== '0' &&
+      sectionId !== '0'
+    ) {
       let classholidays = await prisma.holidays.findMany({
         where: {
           campusId: Number(campusId),
@@ -840,25 +1120,41 @@ export class MasterController {
     }
 
     if (holidays !== null && holidays !== undefined && holidays.length > 0) {
-
       for (let i = 0; i < holidays.length; i++) {
-        if (holidays[i].holidayStart !== null && holidays[i].holidayStart !== undefined) {
-          let foundMonth: string = moment(holidays[i].holidayStart).format('MMMM');
+        if (
+          holidays[i].holidayStart !== null &&
+          holidays[i].holidayStart !== undefined
+        ) {
+          let foundMonth: string = moment(holidays[i].holidayStart).format(
+            'MMMM'
+          );
 
-          const thatsMonthData = designatedholidaysToRender.filter((month) => month.month === foundMonth);
+          const thatsMonthData = designatedholidaysToRender.filter(
+            (month) => month.month === foundMonth
+          );
           console.log(thatsMonthData);
 
-          if (thatsMonthData !== null && thatsMonthData !== undefined && thatsMonthData.length === 1) {
-            thatsMonthData[0].holidays.push(holidays[i].name + " (" + moment(holidays[i].holidayStart).format('DD/MM') + " )");
+          if (
+            thatsMonthData !== null &&
+            thatsMonthData !== undefined &&
+            thatsMonthData.length === 1
+          ) {
+            thatsMonthData[0].holidays.push(
+              holidays[i].name +
+                ' (' +
+                moment(holidays[i].holidayStart).format('DD/MM') +
+                ' )'
+            );
           }
         }
       }
     }
-    return res.json({ status: true, data: { holidays: holidays, calenderRender: designatedholidaysToRender }, message: 'Holidays retrieved' });
+    return res.json({
+      status: true,
+      data: { holidays: holidays, calenderRender: designatedholidaysToRender },
+      message: 'Holidays retrieved',
+    });
   }
-
-
-
 
   public async deleteHoliday(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -869,15 +1165,19 @@ export class MasterController {
     await prisma.holidays.update({
       where: {
         id: id,
-        campusId: campusId
+        campusId: campusId,
       },
       data: {
         active: 0,
         updated_by: userId,
-        updated_at: new Date()
-      }
+        updated_at: new Date(),
+      },
     });
-    return res.json({ status: true, data: null, message: 'Deleted successfully' });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Deleted successfully',
+    });
   }
 
   public async getAllSMSTemplates(req: Request, res: Response) {
@@ -885,39 +1185,53 @@ export class MasterController {
 
     const smsTemplates = await prisma.sMSTemplate.findMany({
       where: {
-        campusId: campusId
+        campusId: campusId,
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: 'asc',
+      },
     });
 
-    return res.json({ status: true, data: smsTemplates, message: 'Templates retrieved' });
+    return res.json({
+      status: true,
+      data: smsTemplates,
+      message: 'Templates retrieved',
+    });
   }
 
   public async saveSmsTemplates(req: Request, res: Response) {
     const smsTemplates: any = req.body;
     try {
-      if (smsTemplates !== null && smsTemplates !== undefined && smsTemplates.smsTemplates !== null && smsTemplates.smsTemplates !== undefined) {
-
+      if (
+        smsTemplates !== null &&
+        smsTemplates !== undefined &&
+        smsTemplates.smsTemplates !== null &&
+        smsTemplates.smsTemplates !== undefined
+      ) {
         smsTemplates.smsTemplates.forEach(async (element) => {
           await prisma.sMSTemplate.update({
             where: {
               id: element.id,
-              campusId: element.campusId
+              campusId: element.campusId,
             },
             data: {
               body: element.body,
               updated_by: element.updated_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
         });
       }
-      return res.json({ data: null, status: true, message: 'SMS Templates updated' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'SMS Templates updated',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -925,7 +1239,7 @@ export class MasterController {
     let smsTemplate = await prisma.sMSTemplate.findMany({
       where: {
         name: name,
-        active: 1
+        active: 1,
       },
     });
     return smsTemplate;
@@ -936,128 +1250,169 @@ export class MasterController {
 
     const emailTemplate = await prisma.emailTemplate.findMany({
       where: {
-        campusId: campusId
+        campusId: campusId,
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: 'asc',
+      },
     });
-    return res.json({ status: true, data: emailTemplate, message: 'Templates retrieved' });
+    return res.json({
+      status: true,
+      data: emailTemplate,
+      message: 'Templates retrieved',
+    });
   }
-
 
   public async sendAdhocNotification(req: Request, res: Response) {
     const emailContent: any = req.body;
     try {
       let emails = [];
 
-      if (emailContent !== null && emailContent !== undefined && emailContent.sendToUsers !== null && emailContent.sendToUsers !== undefined && emailContent.sendToUsers.length > 0) {
+      if (
+        emailContent !== null &&
+        emailContent !== undefined &&
+        emailContent.sendToUsers !== null &&
+        emailContent.sendToUsers !== undefined &&
+        emailContent.sendToUsers.length > 0
+      ) {
         emailContent.sendToUsers.forEach(async (element: any) => {
           //send out app notification
-          addANotification(Number(emailContent.campusId),
+          addANotification(
+            Number(emailContent.campusId),
             Number(element.original.id),
             Number(emailContent.userId),
-            emailContent.subject);
+            emailContent.subject
+          );
 
           emails.push({
             name: element.original.displayName,
-            email: element.original.email
+            email: element.original.email,
           });
         });
         //send out emails
-        sendAdhocEmail(Number(emailContent.campusId), Number(emailContent.userId), emailContent.subject, emailContent.body, emails);
+        sendAdhocEmail(
+          Number(emailContent.campusId),
+          Number(emailContent.userId),
+          emailContent.subject,
+          emailContent.body,
+          emails
+        );
       }
-      return res.json({ data: null, status: true, message: 'Notifications have been sent' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Notifications have been sent',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: false, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: false, data: null });
     }
   }
 
   public async saveEmailTemplates(req: Request, res: Response) {
     const emailTemplates: any = req.body;
     try {
-      if (emailTemplates !== null && emailTemplates !== undefined && emailTemplates.emailtemplates !== null && emailTemplates.emailtemplates !== undefined) {
-
-
-        emailTemplates.emailtemplates.forEach(async (element: EmailTemplate) => {
-
-          if (element.isEditable) {
-            await prisma.emailTemplate.update({
-              where: {
-                id: element.id,
-                campusId: element.campusId
-              },
-              data: {
-                body: element.body,
-                subject: element.subject,
-                updated_by: element.updated_by,
-                updated_at: new Date()
-              },
-            });
+      if (
+        emailTemplates !== null &&
+        emailTemplates !== undefined &&
+        emailTemplates.emailtemplates !== null &&
+        emailTemplates.emailtemplates !== undefined
+      ) {
+        emailTemplates.emailtemplates.forEach(
+          async (element: EmailTemplate) => {
+            if (element.isEditable) {
+              await prisma.emailTemplate.update({
+                where: {
+                  id: element.id,
+                  campusId: element.campusId,
+                },
+                data: {
+                  body: element.body,
+                  subject: element.subject,
+                  updated_by: element.updated_by,
+                  updated_at: new Date(),
+                },
+              });
+            }
           }
-        });
+        );
       }
-      return res.json({ data: null, status: true, message: 'Email Templates updated' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Email Templates updated',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
   public async getEmailHistory(req: Request, res: Response) {
     const formvalues: any = req.body;
-    console.log(formvalues)
+    console.log(formvalues);
     let history = [];
     try {
       if (formvalues !== null && formvalues !== undefined) {
-
         history = await prisma.emailHistory.findMany({
           where: {
             campusId: Number(formvalues.form.campusId),
             created_at: {
               gte: moment(formvalues.form.startDate, 'DD-MM-YYYY').toDate(),
               lte: moment(formvalues.form.endDate, 'DD-MM-YYYY').toDate(),
-            }
+            },
           },
           orderBy: {
-            created_at: 'desc'
-          }
+            created_at: 'desc',
+          },
         });
       }
-      return res.json({ data: history, status: true, message: 'History fetched' });
-
+      return res.json({
+        data: history,
+        status: true,
+        message: 'History fetched',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
   public async getSmsHistory(req: Request, res: Response) {
     const formvalues: any = req.body;
-    console.log(formvalues)
+    console.log(formvalues);
     let history = [];
     try {
       if (formvalues !== null && formvalues !== undefined) {
-
         history = await prisma.sMSHistory.findMany({
           where: {
             campusId: Number(formvalues.form.campusId),
             created_at: {
               gte: moment(formvalues.form.startDate, 'DD-MM-YYYY').toDate(),
               lte: moment(formvalues.form.endDate, 'DD-MM-YYYY').toDate(),
-            }
+            },
           },
           orderBy: {
-            created_at: 'desc'
-          }
+            created_at: 'desc',
+          },
         });
       }
-      return res.json({ data: history, status: true, message: 'History fetched' });
-
+      return res.json({
+        data: history,
+        status: true,
+        message: 'History fetched',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -1068,34 +1423,37 @@ export class MasterController {
     const type = req.params.type;
 
     if (type === 'ALL') {
-
       const notices = await prisma.noticeBoard.findMany({
         where: {
           campusId: campusId,
-          active: Number(active)
+          active: Number(active),
         },
         include: {
           campus: true,
-
         },
       });
-      return res.json({ status: true, data: notices, message: 'Notices retrieved' });
-
+      return res.json({
+        status: true,
+        data: notices,
+        message: 'Notices retrieved',
+      });
     } else {
       const notices = await prisma.noticeBoard.findMany({
         where: {
           campusId: campusId,
           active: Number(active),
-          messageType: MessageType[type]
+          messageType: MessageType[type],
         },
         include: {
           campus: true,
-
         },
       });
-      return res.json({ status: true, data: notices, message: 'Notices retrieved' });
+      return res.json({
+        status: true,
+        data: notices,
+        message: 'Notices retrieved',
+      });
     }
-
   }
 
   public async addANotice(req: Request, res: Response) {
@@ -1110,14 +1468,20 @@ export class MasterController {
             message: noticeForm.form.message,
             messageType: noticeForm.form.messageType,
             created_by: noticeForm.form.created_by,
-            created_at: new Date()
+            created_at: new Date(),
           },
         });
       }
-      return res.json({ data: null, status: true, message: 'Noticeboard added' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Noticeboard added',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -1128,44 +1492,46 @@ export class MasterController {
       if (noticeForm !== null && noticeForm !== undefined) {
         console.log(noticeForm);
 
-        await prisma.noticeBoard.findUnique({
-          where: {
-            id: noticeForm.id,
-            campusId: noticeForm.campusId,
-          },
-        }).then(async (existingData) => {
+        await prisma.noticeBoard
+          .findUnique({
+            where: {
+              id: noticeForm.id,
+              campusId: noticeForm.campusId,
+            },
+          })
+          .then(async (existingData) => {
+            if (existingData !== null && existingData !== undefined) {
+              let isActive: number = existingData.active;
+              console.log('Current Active Status : ' + isActive);
+              await prisma.noticeBoard.update({
+                where: {
+                  id: noticeForm.id,
+                  campusId: noticeForm.campusId,
+                },
+                data: {
+                  active: isActive === 1 ? 0 : 1,
+                  created_by: Number(noticeForm.currentUserid),
+                  created_at: new Date(),
+                },
+              });
 
-          if (existingData !== null && existingData !== undefined) {
-            let isActive: number = existingData.active;
-            console.log('Current Active Status : ' + isActive);
-            await prisma.noticeBoard.update({
-              where: {
-                id: noticeForm.id,
-                campusId: noticeForm.campusId,
-              },
-              data: {
-                active: isActive === 1 ? 0 : 1,
-                created_by: Number(noticeForm.currentUserid),
-                created_at: new Date()
-              },
-            });
-
-            return res.json({ data: null, status: true, message: 'Noticeboard updated' });
-          }
-
-        });
-
+              return res.json({
+                data: null,
+                status: true,
+                message: 'Noticeboard updated',
+              });
+            }
+          });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
-
   public async getActiveCampuses(req: Request, res: Response) {
-
     const campuses = await prisma.campus.findMany({
       include: {
         TransportRoutes: true,
@@ -1173,11 +1539,14 @@ export class MasterController {
         Section: true,
         Subject: true,
         User: true,
-      }
+      },
     });
-    return res.json({ status: true, data: campuses, message: 'Campus details retrieved' });
+    return res.json({
+      status: true,
+      data: campuses,
+      message: 'Campus details retrieved',
+    });
   }
-
 
   public async getStudyMaterials(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -1190,10 +1559,14 @@ export class MasterController {
         campus: true,
         class: true,
         section: true,
-        subject: true
-      }
+        subject: true,
+      },
     });
-    return res.json({ status: true, data: studyMaterials, message: 'Study Materials retrieved' });
+    return res.json({
+      status: true,
+      data: studyMaterials,
+      message: 'Study Materials retrieved',
+    });
   }
 
   public async getStudyMaterialsByClassSection(req: Request, res: Response) {
@@ -1211,12 +1584,15 @@ export class MasterController {
         campus: true,
         class: true,
         section: true,
-        subject: true
-      }
+        subject: true,
+      },
     });
-    return res.json({ status: true, data: studyMaterials, message: 'Study Materials retrieved' });
+    return res.json({
+      status: true,
+      data: studyMaterials,
+      message: 'Study Materials retrieved',
+    });
   }
-
 
   public async changeStudyMaterialStatus(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -1226,15 +1602,19 @@ export class MasterController {
     await prisma.studyMaterial.update({
       where: {
         id: id,
-        campusId: campusId
+        campusId: campusId,
       },
       data: {
         active: 0,
         updated_by: userId,
-        updated_at: new Date()
-      }
+        updated_at: new Date(),
+      },
     });
-    return res.json({ status: true, data: null, message: 'Updated successfully' });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Updated successfully',
+    });
   }
 
   public async deleteStudyMaterial(req: Request, res: Response) {
@@ -1244,17 +1624,26 @@ export class MasterController {
     await prisma.studyMaterial.delete({
       where: {
         id: id,
-        campusId: campusId
+        campusId: campusId,
       },
     });
-    return res.json({ status: true, data: null, message: 'Deleted successfully' });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Deleted successfully',
+    });
   }
 
   public async addUpdateStudyMaterial(req: Request, res: Response) {
     const studyMaterialForm: any = req.body;
 
     try {
-      if (studyMaterialForm !== null && studyMaterialForm !== undefined && studyMaterialForm.form.id !== null && studyMaterialForm.form.id !== undefined) {
+      if (
+        studyMaterialForm !== null &&
+        studyMaterialForm !== undefined &&
+        studyMaterialForm.form.id !== null &&
+        studyMaterialForm.form.id !== undefined
+      ) {
         await prisma.studyMaterial.update({
           where: {
             id: Number(studyMaterialForm.form.id),
@@ -1273,11 +1662,15 @@ export class MasterController {
             created_by: studyMaterialForm.form.created_by,
             created_at: new Date(),
             updated_by: studyMaterialForm.form.created_by,
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
 
-        return res.json({ data: null, status: true, message: 'Study Material updated' });
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Study Material updated',
+        });
       } else {
         await prisma.studyMaterial.create({
           data: {
@@ -1293,86 +1686,95 @@ export class MasterController {
             created_by: studyMaterialForm.form.created_by,
             created_at: new Date(),
             updated_by: studyMaterialForm.form.created_by,
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
 
-        return res.json({ data: null, status: true, message: 'Study Material added' });
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Study Material added',
+        });
       }
-
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
-
-
   public async addACampus(req: Request, res: Response) {
     const campusForm: any = req.body;
-    
-    try {
-      if (campusForm !== null && campusForm !== undefined &&
-        campusForm.form.campusId !== null && campusForm.form.campusId !== undefined
-      ) {
 
+    try {
+      if (
+        campusForm !== null &&
+        campusForm !== undefined &&
+        campusForm.form.campusId !== null &&
+        campusForm.form.campusId !== undefined
+      ) {
         await prisma.campus.update({
           where: {
-            id : campusForm.form.campusId
+            id: campusForm.form.campusId,
           },
           data: {
             campusName: campusForm.form.campusName,
             campusAddress: campusForm.form.campusAddress,
             campusPhone: campusForm.form.campusPhone,
             affilicationNumber: campusForm.form.affilicationNumber,
-            fireSafetyClearanceNumber: campusForm.form.fireSafetyClearanceNumber,
-            buildingSafetyCertificate: campusForm.form.buildingSafetyCertificate,
+            fireSafetyClearanceNumber:
+              campusForm.form.fireSafetyClearanceNumber,
+            buildingSafetyCertificate:
+              campusForm.form.buildingSafetyCertificate,
             updated_by: campusForm.form.created_by,
-            updated_at: new Date()
-          }
+            updated_at: new Date(),
+          },
         });
-
       } else {
-        
-        await prisma.campus.create({
-          data: {
-            active: 1,
-            campusName: campusForm.form.campusName,
-            campusAddress: campusForm.form.campusAddress,
-            campusPhone: campusForm.form.campusPhone,
-            affilicationNumber: campusForm.form.affilicationNumber,
-            fireSafetyClearanceNumber: campusForm.form.fireSafetyClearanceNumber,
-            buildingSafetyCertificate: campusForm.form.buildingSafetyCertificate,
-            instituteId: campusForm.form.instituteId,
-            created_by: campusForm.form.created_by,
-            created_at: new Date(),
-            updated_by: campusForm.form.created_by,
-            updated_at: new Date()
-          },
-        }).then(async (campusAdded) => {
-
-          await prisma.expenseType.create({
+        await prisma.campus
+          .create({
             data: {
               active: 1,
-              campusId: campusAdded.id,
-              typeName: 'STAFF_SALARY_PAYMENT',
-              description: 'Expense Type: Salary disbursal considered as an expense',
+              campusName: campusForm.form.campusName,
+              campusAddress: campusForm.form.campusAddress,
+              campusPhone: campusForm.form.campusPhone,
+              affilicationNumber: campusForm.form.affilicationNumber,
+              fireSafetyClearanceNumber:
+                campusForm.form.fireSafetyClearanceNumber,
+              buildingSafetyCertificate:
+                campusForm.form.buildingSafetyCertificate,
+              instituteId: campusForm.form.instituteId,
               created_by: campusForm.form.created_by,
               created_at: new Date(),
               updated_by: campusForm.form.created_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           })
-        });
+          .then(async (campusAdded) => {
+            await prisma.expenseType.create({
+              data: {
+                active: 1,
+                campusId: campusAdded.id,
+                typeName: 'STAFF_SALARY_PAYMENT',
+                description:
+                  'Expense Type: Salary disbursal considered as an expense',
+                created_by: campusForm.form.created_by,
+                created_at: new Date(),
+                updated_by: campusForm.form.created_by,
+                updated_at: new Date(),
+              },
+            });
+          });
       }
       return res.json({ data: null, status: true, message: 'Campus added' });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async changeUserCampus(req: Request, res: Response) {
     const campusForm: any = req.body;
@@ -1381,35 +1783,38 @@ export class MasterController {
       if (campusForm !== null && campusForm !== undefined) {
         console.log(campusForm);
 
-        await prisma.campus.findUnique({
-          where: {
-            id: campusForm.id,
-          },
-        }).then(async (existingCampus) => {
+        await prisma.campus
+          .findUnique({
+            where: {
+              id: campusForm.id,
+            },
+          })
+          .then(async (existingCampus) => {
+            if (existingCampus !== null && existingCampus !== undefined) {
+              await prisma.user.update({
+                where: {
+                  id: campusForm.currentUserid,
+                },
+                data: {
+                  campusId: existingCampus.id,
+                  updated_by: Number(campusForm.currentUserid),
+                  updated_at: new Date(),
+                },
+              });
 
-          if (existingCampus !== null && existingCampus !== undefined) {
-
-            await prisma.user.update({
-              where: {
-                id: campusForm.currentUserid,
-              },
-              data: {
-                campusId: existingCampus.id,
-                updated_by: Number(campusForm.currentUserid),
-                updated_at: new Date()
-              },
-            });
-
-            return res.json({ data: null, status: true, message: 'Campus updated. Relogin to see changes.' });
-          }
-
-        });
-
+              return res.json({
+                data: null,
+                status: true,
+                message: 'Campus updated. Relogin to see changes.',
+              });
+            }
+          });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: false, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: false, data: null });
     }
   }
 
@@ -1420,61 +1825,65 @@ export class MasterController {
       if (campusForm !== null && campusForm !== undefined) {
         console.log(campusForm);
 
-        await prisma.campus.findUnique({
-          where: {
-            id: campusForm.id,
-          },
-        }).then(async (existingData) => {
+        await prisma.campus
+          .findUnique({
+            where: {
+              id: campusForm.id,
+            },
+          })
+          .then(async (existingData) => {
+            if (existingData !== null && existingData !== undefined) {
+              let isActive: number = existingData.active;
+              console.log('Current Campus Active Status : ' + isActive);
 
-          if (existingData !== null && existingData !== undefined) {
-            let isActive: number = existingData.active;
-            console.log('Current Campus Active Status : ' + isActive);
+              await prisma.campus.update({
+                where: {
+                  id: campusForm.id,
+                },
+                data: {
+                  active: isActive === 1 ? 0 : 1,
+                  updated_by: Number(campusForm.currentUserid),
+                  updated_at: new Date(),
+                },
+              });
 
-            await prisma.campus.update({
-              where: {
-                id: campusForm.id,
-              },
-              data: {
-                active: isActive === 1 ? 0 : 1,
-                updated_by: Number(campusForm.currentUserid),
-                updated_at: new Date()
-              },
-            });
-
-            return res.json({ data: null, status: true, message: 'Status updated. Relogin to see changes.' });
-          }
-
-        });
-
+              return res.json({
+                data: null,
+                status: true,
+                message: 'Status updated. Relogin to see changes.',
+              });
+            }
+          });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: false, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: false, data: null });
     }
   }
-
 
   public async fetchHomeworks(req: Request, res: Response) {
     const homeworkform: any = req.body;
     console.log(homeworkform);
-    const result = await prisma.$queryRaw`SELECT dh.*,cam.campusName, cls.className, sec.sectionName , DATE_FORMAT(dh.homeworkDate,'%d-%m-%Y') as homeworkDateProcessed FROM myskool.DailyHomework dh
+    const result =
+      await prisma.$queryRaw`SELECT dh.*,cam.campusName, cls.className, sec.sectionName , DATE_FORMAT(dh.homeworkDate,'%d-%m-%Y') as homeworkDateProcessed FROM myskool.DailyHomework dh
                                 LEFT JOIN myskool.Campus cam ON cam.id=dh.campusId
                                 LEFT JOIN myskool.Class cls ON cls.id=dh.classId
                                 LEFT JOIN myskool.Section sec ON sec.id=dh.sectionId 
                                where 
                                dh.campusId=${homeworkform.campusId} and dh.classId=${homeworkform.classId} 
                                and dh.sectionId=${homeworkform.sectionId}  
-                               and DATE_FORMAT(dh.homeworkDate,'%d-%m-%Y') =${homeworkform.homeworkDate};`
-
-
-
+                               and DATE_FORMAT(dh.homeworkDate,'%d-%m-%Y') =${homeworkform.homeworkDate};`;
 
     //console.log(result);
 
-    return res.json({ status: true, data: result, message: 'Homework details retrieved' });
+    return res.json({
+      status: true,
+      data: result,
+      message: 'Homework details retrieved',
+    });
   }
-
 
   public async addAHomework(req: Request, res: Response) {
     const homeworkform: any = req.body;
@@ -1482,133 +1891,175 @@ export class MasterController {
 
     try {
       if (homeworkform !== null && homeworkform !== undefined) {
-
-        await prisma.dailyHomework.create({
-          data: {
-            active: 1,
-            campusId: Number(homeworkform.form.campusId),
-            classId: Number(homeworkform.form.classId),
-            sectionId: Number(homeworkform.form.sectionId),
-            homeworkDate: moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toDate(),
-            homeworkData: homeworkform.form.homeworkData,
-            created_by: homeworkform.form.created_by,
-            created_at: new Date(),
-            updated_by: homeworkform.form.created_by,
-            updated_at: new Date()
-          },
-        }).then(async (homeworkItem) => {
-          const institute = await prisma.institute.findFirst({
-            include: {
-              session: true,
-            }
-          });
-
-
-          const studentsInClass = await prisma.user.findMany({
-            where: {
+        await prisma.dailyHomework
+          .create({
+            data: {
               active: 1,
-              userType: UserType.student,
               campusId: Number(homeworkform.form.campusId),
               classId: Number(homeworkform.form.classId),
               sectionId: Number(homeworkform.form.sectionId),
+              homeworkDate: moment(
+                homeworkform.form.homeworkDate,
+                'DD-MM-YYYY'
+              ).toDate(),
+              homeworkData: homeworkform.form.homeworkData,
+              created_by: homeworkform.form.created_by,
+              created_at: new Date(),
+              updated_by: homeworkform.form.created_by,
+              updated_at: new Date(),
             },
-            include: {
-              campus: true,
-              class: true,
-              section: true,
-              parent: {
-                include: {
-                  parent: true
+          })
+          .then(async (homeworkItem) => {
+            const institute = await prisma.institute.findFirst({
+              include: {
+                session: true,
+              },
+            });
+
+            const studentsInClass = await prisma.user.findMany({
+              where: {
+                active: 1,
+                userType: UserType.student,
+                campusId: Number(homeworkform.form.campusId),
+                classId: Number(homeworkform.form.classId),
+                sectionId: Number(homeworkform.form.sectionId),
+              },
+              include: {
+                campus: true,
+                class: true,
+                section: true,
+                parent: {
+                  include: {
+                    parent: true,
+                  },
+                },
+              },
+            });
+
+            if (
+              studentsInClass !== null &&
+              studentsInClass !== undefined &&
+              studentsInClass.length > 0
+            ) {
+              for (let i = 0; i < studentsInClass.length; i++) {
+                //add a notification for student profile
+                addANotification(
+                  Number(homeworkform.form.campusId),
+                  Number(studentsInClass[i].id),
+                  Number(homeworkform.form.created_by),
+                  buildMessage(
+                    NEW_HOMEWORK_ADDED,
+                    moment(
+                      homeworkform.form.homeworkDate,
+                      'DD-MM-YYYY'
+                    ).toString()
+                  )
+                );
+
+                if (
+                  studentsInClass[i].parent !== null &&
+                  studentsInClass[i].parent !== undefined &&
+                  studentsInClass[i].parent.length > 0
+                ) {
+                  for (let j = 0; j < studentsInClass[i].parent.length; j++) {
+                    if (
+                      studentsInClass[i].parent[j].parent !== null &&
+                      studentsInClass[i].parent[j].parent !== undefined &&
+                      studentsInClass[i].parent[j].parent.email !== null &&
+                      studentsInClass[i].parent[j].parent.email !== undefined
+                    ) {
+                      //add a notification for Parent profile
+                      addANotification(
+                        Number(homeworkform.form.campusId),
+                        Number(studentsInClass[i].parent[j].parent.id),
+                        Number(homeworkform.form.created_by),
+                        buildMessage(
+                          NEW_HOMEWORK_ADDED,
+                          moment(
+                            homeworkform.form.homeworkDate,
+                            'DD-MM-YYYY'
+                          ).toString()
+                        )
+                      );
+
+                      sendSms(
+                        'Homework SMS',
+                        {
+                          campusId: homeworkform.form.campusId,
+                          student_name: studentsInClass[i].displayName,
+                          parent_name:
+                            studentsInClass[i].parent[j].parent.displayName,
+                          parent_phone:
+                            studentsInClass[i].parent[j].parent.mobile,
+                          roll_no: studentsInClass[i].rollNoProcessed,
+                          student_id_card: studentsInClass[i].idCardNumber,
+                          institute_name: institute.instituteName,
+                          institute_campus:
+                            studentsInClass[i].campus.campusName,
+                          class_name: studentsInClass[i].class.className,
+                          section_name: studentsInClass[i].section.sectionName,
+                          session: institute.session.session,
+                          loggedInUserId: Number(homeworkform.form.created_by),
+                          studentOrTeacherId: null,
+                          classId: homeworkform.form.classId,
+                          sectionId: homeworkform.form.sectionId,
+                          diary:
+                            homeworkform.form.homeworkData.substring(0, 8) +
+                            '...',
+                        },
+                        [studentsInClass[i].parent[j].parent.mobile]
+                      );
+
+                      sendEmail(
+                        'Homework Email',
+                        {
+                          student_name: studentsInClass[i].displayName,
+                          parent_name:
+                            studentsInClass[i].parent[j].parent.displayName,
+                          parent_phone:
+                            studentsInClass[i].parent[j].parent.mobile,
+                          roll_no: studentsInClass[i].rollNoProcessed,
+                          student_id_card: studentsInClass[i].idCardNumber,
+                          institute_name: institute.instituteName,
+                          institute_campus:
+                            studentsInClass[i].campus.campusName,
+                          class_name: studentsInClass[i].class.className,
+                          section_name: studentsInClass[i].section.sectionName,
+                          session: institute.session.session,
+                          campusId: homeworkform.form.campusId,
+                          loggedInUserId: Number(homeworkform.form.created_by),
+                          studentOrTeacherId: null,
+                          classId: homeworkform.form.classId,
+                          sectionId: homeworkform.form.sectionId,
+                          diary:
+                            homeworkform.form.homeworkData.substring(0, 8) +
+                            '...',
+                        },
+                        [
+                          {
+                            name: studentsInClass[i].parent[j].parent
+                              .displayName,
+                            email: studentsInClass[i].parent[j].parent.email,
+                          },
+                        ]
+                      );
+                    }
+                  }
                 }
               }
             }
           });
-
-          if (studentsInClass !== null && studentsInClass !== undefined && studentsInClass.length > 0) {
-            for (let i = 0; i < studentsInClass.length; i++) {
-              //add a notification for student profile
-              addANotification(Number(homeworkform.form.campusId),
-                Number(studentsInClass[i].id),
-                Number(homeworkform.form.created_by),
-                buildMessage(NEW_HOMEWORK_ADDED, moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toString()));
-
-
-
-              if (studentsInClass[i].parent !== null && studentsInClass[i].parent !== undefined && studentsInClass[i].parent.length > 0) {
-                for (let j = 0; j < studentsInClass[i].parent.length; j++) {
-                  if (studentsInClass[i].parent[j].parent !== null && studentsInClass[i].parent[j].parent !== undefined &&
-                    studentsInClass[i].parent[j].parent.email !== null && studentsInClass[i].parent[j].parent.email !== undefined
-                  ) {
-
-                    //add a notification for Parent profile
-                    addANotification(Number(homeworkform.form.campusId),
-                      Number(studentsInClass[i].parent[j].parent.id),
-                      Number(homeworkform.form.created_by),
-                      buildMessage(NEW_HOMEWORK_ADDED, moment(homeworkform.form.homeworkDate, 'DD-MM-YYYY').toString()));
-
-
-                    sendSms('Homework SMS',
-                      {
-                        campusId: homeworkform.form.campusId,
-                        student_name: studentsInClass[i].displayName,
-                        parent_name: studentsInClass[i].parent[j].parent.displayName,
-                        parent_phone: studentsInClass[i].parent[j].parent.mobile,
-                        roll_no: studentsInClass[i].rollNoProcessed,
-                        student_id_card: studentsInClass[i].idCardNumber,
-                        institute_name: institute.instituteName,
-                        institute_campus: studentsInClass[i].campus.campusName,
-                        class_name: studentsInClass[i].class.className,
-                        section_name: studentsInClass[i].section.sectionName,
-                        session: institute.session.session,
-                        loggedInUserId: Number(homeworkform.form.created_by),
-                        studentOrTeacherId: null,
-                        classId: homeworkform.form.classId,
-                        sectionId: homeworkform.form.sectionId,
-                        diary: homeworkform.form.homeworkData.substring(0, 8) + '...'
-                      },
-                      [
-                        studentsInClass[i].parent[j].parent.mobile
-                      ]);
-
-                    sendEmail('Homework Email',
-                      {
-                        student_name: studentsInClass[i].displayName,
-                        parent_name: studentsInClass[i].parent[j].parent.displayName,
-                        parent_phone: studentsInClass[i].parent[j].parent.mobile,
-                        roll_no: studentsInClass[i].rollNoProcessed,
-                        student_id_card: studentsInClass[i].idCardNumber,
-                        institute_name: institute.instituteName,
-                        institute_campus: studentsInClass[i].campus.campusName,
-                        class_name: studentsInClass[i].class.className,
-                        section_name: studentsInClass[i].section.sectionName,
-                        session: institute.session.session,
-                        campusId: homeworkform.form.campusId,
-                        loggedInUserId: Number(homeworkform.form.created_by),
-                        studentOrTeacherId: null,
-                        classId: homeworkform.form.classId,
-                        sectionId: homeworkform.form.sectionId,
-                        diary: homeworkform.form.homeworkData.substring(0, 8) + '...'
-                      },
-                      [
-                        {
-                          name: studentsInClass[i].parent[j].parent.displayName,
-                          email: studentsInClass[i].parent[j].parent.email
-                        },
-                      ]
-                    );
-                  }
-                }
-              }
-
-
-            }
-          }
-        });
       }
-      return res.json({ data: null, status: true, message: 'Engagement added' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Engagement added',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -1624,8 +2075,11 @@ export class MasterController {
       },
     });
 
-
-    return res.json({ status: true, data: deleteEngagement, message: 'Engagement deleted' });
+    return res.json({
+      status: true,
+      data: deleteEngagement,
+      message: 'Engagement deleted',
+    });
   }
 
   public async changeEngagementStatus(req: Request, res: Response) {
@@ -1635,63 +2089,69 @@ export class MasterController {
       if (formData !== null && formData !== undefined) {
         console.log(formData);
 
-        await prisma.engagements.findUnique({
-          where: {
-            id: formData.id,
-          },
-        }).then(async (existingData) => {
+        await prisma.engagements
+          .findUnique({
+            where: {
+              id: formData.id,
+            },
+          })
+          .then(async (existingData) => {
+            if (existingData !== null && existingData !== undefined) {
+              let isActive: number = existingData.active;
 
-          if (existingData !== null && existingData !== undefined) {
-            let isActive: number = existingData.active;
+              console.log('Current Engagement Active Status : ' + isActive);
 
-            console.log('Current Engagement Active Status : ' + isActive);
+              await prisma.engagements.update({
+                where: {
+                  id: formData.id,
+                },
+                data: {
+                  active: isActive === 1 ? 0 : 1,
+                  updated_by: Number(formData.currentUserid),
+                  updated_at: new Date(),
+                },
+              });
 
-            await prisma.engagements.update({
-              where: {
-                id: formData.id,
-              },
-              data: {
-                active: isActive === 1 ? 0 : 1,
-                updated_by: Number(formData.currentUserid),
-                updated_at: new Date()
-              },
-            });
-
-            return res.json({ data: null, status: true, message: 'Engagement status updated' });
-          }
-
-        });
-
+              return res.json({
+                data: null,
+                status: true,
+                message: 'Engagement status updated',
+              });
+            }
+          });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   public async addEngagement(req: Request, res: Response) {
     const formData: any = req.body;
 
     try {
       if (formData !== null && formData !== undefined) {
-
         if (formData.form.id !== null && formData.form.id !== undefined) {
           await prisma.engagements.update({
             where: {
               id: formData.form.id,
-              campusId: formData.form.campusId
+              campusId: formData.form.campusId,
             },
             data: {
               classId: Number(formData.form.classId),
               name: formData.form.name,
               details: formData.details,
               updated_by: formData.form.created_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
-          return res.json({ data: null, status: true, message: 'Engagement updated' });
+          return res.json({
+            data: null,
+            status: true,
+            message: 'Engagement updated',
+          });
         } else {
           await prisma.engagements.create({
             data: {
@@ -1703,18 +2163,27 @@ export class MasterController {
               created_by: formData.form.created_by,
               created_at: new Date(),
               updated_by: formData.form.created_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
-          return res.json({ data: null, status: true, message: 'Engagement added' });
+          return res.json({
+            data: null,
+            status: true,
+            message: 'Engagement added',
+          });
         }
-
       } else {
-        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Some error occured. Please try later',
+        });
       }
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -1731,19 +2200,21 @@ export class MasterController {
         campus: true,
         class: true,
         StudentToEngagements: {
-
           where: {
             completed: 0,
-
-          }
-        }
+          },
+        },
       },
       orderBy: {
-        updated_at: 'desc'
-      }
+        updated_at: 'desc',
+      },
     });
 
-    return res.json({ status: true, data: engagements, message: 'Engagements retrieved' });
+    return res.json({
+      status: true,
+      data: engagements,
+      message: 'Engagements retrieved',
+    });
   }
 
   public async fetchStudentEngagements(req: Request, res: Response) {
@@ -1757,15 +2228,18 @@ export class MasterController {
         classId: engagemntForm.classId,
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: 'asc',
+      },
     });
-    if (engagements !== null && engagements !== undefined && engagements.length > 0) {
+    if (
+      engagements !== null &&
+      engagements !== undefined &&
+      engagements.length > 0
+    ) {
       engagements.forEach(async (element) => {
-        engagementItems.push({ label: element.name, value: element.id })
+        engagementItems.push({ label: element.name, value: element.id });
       });
     }
-
 
     const studentengagements = await prisma.studentToEngagements.findMany({
       where: {
@@ -1774,17 +2248,20 @@ export class MasterController {
       },
       include: {
         campus: true,
-        engagement: true
+        engagement: true,
       },
       orderBy: {
-        updated_at: 'desc'
-      }
+        updated_at: 'desc',
+      },
     });
 
     return res.json({
       status: true,
-      data: { studentEngagements: studentengagements, engagementItems: engagementItems },
-      message: 'Student Engagements retrieved'
+      data: {
+        studentEngagements: studentengagements,
+        engagementItems: engagementItems,
+      },
+      message: 'Student Engagements retrieved',
     });
   }
 
@@ -1793,38 +2270,53 @@ export class MasterController {
     console.log(formData);
     try {
       if (formData !== null && formData !== undefined) {
-
         await prisma.studentToEngagements.create({
           data: {
-            campusId: formData.form.campusId,
-            engagementId: formData.form.engagementId,
-            userId: formData.form.studentId,
+            campusId: Number(formData.form.campusId),
+            engagementId: Number(formData.form.engagementId),
+            userId: Number(formData.form.studentId),
             completed: 0,
             rating: 0,
             comments: null,
-            created_by: formData.form.currentUserId,
+            created_by: Number(formData.form.currentUserId),
             created_at: new Date(),
-            updated_by: formData.form.currentUserId,
-            updated_at: new Date()
+            updated_by: Number(formData.form.currentUserId),
+            updated_at: new Date(),
           },
         });
-        return res.json({ data: null, status: true, message: 'Engagement is assigned to ' + formData.form.displayName });
-
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Engagement is assigned to ' + formData.form.displayName,
+        });
       } else {
-        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Some error occured. Please try later',
+        });
       }
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
-  public async updateStudentEngagementRatingAndComments(req: Request, res: Response) {
+  public async updateStudentEngagementRatingAndComments(
+    req: Request,
+    res: Response
+  ) {
     const formData: any = req.body;
     console.log(formData);
     try {
-      if (formData !== null && formData !== undefined && formData.form.studentEngagementId !== null && formData.form.studentEngagementId !== undefined) {
-
+      if (
+        formData !== null &&
+        formData !== undefined &&
+        formData.form.studentEngagementId !== null &&
+        formData.form.studentEngagementId !== undefined
+      ) {
         await prisma.studentToEngagements.update({
           where: {
             id: formData.form.studentEngagementId,
@@ -1835,17 +2327,26 @@ export class MasterController {
             rating: formData.form.rating,
             comments: formData.form.comments,
             updated_by: formData.form.currentUserId,
-            updated_at: new Date()
+            updated_at: new Date(),
           },
         });
-        return res.json({ data: null, status: true, message: 'Engagement is assigned to ' + formData.form.displayName });
-
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Engagement is assigned to ' + formData.form.displayName,
+        });
       } else {
-        return res.json({ data: null, status: false, message: 'Some error occured. Please try later' });
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Some error occured. Please try later',
+        });
       }
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -1854,65 +2355,117 @@ export class MasterController {
   public async resetPassword(req: Request, res: Response) {
     const resetpasswordform: any = req.body;
     try {
-      if (resetpasswordform !== null && resetpasswordform !== undefined &&
-        resetpasswordform.user !== null && resetpasswordform.user !== undefined
+      if (
+        resetpasswordform !== null &&
+        resetpasswordform !== undefined &&
+        resetpasswordform.user !== null &&
+        resetpasswordform.user !== undefined
       ) {
-
-        let template: EmailTemplate = await getEmailTemplateByName('Reset Password');
-        let resetPasswordWebAppUrlFrontEnd = process.env.WEB_APP_URL + 'reset-password';
+        let template: EmailTemplate =
+          await getEmailTemplateByName('Reset Password');
+        let resetPasswordWebAppUrlFrontEnd =
+          process.env.WEB_APP_URL + 'reset-password';
         let templateHtml = resetPasswordTemplate;
-        templateHtml = templateHtml.replaceAll("$USERNAME", resetpasswordform.user.displayName);
-        templateHtml = templateHtml.replaceAll("$SCHOOLNAME", resetpasswordform.institute.instituteName);
-        templateHtml = templateHtml.replaceAll("$SCHOOLLOGO", resetpasswordform.institute.logo);
-        templateHtml = templateHtml.replaceAll("$CODE", resetpasswordform.otp);
-        templateHtml = templateHtml.replaceAll("$RESET_PASSWORD_URL", resetPasswordWebAppUrlFrontEnd);
+        templateHtml = templateHtml.replaceAll(
+          '$USERNAME',
+          resetpasswordform.user.displayName
+        );
+        templateHtml = templateHtml.replaceAll(
+          '$SCHOOLNAME',
+          resetpasswordform.institute.instituteName
+        );
+        templateHtml = templateHtml.replaceAll(
+          '$SCHOOLLOGO',
+          resetpasswordform.institute.logo
+        );
+        templateHtml = templateHtml.replaceAll('$CODE', resetpasswordform.otp);
+        templateHtml = templateHtml.replaceAll(
+          '$RESET_PASSWORD_URL',
+          resetPasswordWebAppUrlFrontEnd
+        );
 
         console.log(resetpasswordform.otp);
         console.log(resetPasswordWebAppUrlFrontEnd);
 
-
-        sendEmailCommon(resetpasswordform.institute,
+        sendEmailCommon(
+          resetpasswordform.institute,
           'Reset Password Requested for ' + resetpasswordform.user.displayName,
           templateHtml,
-          [{ email: resetpasswordform.user.email, name: resetpasswordform.user.name, }],
-          template.name, resetpasswordform.campusId,
+          [
+            {
+              email: resetpasswordform.user.email,
+              name: resetpasswordform.user.name,
+            },
+          ],
+          template.name,
+          resetpasswordform.campusId,
           template.id,
           resetpasswordform.currentUserid
         );
-        changeAccountResetStatus(resetpasswordform.user, resetpasswordform.campusId, resetpasswordform.otp + '', true);
-
+        changeAccountResetStatus(
+          resetpasswordform.user,
+          resetpasswordform.campusId,
+          resetpasswordform.otp + '',
+          true
+        );
       }
-      return res.json({ data: null, status: true, message: 'Reset requested. Relogin to see changes.' });
-
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Reset requested. Relogin to see changes.',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
-
 
   //Fee Plan
   public async getActiveFeePlansForDropdown(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const institute = await prisma.institute.findFirst();
 
-
     let feePlansDropdown = [];
     const feePlans = await prisma.feePlan.findMany({
       where: {
         campusId: campusId,
-        active: 1
+        active: 1,
       },
       orderBy: {
-        name: 'asc'
-      }
+        name: 'asc',
+      },
     });
     if (feePlans !== null && feePlans !== undefined && feePlans.length > 0) {
       for (let i = 0; i < feePlans.length; i++) {
         feePlansDropdown.push({
           value: feePlans[i].id + '',
-          label: feePlans[i].name + ' (Monthly: ' + getCurrencySymbol('en-US', institute !== null && institute !== undefined && institute.currency !== null && institute.currency !== undefined ? institute.currency : 'INR') + feePlans[i].monthlyAmt + ', Yearly: ' + getCurrencySymbol('en-US', institute !== null && institute !== undefined && institute.currency !== null && institute.currency !== undefined ? institute.currency : 'INR') + feePlans[i].yearlyAmt + ' )'
+          label:
+            feePlans[i].name +
+            ' (Monthly: ' +
+            getCurrencySymbol(
+              'en-US',
+              institute !== null &&
+                institute !== undefined &&
+                institute.currency !== null &&
+                institute.currency !== undefined
+                ? institute.currency
+                : 'INR'
+            ) +
+            feePlans[i].monthlyAmt +
+            ', Yearly: ' +
+            getCurrencySymbol(
+              'en-US',
+              institute !== null &&
+                institute !== undefined &&
+                institute.currency !== null &&
+                institute.currency !== undefined
+                ? institute.currency
+                : 'INR'
+            ) +
+            feePlans[i].yearlyAmt +
+            ' )',
         });
       }
     }
@@ -1931,14 +2484,18 @@ export class MasterController {
         FeePlanBreakup: {
           orderBy: {
             amount: 'desc',
-          }
+          },
         },
       },
       orderBy: {
-        updated_at: 'desc'
-      }
+        updated_at: 'desc',
+      },
     });
-    return res.json({ status: true, data: feePlans, message: 'Fee Plans retrieved' });
+    return res.json({
+      status: true,
+      data: feePlans,
+      message: 'Fee Plans retrieved',
+    });
   }
 
   public async getFeePlanBreakup(req: Request, res: Response) {
@@ -1951,7 +2508,7 @@ export class MasterController {
         campusId: campusId,
         isYearly: 1,
         breakupname: 'Admission Fee',
-        amount: 2500
+        amount: 2500,
       },
       {
         id: uuidv4(),
@@ -1959,7 +2516,7 @@ export class MasterController {
         campusId: campusId,
         isYearly: 1,
         breakupname: 'Exam Fee',
-        amount: 500
+        amount: 500,
       },
       {
         id: uuidv4(),
@@ -1967,7 +2524,7 @@ export class MasterController {
         campusId: campusId,
         isYearly: 1,
         breakupname: 'Id Card Fee',
-        amount: 150
+        amount: 150,
       },
       {
         id: uuidv4(),
@@ -1975,19 +2532,16 @@ export class MasterController {
         campusId: campusId,
         isYearly: 0,
         breakupname: 'Monthly Fee',
-        amount: 500
+        amount: 500,
       },
-
     ];
 
     return res.json({ status: true, data: blankFeeBreakup, message: '' });
   }
 
-
-
   public async addUpdateFeePlan(req: Request, res: Response) {
     const formData: any = req.body;
-    console.log(formData)
+    console.log(formData);
     try {
       if (formData !== null && formData !== undefined) {
         if (formData.feeId !== null && formData.feeId !== undefined) {
@@ -1996,14 +2550,17 @@ export class MasterController {
             where: {
               campusId: Number(formData.campusId),
               feePlanId: Number(formData.feeId),
-            }
+            },
           });
           let monthlyAmount = 0;
           let yearlyAmount = 0;
 
           //Update fee id
-          if (formData.feeBreakUp !== null && formData.feeBreakUp !== undefined && formData.feeBreakUp.length > 0) {
-
+          if (
+            formData.feeBreakUp !== null &&
+            formData.feeBreakUp !== undefined &&
+            formData.feeBreakUp.length > 0
+          ) {
             for (let i = 0; i < formData.feeBreakUp.length; i++) {
               let element = formData.feeBreakUp[i];
               if (element.isYearly === 1) {
@@ -2022,7 +2579,12 @@ export class MasterController {
               });
             }
           }
-          console.log('Updated yearlyAmount :' + yearlyAmount + ' monthlyAmount: ' + monthlyAmount)
+          console.log(
+            'Updated yearlyAmount :' +
+              yearlyAmount +
+              ' monthlyAmount: ' +
+              monthlyAmount
+          );
 
           let feePlan = await prisma.feePlan.update({
             where: {
@@ -2034,16 +2596,24 @@ export class MasterController {
               monthlyAmt: monthlyAmount,
               yearlyAmt: yearlyAmount,
               updated_by: formData.created_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
 
-          return res.json({ data: null, status: true, message: 'Fee Plan updated' });
+          return res.json({
+            data: null,
+            status: true,
+            message: 'Fee Plan updated',
+          });
         } else {
           let monthlyAmount = 0;
           let yearlyAmount = 0;
 
-          if (formData.feeBreakUp !== null && formData.feeBreakUp !== undefined && formData.feeBreakUp.length > 0) {
+          if (
+            formData.feeBreakUp !== null &&
+            formData.feeBreakUp !== undefined &&
+            formData.feeBreakUp.length > 0
+          ) {
             for (let i = 0; i < formData.feeBreakUp.length; i++) {
               let element = formData.feeBreakUp[i];
               if (element.isYearly === 1) {
@@ -2052,7 +2622,12 @@ export class MasterController {
                 monthlyAmount = Number(monthlyAmount) + Number(element.amount);
               }
             }
-            console.log('New yearlyAmount :' + yearlyAmount + ' monthlyAmount: ' + monthlyAmount)
+            console.log(
+              'New yearlyAmount :' +
+                yearlyAmount +
+                ' monthlyAmount: ' +
+                monthlyAmount
+            );
           }
 
           let feePlan = await prisma.feePlan.create({
@@ -2065,11 +2640,17 @@ export class MasterController {
               created_by: formData.created_by,
               created_at: new Date(),
               updated_by: formData.created_by,
-              updated_at: new Date()
+              updated_at: new Date(),
             },
           });
 
-          if (feePlan !== null && feePlan !== undefined && formData.feeBreakUp !== null && formData.feeBreakUp !== undefined && formData.feeBreakUp.length > 0) {
+          if (
+            feePlan !== null &&
+            feePlan !== undefined &&
+            formData.feeBreakUp !== null &&
+            formData.feeBreakUp !== undefined &&
+            formData.feeBreakUp.length > 0
+          ) {
             for (let i = 0; i < formData.feeBreakUp.length; i++) {
               let element = formData.feeBreakUp[i];
               await prisma.feePlanBreakup.create({
@@ -2081,17 +2662,21 @@ export class MasterController {
                   amount: Number(element.amount),
                 },
               });
-
             }
           }
 
-          return res.json({ data: null, status: true, message: 'Fee Plan added' });
+          return res.json({
+            data: null,
+            status: true,
+            message: 'Fee Plan added',
+          });
         }
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -2102,39 +2687,43 @@ export class MasterController {
       if (feeForm !== null && feeForm !== undefined) {
         console.log(feeForm);
 
-        await prisma.feePlan.findUnique({
-          where: {
-            id: feeForm.id,
-            campusId: feeForm.campusId,
-          },
-        }).then(async (existingData) => {
+        await prisma.feePlan
+          .findUnique({
+            where: {
+              id: feeForm.id,
+              campusId: feeForm.campusId,
+            },
+          })
+          .then(async (existingData) => {
+            if (existingData !== null && existingData !== undefined) {
+              let isActive: number = existingData.active;
+              console.log('Current Active Status : ' + isActive);
 
-          if (existingData !== null && existingData !== undefined) {
-            let isActive: number = existingData.active;
-            console.log('Current Active Status : ' + isActive);
+              await prisma.feePlan.update({
+                where: {
+                  id: feeForm.id,
+                  campusId: feeForm.campusId,
+                },
+                data: {
+                  active: isActive === 1 ? 0 : 1,
+                  created_by: Number(feeForm.currentUserid),
+                  created_at: new Date(),
+                },
+              });
 
-            await prisma.feePlan.update({
-              where: {
-                id: feeForm.id,
-                campusId: feeForm.campusId,
-              },
-              data: {
-                active: isActive === 1 ? 0 : 1,
-                created_by: Number(feeForm.currentUserid),
-                created_at: new Date()
-              },
-            });
-
-            return res.json({ data: null, status: true, message: 'Fee Plan updated' });
-          }
-
-        });
-
+              return res.json({
+                data: null,
+                status: true,
+                message: 'Fee Plan updated',
+              });
+            }
+          });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
 
@@ -2147,7 +2736,10 @@ export class MasterController {
         campusId: Number(leaveForm.form.campusId),
         isApproved: Number(leaveForm.form.isApproved),
         userType: {
-          in: leaveForm.form.userType === 'student' ? [UserType.student] : [UserType.staff, UserType.accountant, UserType.admin]
+          in:
+            leaveForm.form.userType === 'student'
+              ? [UserType.student]
+              : [UserType.staff, UserType.accountant, UserType.admin],
         },
       },
       orderBy: [
@@ -2164,17 +2756,20 @@ export class MasterController {
             },
           ],
         },
-        user: true
+        user: true,
       },
     });
 
-
-    return res.json({ status: true, data: leaves, message: 'Leaves retrieved' });
+    return res.json({
+      status: true,
+      data: leaves,
+      message: 'Leaves retrieved',
+    });
   }
 
   public async approveRejectRequest(req: Request, res: Response) {
     const leaveForm: any = req.body;
-    console.log(leaveForm)
+    console.log(leaveForm);
 
     let leaves = await prisma.leaves.update({
       where: {
@@ -2182,111 +2777,164 @@ export class MasterController {
         campusId: Number(leaveForm.campusId),
       },
       data: {
-        isApproved: leaveForm.status === 'Approve' ? 1 : leaveForm.status === 'Reject' ? 2 : 0,
+        isApproved:
+          leaveForm.status === 'Approve'
+            ? 1
+            : leaveForm.status === 'Reject'
+              ? 2
+              : 0,
         updated_at: new Date(),
         updated_by: leaveForm.updatedBy,
-        rejectApproveReason: leaveForm.rejectApproveReason
+        rejectApproveReason: leaveForm.rejectApproveReason,
       },
     });
     //Add notification
-    addANotification(Number(leaveForm.campusId),
+    addANotification(
+      Number(leaveForm.campusId),
       Number(leaves.created_by),
       Number(leaveForm.updatedBy),
-      buildMessage(LEAVE_REQUEST_APP_REJ,
+      buildMessage(
+        LEAVE_REQUEST_APP_REJ,
         leaves.id + '',
         leaveForm.status,
-        leaveForm.rejectApproveReason));
+        leaveForm.rejectApproveReason
+      )
+    );
 
-    let fetchedLeave = await prisma.leaves.findUnique({
-      where: {
-        id: Number(leaveForm.id),
-        campusId: Number(leaveForm.campusId),
-      },
-      include: {
-        user: true,
-        LeaveDates: {
-          orderBy: [
-            {
-              date: 'asc',
-            },
-          ],
-        },
-      }
-    }).then(async (fetchedLeave) => {
-      const institute = await prisma.institute.findFirst({
-        include: {
-          session: true,
-        }
-      });
-      const updater = await prisma.user.findUnique({
+    let fetchedLeave = await prisma.leaves
+      .findUnique({
         where: {
-          id: Number(leaveForm.updatedBy),
+          id: Number(leaveForm.id),
           campusId: Number(leaveForm.campusId),
-        }
-      });
-      sendSms('Leave Request',
-        {
-          campusId: Number(leaveForm.campusId),
-          student_name: fetchedLeave.user.displayName,
-          parent_name: '',
-          parent_phone: '',
-          roll_no: fetchedLeave.user.rollNoProcessed,
-          student_id_card: fetchedLeave.user.idCardNumber,
-          institute_name: institute.instituteName,
-          institute_campus: '',
-          class_name: '',
-          section_name: '',
-          session: institute.session.session,
-          loggedInUserId: Number(leaveForm.updatedBy),
-          studentOrTeacherId: null,
-          classId: -1,
-          sectionId: -1,
-          student_leave_start: fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length > 0 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') : '',
-          student_leave_end: fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length === 1 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :
-            fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length > 1 ? moment(fetchedLeave.LeaveDates[fetchedLeave.LeaveDates.length - 1].date).format('DD-MM-YYYY') : '',
-          student_leave_approved_by: updater.displayName,
-          student_leave_status: leaveForm.status === 'Approve' ? 'approved' : 'rejected'
         },
-        [
-          fetchedLeave.user.mobile
-        ]);
-
-      sendEmail('Leave Request',
-        {
-          campusId: Number(leaveForm.campusId),
-          student_name: fetchedLeave.user.displayName,
-          parent_name: '',
-          parent_phone: '',
-          roll_no: fetchedLeave.user.rollNoProcessed,
-          student_id_card: fetchedLeave.user.idCardNumber,
-          institute_name: institute.instituteName,
-          institute_campus: '',
-          class_name: '',
-          section_name: '',
-          session: institute.session.session,
-          loggedInUserId: Number(leaveForm.updatedBy),
-          studentOrTeacherId: null,
-          classId: -1,
-          sectionId: -1,
-          student_leave_start: fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length > 0 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') : '',
-          student_leave_end: fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length === 1 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY') :
-            fetchedLeave.LeaveDates !== null && fetchedLeave.LeaveDates !== undefined && fetchedLeave.LeaveDates.length > 1 ? moment(fetchedLeave.LeaveDates[fetchedLeave.LeaveDates.length - 1].date).format('DD-MM-YYYY') : '',
-          student_leave_approved_by: updater.displayName,
-          student_leave_status: leaveForm.status === 'Approve' ? 'approved' : 'rejected'
-        },
-        [
-          {
-            name: fetchedLeave.user.displayName,
-            email: fetchedLeave.user.email
+        include: {
+          user: true,
+          LeaveDates: {
+            orderBy: [
+              {
+                date: 'asc',
+              },
+            ],
           },
-        ]
-      );
+        },
+      })
+      .then(async (fetchedLeave) => {
+        const institute = await prisma.institute.findFirst({
+          include: {
+            session: true,
+          },
+        });
+        const updater = await prisma.user.findUnique({
+          where: {
+            id: Number(leaveForm.updatedBy),
+            campusId: Number(leaveForm.campusId),
+          },
+        });
+        sendSms(
+          'Leave Request',
+          {
+            campusId: Number(leaveForm.campusId),
+            student_name: fetchedLeave.user.displayName,
+            parent_name: '',
+            parent_phone: '',
+            roll_no: fetchedLeave.user.rollNoProcessed,
+            student_id_card: fetchedLeave.user.idCardNumber,
+            institute_name: institute.instituteName,
+            institute_campus: '',
+            class_name: '',
+            section_name: '',
+            session: institute.session.session,
+            loggedInUserId: Number(leaveForm.updatedBy),
+            studentOrTeacherId: null,
+            classId: -1,
+            sectionId: -1,
+            student_leave_start:
+              fetchedLeave.LeaveDates !== null &&
+              fetchedLeave.LeaveDates !== undefined &&
+              fetchedLeave.LeaveDates.length > 0
+                ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
+                : '',
+            student_leave_end:
+              fetchedLeave.LeaveDates !== null &&
+              fetchedLeave.LeaveDates !== undefined &&
+              fetchedLeave.LeaveDates.length === 1
+                ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
+                : fetchedLeave.LeaveDates !== null &&
+                    fetchedLeave.LeaveDates !== undefined &&
+                    fetchedLeave.LeaveDates.length > 1
+                  ? moment(
+                      fetchedLeave.LeaveDates[
+                        fetchedLeave.LeaveDates.length - 1
+                      ].date
+                    ).format('DD-MM-YYYY')
+                  : '',
+            student_leave_approved_by: updater.displayName,
+            student_leave_status:
+              leaveForm.status === 'Approve' ? 'approved' : 'rejected',
+          },
+          [fetchedLeave.user.mobile]
+        );
+
+        sendEmail(
+          'Leave Request',
+          {
+            campusId: Number(leaveForm.campusId),
+            student_name: fetchedLeave.user.displayName,
+            parent_name: '',
+            parent_phone: '',
+            roll_no: fetchedLeave.user.rollNoProcessed,
+            student_id_card: fetchedLeave.user.idCardNumber,
+            institute_name: institute.instituteName,
+            institute_campus: '',
+            class_name: '',
+            section_name: '',
+            session: institute.session.session,
+            loggedInUserId: Number(leaveForm.updatedBy),
+            studentOrTeacherId: null,
+            classId: -1,
+            sectionId: -1,
+            student_leave_start:
+              fetchedLeave.LeaveDates !== null &&
+              fetchedLeave.LeaveDates !== undefined &&
+              fetchedLeave.LeaveDates.length > 0
+                ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
+                : '',
+            student_leave_end:
+              fetchedLeave.LeaveDates !== null &&
+              fetchedLeave.LeaveDates !== undefined &&
+              fetchedLeave.LeaveDates.length === 1
+                ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
+                : fetchedLeave.LeaveDates !== null &&
+                    fetchedLeave.LeaveDates !== undefined &&
+                    fetchedLeave.LeaveDates.length > 1
+                  ? moment(
+                      fetchedLeave.LeaveDates[
+                        fetchedLeave.LeaveDates.length - 1
+                      ].date
+                    ).format('DD-MM-YYYY')
+                  : '',
+            student_leave_approved_by: updater.displayName,
+            student_leave_status:
+              leaveForm.status === 'Approve' ? 'approved' : 'rejected',
+          },
+          [
+            {
+              name: fetchedLeave.user.displayName,
+              email: fetchedLeave.user.email,
+            },
+          ]
+        );
+      });
+
+    return res.json({
+      status: true,
+      data: leaves,
+      message:
+        leaveForm.status === 'Approve'
+          ? 'Leave Request Approved'
+          : 'Leave Request Rejected',
     });
-
-
-    return res.json({ status: true, data: leaves, message: leaveForm.status === 'Approve' ? 'Leave Request Approved' : 'Leave Request Rejected' });
   }
-
 
   public async getLeavesByUser(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -2306,114 +2954,148 @@ export class MasterController {
             },
           ],
         },
-        user: true
+        user: true,
       },
     });
 
-
-    return res.json({ status: true, data: leaves, message: 'Leaves retrieved' });
+    return res.json({
+      status: true,
+      data: leaves,
+      message: 'Leaves retrieved',
+    });
   }
 
   public async addUpdateLeaves(req: Request, res: Response) {
     const leaveForm: any = req.body;
 
     try {
-      if (leaveForm !== null && leaveForm !== undefined
-        && leaveForm.form !== null && leaveForm.form !== undefined) {
+      if (
+        leaveForm !== null &&
+        leaveForm !== undefined &&
+        leaveForm.form !== null &&
+        leaveForm.form !== undefined
+      ) {
         if (leaveForm.leaveDates.length > 0) {
-          leaveForm.leaveDates.filter((item, index) => leaveForm.leaveDates.indexOf(item) === index);
-          console.log(leaveForm.leaveDates)
+          leaveForm.leaveDates.filter(
+            (item, index) => leaveForm.leaveDates.indexOf(item) === index
+          );
+          console.log(leaveForm.leaveDates);
           if (leaveForm.form.id !== null && leaveForm.form.id !== undefined) {
-
-            await prisma.leaves.update({
-              where: {
-                id: leaveForm.form.id,
-                campusId: leaveForm.form.campusId,
-              },
-              data: {
-                reason: leaveForm.form.reason,
-                updated_by: leaveForm.form.created_by,
-                updated_at: new Date()
-              },
-            }).then(async (leaveReq) => {
-              console.log(leaveReq)
-              await prisma.leaveDates.deleteMany({
+            await prisma.leaves
+              .update({
                 where: {
-                  leaveId: leaveForm.form.id,
+                  id: leaveForm.form.id,
                   campusId: leaveForm.form.campusId,
                 },
-              }).then(async (isDeleted) => {
-                for (let i = 0; i < leaveForm.leaveDates.length; i++) {
-                  console.log(leaveForm.leaveDates[i])
+                data: {
+                  reason: leaveForm.form.reason,
+                  updated_by: leaveForm.form.created_by,
+                  updated_at: new Date(),
+                },
+              })
+              .then(async (leaveReq) => {
+                console.log(leaveReq);
+                await prisma.leaveDates
+                  .deleteMany({
+                    where: {
+                      leaveId: leaveForm.form.id,
+                      campusId: leaveForm.form.campusId,
+                    },
+                  })
+                  .then(async (isDeleted) => {
+                    for (let i = 0; i < leaveForm.leaveDates.length; i++) {
+                      console.log(leaveForm.leaveDates[i]);
+                      await prisma.leaveDates.create({
+                        data: {
+                          campusId: leaveForm.form.campusId,
+                          leaveId: leaveReq.id,
+                          date: leaveForm.leaveDates[i],
+                        },
+                      });
+                    }
+                  });
+              });
+          } else {
+            await prisma.leaves
+              .create({
+                data: {
+                  campusId: leaveForm.form.campusId,
+                  userId: leaveForm.form.userId,
+                  userType: leaveForm.form.userType,
+                  isApproved: 0,
+                  reason: leaveForm.form.reason,
+                  created_by: leaveForm.form.created_by,
+                  created_at: new Date(),
+                  updated_by: leaveForm.form.created_by,
+                  updated_at: new Date(),
+                },
+              })
+              .then(async (leaveReq) => {
+                leaveForm.leaveDates.forEach(async (date) => {
                   await prisma.leaveDates.create({
                     data: {
                       campusId: leaveForm.form.campusId,
                       leaveId: leaveReq.id,
-                      date: leaveForm.leaveDates[i],
+                      date: date,
                     },
-                  })
-                }
-              })
-            });
-          } else {
-            await prisma.leaves.create({
-              data: {
-                campusId: leaveForm.form.campusId,
-                userId: leaveForm.form.userId,
-                userType: leaveForm.form.userType,
-                isApproved: 0,
-                reason: leaveForm.form.reason,
-                created_by: leaveForm.form.created_by,
-                created_at: new Date(),
-                updated_by: leaveForm.form.created_by,
-                updated_at: new Date()
-              },
-            }).then(async (leaveReq) => {
-              leaveForm.leaveDates.forEach(async (date) => {
-                await prisma.leaveDates.create({
-                  data: {
-                    campusId: leaveForm.form.campusId,
-                    leaveId: leaveReq.id,
-                    date: date,
-                  },
-                })
-              });
-
-              const admins = await prisma.user.findMany({
-                where: {
-                  active: 1,
-                  userType: UserType.admin,
-                  campusId: Number(leaveForm.form.campusId),
-                },
-              });
-              if (admins !== null && admins !== undefined && admins.length > 0) {
-                admins.forEach(async (eachUser: any) => {
-                  addANotification(Number(leaveForm.form.campusId),
-                    Number(eachUser.id),
-                    Number(leaveForm.form.created_by),
-                    buildMessage(LEAVE_REQUESTED, leaveReq.id + '', leaveForm.form.reason));
+                  });
                 });
-              }
-            });
+
+                const admins = await prisma.user.findMany({
+                  where: {
+                    active: 1,
+                    userType: UserType.admin,
+                    campusId: Number(leaveForm.form.campusId),
+                  },
+                });
+                if (
+                  admins !== null &&
+                  admins !== undefined &&
+                  admins.length > 0
+                ) {
+                  admins.forEach(async (eachUser: any) => {
+                    addANotification(
+                      Number(leaveForm.form.campusId),
+                      Number(eachUser.id),
+                      Number(leaveForm.form.created_by),
+                      buildMessage(
+                        LEAVE_REQUESTED,
+                        leaveReq.id + '',
+                        leaveForm.form.reason
+                      )
+                    );
+                  });
+                }
+              });
           }
         } else {
-          return res.status(400).json({ message: 'Please select dates', status: false, data: null })
+          return res
+            .status(400)
+            .json({
+              message: 'Please select dates',
+              status: false,
+              data: null,
+            });
         }
       }
-      return res.json({ data: null, status: true, message: 'Leave Request saved' });
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Leave Request saved',
+      });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: error.message, status: true, data: null })
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
     }
   }
-
 
   //Notifications
   public async getUserNotificationsAndEmails(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const userId = Number(req.params.userId);
     let emailsObj = [];
-
 
     let notificationsForUser = await prisma.notifications.findMany({
       where: {
@@ -2426,32 +3108,39 @@ export class MasterController {
       include: {
         campus: true,
         user: true,
-        createdbyuser: true
+        createdbyuser: true,
       },
     });
 
     //get emails
-    await prisma.user.findUnique({
-      where: {
-        campusId: Number(campusId),
-        id: Number(userId),
-      },
-    }).then(async (user: User) => {
+    await prisma.user
+      .findUnique({
+        where: {
+          campusId: Number(campusId),
+          id: Number(userId),
+        },
+      })
+      .then(async (user: User) => {
+        if (
+          user !== null &&
+          user !== undefined &&
+          user.email !== null &&
+          user.email !== undefined
+        ) {
+          emailsObj = await prisma.emailHistory.findMany({
+            where: { tos: user.email + ';' },
+            orderBy: {
+              created_at: 'desc',
+            },
+          });
+        }
+      });
 
-      if (user !== null && user !== undefined && user.email !== null && user.email !== undefined) {
-
-        emailsObj = await prisma.emailHistory.findMany({
-          where: { tos: user.email + ';' },
-          orderBy: {
-            created_at: "desc"
-          }
-        });
-      }
-
+    return res.json({
+      status: true,
+      data: { data: notificationsForUser, emailsObj: emailsObj },
+      message: 'Notifications retrieved',
     });
-
-
-    return res.json({ status: true, data: { data: notificationsForUser, emailsObj: emailsObj }, message: 'Notifications retrieved' });
   }
   public async getAllNotifications(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
@@ -2466,12 +3155,15 @@ export class MasterController {
       include: {
         campus: true,
         user: true,
-        createdbyuser: true
+        createdbyuser: true,
       },
     });
 
-
-    return res.json({ status: true, data: notificationsForThisSession, message: 'Notifications retrieved' });
+    return res.json({
+      status: true,
+      data: notificationsForThisSession,
+      message: 'Notifications retrieved',
+    });
   }
 
   public async updateMasterNotification(req: Request, res: Response) {
@@ -2484,7 +3176,7 @@ export class MasterController {
       },
       data: {
         message: form.message,
-        created_at: new Date()
+        created_at: new Date(),
       },
     });
     //Add notification
@@ -2494,7 +3186,11 @@ export class MasterController {
     //                   buildMessage(UPDATE_MASTER_NOTIFICATION,
     //                     notification.id+''));
 
-    return res.json({ status: true, data: null, message: 'Notification #' + notification.id + ' updated' });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Notification #' + notification.id + ' updated',
+    });
   }
 
   public async deleteNotification(req: Request, res: Response) {
@@ -2508,20 +3204,22 @@ export class MasterController {
       },
     });
 
-
-    return res.json({ status: true, data: notificationsForThisSession, message: 'Notifications deleted' });
+    return res.json({
+      status: true,
+      data: notificationsForThisSession,
+      message: 'Notifications deleted',
+    });
   }
 }
-
-
 
 function getAllDaysBetweenDates(startDate: Date, endDate: Date, day: number) {
   const wednesdays = [];
   let currentDate = moment(startDate);
 
   while (currentDate.isSameOrBefore(endDate)) {
-    if (currentDate.isoWeekday() === day) { // 3 represents Wednesday
-      const formattedDate = currentDate.format('YYYY-MM-DD')
+    if (currentDate.isoWeekday() === day) {
+      // 3 represents Wednesday
+      const formattedDate = currentDate.format('YYYY-MM-DD');
       wednesdays.push(formattedDate);
     }
     currentDate.add(1, 'day');
@@ -2529,4 +3227,3 @@ function getAllDaysBetweenDates(startDate: Date, endDate: Date, day: number) {
 
   return wednesdays;
 }
-

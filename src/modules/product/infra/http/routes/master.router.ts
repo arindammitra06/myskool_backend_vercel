@@ -12,6 +12,12 @@ MasterRouter.post("/saveATheme", masterControllerInstance.saveATheme);
 
 MasterRouter.get("/getAllSessions", masterControllerInstance.getAllSessions);
 MasterRouter.get("/getAllSessionsCompleteData", masterControllerInstance.getAllSessionsCompleteData);
+MasterRouter.post("/addUpdateFinancialYear", masterControllerInstance.addUpdateFinancialYear);
+MasterRouter.delete("/deleteFinancialYear/:id/:userId", masterControllerInstance.deleteFinancialYear);
+
+MasterRouter.post("/addUpdateSession", masterControllerInstance.addUpdateSession);
+MasterRouter.delete("/deleteSession/:id/:userId", masterControllerInstance.deleteSession);
+
 MasterRouter.get("/getAllFinancialYearsDropdown", masterControllerInstance.getAllFinancialYearsDropdown);
 MasterRouter.get("/getAllFinancialYears", masterControllerInstance.getAllFinancialYears);
 

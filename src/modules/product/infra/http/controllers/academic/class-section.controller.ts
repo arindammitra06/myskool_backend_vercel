@@ -249,14 +249,14 @@ export class ClassSectionController {
 
         const updatedClassS = await prisma.section.update({
           where: {
-            id: sectionS.form.id,
+            id: Number(sectionS.form.id),
             campusId: Number(sectionS.form.campusId)
           },
           data: {
-            campusId: sectionS.form.campusId,
-            classId: sectionS.form.classId,
+            campusId: Number(sectionS.form.campusId),
+            classId: Number(sectionS.form.classId),
             sectionName: sectionS.form.sectionName,
-            updated_by: sectionS.form.updated_by,
+            updated_by: Number(sectionS.form.updated_by),
             updated_at: new Date(),
             active: 1,
           },
@@ -294,8 +294,8 @@ export class ClassSectionController {
             classId: Number(sectionS.form.classId),
             sectionName: sectionS.form.sectionName,
             created_at:new Date(),
-            created_by:sectionS.form.updated_by,
-            updated_by: sectionS.form.updated_by,
+            created_by: Number(sectionS.form.updated_by),
+            updated_by: Number(sectionS.form.updated_by),
             updated_at: new Date(),
             active: 1,
           },

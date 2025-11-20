@@ -58,6 +58,7 @@ export class AccountingController {
       }
     });
     let parentModel = [];
+    
     if (parents !== null && parents !== undefined && parents.length > 0) {
       for (let i = 0; i < parents.length; i++) {
         if (parents[i].children.length > 1) {
