@@ -24,7 +24,7 @@
     "swagger-autogen": "node swagger.js"
   },
   "engines": {
-    "node": ">=16"
+    "node": "20.x"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.1.1",
