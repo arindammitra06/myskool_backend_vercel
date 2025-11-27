@@ -1,10 +1,13 @@
 import { Router } from "express";
 import { masterControllerInstance } from '../controllers';
 import upload from "../middlewares/multer";
+import { uploadSingleFile } from "../../../../../middleware/upload";
 
 
 const MasterRouter = Router();
+MasterRouter.get("/getImagekitAuth", masterControllerInstance.getImagekitAuth);
 MasterRouter.post("/uploadImageToImageKit", upload.single("file"), masterControllerInstance.uploadImageToImageKit);
+MasterRouter.post("/upload/:uid", uploadSingleFile, masterControllerInstance.uploadDocument);
 
 
 MasterRouter.get("/getAllThemes/:campusId/:userId", masterControllerInstance.getAllThemes);

@@ -38,7 +38,9 @@ import {
   UPDATE_MASTER_NOTIFICATION,
   USER_CREATED,
 } from '../../../../../../shared/constants/notification.constants';
+import path from "path";
 import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit';
+import imagekit from '../../../../../../shared/helpers/utils/imagekitClient';
 const fs = require('fs');
 
 interface MulterMemoryRequest extends Request {
@@ -46,35 +48,110 @@ interface MulterMemoryRequest extends Request {
 }
 
 export class MasterController {
-  public async uploadImageToImageKit(req: MulterMemoryRequest, res: Response) {
+
+  
+  public async getImagekitAuth (req: Request, res: Response) {
     try {
       console.log(req);
-      const { file } = req;
+      const auth = imagekit.getAuthenticationParameters();
 
-      if (!file) {
-        return res.json({
-          status: false,
-          data: null,
-          message: 'File upload error',
-        });
-      }
+      return res.json(auth);
 
-      const uploadResponse = await uploadImageToImageKit(
-        file.buffer,
-        uuidv4() + req.file.originalname
-      );
-
-      res.json({
-        status: true,
-        fileType: uploadResponse.fileType,
-        url: uploadResponse.url,
-        thumbnailUrl: uploadResponse.thumbnailUrl,
-      });
     } catch (error) {
       return res.json({
         status: false,
         data: null,
         message: 'File upload error',
+      });
+    }
+  }
+  
+  public async uploadImageToImageKit(req: MulterMemoryRequest, res: Response) {
+  try {
+    const uid = req.body.uid || req.query.uid || null;
+
+    // Handle both single and multiple files
+    const files: Express.Multer.File[] = [];
+    if (req.file) files.push(req.file);
+    if (req.files && Array.isArray(req.files)) files.push(...req.files);
+
+    if (files.length === 0) {
+      return res.json({
+        status: false,
+        message: "No file provided",
+        data: null
+      });
+    }
+
+    // Target folder on ImageKit
+    const folderPath = uid ? `/uploads/${uid}` : `/assets`;
+
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const fileName = uuidv4() + "-" + file.originalname;
+
+      const uploadResponse = await uploadImageToImageKit(file.buffer, fileName, folderPath);
+
+      uploadedFiles.push({
+        fileType: uploadResponse.fileType,
+        url: uploadResponse.url,
+        thumbnailUrl: uploadResponse.thumbnailUrl
+      });
+    }
+
+    return res.json({
+      status: true,
+      count: uploadedFiles.length,
+      files: uploadedFiles
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.json({
+      status: false,
+      message: "File upload error",
+      data: null
+    });
+  }
+}
+
+
+   public async uploadDocument(req: Request, res: Response) {
+    try {
+      const uid = req.params.uid || req.body.uid;
+
+      if (!uid) {
+        return res.status(400).json({
+          status: false,
+          message: "UID is required",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          status: false,
+          message: "No file uploaded",
+        });
+      }
+
+      const serverUrl = process.env.SERVER_API_URL?.replace(/\/$/, "") || ""; 
+      const fileUrl = `${serverUrl}/uploads/${uid}/${req.file.filename}`;
+
+      const filePath = path.join("uploads", uid, req.file.filename);
+
+      return res.json({
+        status: true,
+        message: "File uploaded successfully",
+        fileName: req.file.filename,
+        filePath,
+        url: fileUrl,       // FULL URL here
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(500).json({
+        status: false,
+        message: "File upload failed",
       });
     }
   }

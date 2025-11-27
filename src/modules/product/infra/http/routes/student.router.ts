@@ -2,6 +2,7 @@ import { Router } from "express";
 import { studentControllerInstance } from '../controllers';
 
 const StudentRouter = Router();
+StudentRouter.post("/submitApplicationForm", studentControllerInstance.submitApplicationForm);
 StudentRouter.post("/createStudent", studentControllerInstance.createStudent);
 StudentRouter.post("/bulkLoadStudents", studentControllerInstance.bulkLoadStudents);
 StudentRouter.post("/transferStudentCampus", studentControllerInstance.transferStudentCampus);
@@ -9,6 +10,7 @@ StudentRouter.post("/promoteStudent", studentControllerInstance.promoteStudent);
 StudentRouter.get("/getAllStudents/:campusId", studentControllerInstance.getAllStudents);
 StudentRouter.get("/getAllStudentsByClassAndSection/:campusId/:classId/:sectionId/:active", studentControllerInstance.getAllStudentsByClassAndSection);
 StudentRouter.get("/getStudentById/:id/:campusId", studentControllerInstance.getStudentId);
+StudentRouter.post("/updatePhoto/:campusId/:id", studentControllerInstance.updatePhoto);
 
 StudentRouter.delete("/deleteStudent/:id/:campusId", studentControllerInstance.deleteStudent);
 StudentRouter.get("/getStudentBirthday/:campusId", studentControllerInstance.getStudentBirthday);

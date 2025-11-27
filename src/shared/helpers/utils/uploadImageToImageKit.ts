@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import imagekit from "./imagekitClient"; // you already created this
 
-export async function uploadImageToImageKit(buffer: Buffer, fileName?: string): Promise<any> {
+export async function uploadImageToImageKit(buffer: Buffer, fileName?: string, folderPath?: string): Promise<any> {
     try {
         
 
@@ -11,7 +11,7 @@ export async function uploadImageToImageKit(buffer: Buffer, fileName?: string): 
             isPrivateFile: false,
             useUniqueFileName: true,
             fileName: fileName,
-            folder: "myskool",
+            folder: folderPath,
         });
 
         return result;

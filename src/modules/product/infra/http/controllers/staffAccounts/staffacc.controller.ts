@@ -46,8 +46,8 @@ export class StaffAccountantController {
       citizenship: staffDetails.form.citizenship,
       gender: staffDetails.form.gender,
       dateOfBirth: moment(staffDetails.form.dateOfBirth, 'DD-MM-YYYY').toDate(),
-      photo: staffDetails.photo,
-      thumbnailUrl: staffDetails.thumbnailUrl,
+      //photo: staffDetails.photo,
+      //thumbnailUrl: staffDetails.thumbnailUrl,
       homeAddress: staffDetails.form.homeAddress,
       joiningDate: moment(staffDetails.form.joiningDate, 'DD-MM-YYYY').toDate(),
       religion: staffDetails.form.religion,
@@ -104,8 +104,8 @@ export class StaffAccountantController {
               qualification: staffDetails.form.qualification,
               designation: staffDetails.form.designation,
               fatherHusbandName: staffDetails.form.fatherHusbandName,
-              photo: staffDetails.photo,
-              thumbnailUrl: staffDetails.thumbnailUrl,
+              //photo: staffDetails.photo,
+              //thumbnailUrl: staffDetails.thumbnailUrl,
               email: staffDetails.form.email,
               mobile: staffDetails.form.mobile,
               updated_by: staffDetails.form.updated_by,
@@ -375,8 +375,8 @@ export class StaffAccountantController {
           emergencyContact: input.form.emergencyContact,
           email: input.form.email,
           mobile: input.form.mobile,
-          photo: input.photo,
-          thumbnailUrl: input.thumbnailUrl,
+          //photo: input.photo,
+          //thumbnailUrl: input.thumbnailUrl,
           updated_by: input.updated_by,
         },
       })
@@ -386,7 +386,7 @@ export class StaffAccountantController {
         Number(input.updated_by),
         USER_UPDATED + updatedStaff.displayName);
 
-      return res.json({ status: true, data: null, message: 'User updated successfully' });
+      return res.json({ status: true, data: updatedStaff, message: 'User updated successfully' });
 
     } catch (error) {
       console.error(error);

@@ -38,6 +38,9 @@ model Sessions {
   campus                Campus                  @relation(fields: [campusId], references: [id])
   SubjectMarksTimeTable SubjectMarksTimeTable[]
   TimeTable             TimeTable[]
+  AdmissionRequestUser  AdmissionRequestUser[]
+  Class                 Class[]
+  Section               Section[]
 
   @@index([campusId], map: "Sessions_campusId_fkey")
 }
@@ -177,6 +180,7 @@ model Campus {
   User                        User[]
   UserPermission              UserPermission[]
   BankInformation             BankInformation[]
+  AdmissionRequestUser        AdmissionRequestUser[]
 
   @@index([instituteId], map: "Campus_instituteId_fkey")
 }
@@ -236,6 +240,7 @@ model Class {
   className                   String                        @db.VarChar(255)
   numericName                 String                        @db.VarChar(255)
   teacherId                   Int?
+  ageOfStudent                Int?
   campusId                    Int
   active                      Int                           @default(1) @db.TinyInt
   created_by                  Int
@@ -245,6 +250,8 @@ model Class {
   AdmissionRequestOrInquiries AdmissionRequestOrInquiries[]
   Attendance                  Attendance[]
   campus                      Campus                        @relation(fields: [campusId], references: [id])
+  sessionId                   Int?
+  session                     Sessions?                     @relation(fields: [sessionId], references: [id])
   DailyHomework               DailyHomework[]
   Engagements                 Engagements[]
   Holidays                    Holidays[]
@@ -268,6 +275,8 @@ model Section {
   classId               Int
   campusId              Int
   active                Int                     @default(1) @db.TinyInt
+  sessionId             Int?
+  session               Sessions?               @relation(fields: [sessionId], references: [id])
   created_by            Int
   updated_by            Int
   created_at            DateTime                @default(now()) @db.DateTime(6)
@@ -425,21 +434,66 @@ model ParentChildRelation {
   @@index([childrenId], map: "ParentChildRelation_childrenId_fkey")
 }
 
+model AdmissionRequestUser {
+  id              Int                    @id @default(autoincrement())
+  userType        UserType               @default(student)
+  firstName       String                 @db.VarChar(255)
+  middleName      String?                @db.VarChar(255)
+  lastName        String                 @db.VarChar(255)
+  displayName     String                 @db.VarChar(255)
+  gender          Gender                 @default(Male)
+  dateOfBirth     DateTime?              @db.Date
+  placeOfBirth    String?                @db.VarChar(255)
+  photo           String?                @db.VarChar(4000)
+  active          Int                    @default(1) @db.TinyInt
+  campusId        Int
+  sessionId       Int
+  homeAddress     String?                @db.VarChar(500)
+  idCardNumber    String                 @unique @db.VarChar(255)
+  classId         Int?
+  routeId         Int?
+  previousSchool  String?                @db.VarChar(255)
+  citizenship     String?                @db.VarChar(255)
+  admissionDate   DateTime?              @db.Date
+  email           String?                @db.VarChar(255)
+  mobile          String?                @db.VarChar(255)
+  CNIC            String?                @db.VarChar(255)
+  religion        String?                @db.VarChar(255)
+  annualIncome    String?                @db.VarChar(255)
+  parentType      ParentType?            @default(NA_PARENTTYPE)
+  profession      String?                @db.VarChar(255)
+  created_by      Int
+  updated_by      Int
+  created_at      DateTime               @default(now()) @db.DateTime(6)
+  updated_at      DateTime               @default(now()) @db.DateTime(6)
+  campus          Campus                 @relation(fields: [campusId], references: [id])
+  session         Sessions?              @relation(fields: [sessionId], references: [id])
+  parents         AdmissionRequestUser[] @relation("UserParentChild")
+  children        AdmissionRequestUser[] @relation("UserParentChild")
+  AdmissionRecord AdmissionRecord[]
+}
+
 model AdmissionRecord {
-  id                Int       @id @default(autoincrement())
+  id                Int                  @id @default(autoincrement())
   userId            Int?
   campusId          Int
-  admissionComments String?   @db.VarChar(255)
-  rollNumber        String?   @db.VarChar(255)
-  active            Int       @default(1) @db.TinyInt
+  studentId         Int?
+  student           AdmissionRequestUser? @relation(fields: [studentId], references: [id])
+  applicationStatus Status               @default(Initiate)
+  applicationDate   DateTime?            @db.Date
+  interviewStatus   Status               @default(UnAssigned)
+  interviewDate     DateTime?            @db.Date
+  admissionStatus   Status               @default(New)
+  admissionComments String?              @db.VarChar(255)
+  active            Int                  @default(1) @db.TinyInt
   created_by        Int
   updated_by        Int
-  created_at        DateTime  @default(now()) @db.DateTime(6)
-  updated_at        DateTime  @default(now()) @db.DateTime(6)
+  created_at        DateTime             @default(now()) @db.DateTime(6)
+  updated_at        DateTime             @default(now()) @db.DateTime(6)
   ongoingSessionId  Int?
-  campus            Campus    @relation(fields: [campusId], references: [id])
-  session           Sessions? @relation(fields: [ongoingSessionId], references: [id])
-  user              User?     @relation(fields: [userId], references: [id])
+  campus            Campus               @relation(fields: [campusId], references: [id])
+  session           Sessions?            @relation(fields: [ongoingSessionId], references: [id])
+  user              User?                @relation(fields: [userId], references: [id])
 
   @@index([campusId], map: "AdmissionRecord_campusId_fkey")
   @@index([ongoingSessionId], map: "AdmissionRecord_ongoingSessionId_fkey")
@@ -1834,6 +1888,20 @@ enum ThemeType {
 enum ExamType {
   Exam
   Test
+}
+
+enum Status {
+  New
+  Initiate
+  UnAssigned
+  Assigned
+  InReview
+  Processing
+  Approved
+  Passed
+  Completed
+  Failed
+  Cancelled
 }
 
 enum FileType {

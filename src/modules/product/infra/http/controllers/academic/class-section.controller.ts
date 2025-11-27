@@ -23,6 +23,7 @@ export class ClassSectionController {
             campusId: classS.form.campusId,
             className: classS.form.className,
             numericName: classS.form.numericName,
+            ageOfStudent: classS.form.ageOfStudent,
             teacherId: classS.form.teacherId,
             updated_at: new Date(),
             updated_by: classS.form.updated_by,

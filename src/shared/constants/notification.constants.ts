@@ -2,6 +2,10 @@ import { configService } from "nest-shared";
 
 export const SYSTEM_THEME_UPDATED = "System theme is updated by {1}";
 
+//Admission Request
+export const APPLICATION_REQUEST_SUBMITTED = "A new admission request has been created. Please process";
+
+
 //User related
 export const USER_THEME_UPDATED = "User theme is updated to ";
 export const USER_DETAILS_UPDATED = "Profile info has been updated for ";

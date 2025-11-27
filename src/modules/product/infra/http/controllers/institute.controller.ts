@@ -119,10 +119,8 @@ export class InstituteController {
     const id = Number(req.params.id);
 
     const inst = await prisma.institute
-      .findUnique({
-        where: {
-          id: Number(id),
-        },
+      .findFirst({
+        take: 1,
         include: {
           Campus: true,
           theme: true,
