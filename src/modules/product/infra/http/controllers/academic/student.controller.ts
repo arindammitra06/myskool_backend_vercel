@@ -91,6 +91,11 @@ export class StudentController {
                 created_at: new Date(),
                 updated_at: new Date(),
                 created_by: 1,
+                session: {
+                  connect: {
+                    id: Number(studentWithParents.form.sessionId),
+                  },
+                },
                 campus: {
                   connect: {
                     id: Number(studentWithParents.form.campusId),
@@ -340,11 +345,12 @@ export class StudentController {
                 updated_at: new Date(),
                 created_by: studentWithParents.created_by,
                 password: encryptedPassword,
+                ongoingSession: Number(institute.sessionId),
+                campusId: Number(studentWithParents.form.campusId),
                 parentsNames:
                   studentWithParents.form.fatherFullName +
                   ' , ' +
                   studentWithParents.form.motherFullName,
-                campusId: Number(studentWithParents.form.campusId),
               },
             })
             .then(async (ceratedStudentResponse) => {

@@ -39,8 +39,8 @@ model Sessions {
   SubjectMarksTimeTable SubjectMarksTimeTable[]
   TimeTable             TimeTable[]
   AdmissionRequestUser  AdmissionRequestUser[]
-  Class                 Class[]
-  Section               Section[]
+  User                  User[]
+  MYAALInvoices         MYAALInvoices[]
 
   @@index([campusId], map: "Sessions_campusId_fkey")
 }
@@ -250,8 +250,6 @@ model Class {
   AdmissionRequestOrInquiries AdmissionRequestOrInquiries[]
   Attendance                  Attendance[]
   campus                      Campus                        @relation(fields: [campusId], references: [id])
-  sessionId                   Int?
-  session                     Sessions?                     @relation(fields: [sessionId], references: [id])
   DailyHomework               DailyHomework[]
   Engagements                 Engagements[]
   Holidays                    Holidays[]
@@ -275,8 +273,6 @@ model Section {
   classId               Int
   campusId              Int
   active                Int                     @default(1) @db.TinyInt
-  sessionId             Int?
-  session               Sessions?               @relation(fields: [sessionId], references: [id])
   created_by            Int
   updated_by            Int
   created_at            DateTime                @default(now()) @db.DateTime(6)
@@ -317,55 +313,58 @@ model TeachersInSection {
 }
 
 model User {
-  id                    Int                     @id @default(autoincrement())
-  userType              UserType                @default(student)
-  firstName             String                  @db.VarChar(255)
-  middleName            String?                 @db.VarChar(255)
-  lastName              String                  @db.VarChar(255)
-  displayName           String                  @db.VarChar(255)
-  gender                Gender                  @default(Male)
-  dateOfBirth           DateTime?               @db.Date
-  placeOfBirth          String?                 @db.VarChar(255)
-  photo                 String?                 @db.VarChar(4000)
-  thumbnailUrl          String?                 @db.VarChar(4000)
-  active                Int                     @default(1) @db.TinyInt
-  campusId              Int
-  homeAddress           String?                 @db.VarChar(500)
-  password              String                  @db.VarChar(255)
-  idCardNumber          String                  @unique @db.VarChar(255)
-  rollNumber            Int?
-  classId               Int?
-  sectionId             Int?
-  routeId               Int?
-  previousSchool        String?                 @db.VarChar(255)
-  admissionDate         DateTime?               @db.Date
-  email                 String?                 @db.VarChar(255)
-  mobile                String?                 @db.VarChar(255)
-  whatsapp              String?                 @db.VarChar(255)
-  empId                 String?                 @db.VarChar(255)
-  designation           String?                 @db.VarChar(255)
-  CNIC                  String?                 @db.VarChar(255)
-  qualification         String?                 @db.VarChar(255)
-  fatherHusbandName     String?                 @db.VarChar(255)
-  joiningDate           DateTime?               @db.Date
-  maritalStatus         MaritalStatus?          @default(NA_MARITALSTATUS)
-  salaryType            SalaryType?             @default(NA_SALTYPE)
-  schoolIdCardNumber    String?                 @db.VarChar(255)
-  idProofPhoto          String?                 @db.VarChar(255)
-  religion              String?                 @db.VarChar(255)
-  citizenship           String?                 @db.VarChar(255)
-  parentType            ParentType?             @default(NA_PARENTTYPE)
-  profession            String?                 @db.VarChar(255)
-  created_by            Int
-  updated_by            Int
-  created_at            DateTime                @default(now()) @db.DateTime(6)
-  updated_at            DateTime                @default(now()) @db.DateTime(6)
-  parentsNames          String?                 @db.VarChar(255)
-  onlineClassesId       Int?
-  resetPasswordCode     String?                 @db.VarChar(255)
-  resetPasswordFlag     Int                     @default(1) @db.TinyInt
-  leftMenuExpanded      Int                     @default(1) @db.TinyInt
-  emergencyContact      String?                 @db.VarChar(255)
+  id                 Int            @id @default(autoincrement())
+  userType           UserType       @default(student)
+  firstName          String         @db.VarChar(255)
+  middleName         String?        @db.VarChar(255)
+  lastName           String         @db.VarChar(255)
+  displayName        String         @db.VarChar(255)
+  gender             Gender         @default(Male)
+  dateOfBirth        DateTime?      @db.Date
+  placeOfBirth       String?        @db.VarChar(255)
+  photo              String?        @db.VarChar(4000)
+  thumbnailUrl       String?        @db.VarChar(4000)
+  active             Int            @default(1) @db.TinyInt
+  campusId           Int
+  homeAddress        String?        @db.VarChar(500)
+  password           String         @db.VarChar(255)
+  idCardNumber       String         @unique @db.VarChar(255)
+  rollNumber         Int?
+  classId            Int?
+  sectionId          Int?
+  routeId            Int?
+  previousSchool     String?        @db.VarChar(255)
+  admissionDate      DateTime?      @db.Date
+  email              String?        @db.VarChar(255)
+  mobile             String?        @db.VarChar(255)
+  whatsapp           String?        @db.VarChar(255)
+  empId              String?        @db.VarChar(255)
+  designation        String?        @db.VarChar(255)
+  CNIC               String?        @db.VarChar(255)
+  qualification      String?        @db.VarChar(255)
+  fatherHusbandName  String?        @db.VarChar(255)
+  joiningDate        DateTime?      @db.Date
+  maritalStatus      MaritalStatus? @default(NA_MARITALSTATUS)
+  salaryType         SalaryType?    @default(NA_SALTYPE)
+  schoolIdCardNumber String?        @db.VarChar(255)
+  idProofPhoto       String?        @db.VarChar(255)
+  religion           String?        @db.VarChar(255)
+  citizenship        String?        @db.VarChar(255)
+  parentType         ParentType?    @default(NA_PARENTTYPE)
+  profession         String?        @db.VarChar(255)
+  created_by         Int
+  updated_by         Int
+  created_at         DateTime       @default(now()) @db.DateTime(6)
+  updated_at         DateTime       @default(now()) @db.DateTime(6)
+  parentsNames       String?        @db.VarChar(255)
+  onlineClassesId    Int?
+  resetPasswordCode  String?        @db.VarChar(255)
+  resetPasswordFlag  Int            @default(1) @db.TinyInt
+  leftMenuExpanded   Int            @default(1) @db.TinyInt
+  emergencyContact   String?        @db.VarChar(255)
+
+  ongoingSession        Int?
+  session               Sessions?               @relation(fields: [ongoingSession], references: [id])
   AdmissionRecord       AdmissionRecord[]
   Attendance            Attendance[]
   EmployeeLoan          EmployeeLoan[]
@@ -474,26 +473,26 @@ model AdmissionRequestUser {
 }
 
 model AdmissionRecord {
-  id                Int                  @id @default(autoincrement())
+  id                Int                   @id @default(autoincrement())
   userId            Int?
   campusId          Int
   studentId         Int?
   student           AdmissionRequestUser? @relation(fields: [studentId], references: [id])
-  applicationStatus Status               @default(Initiate)
-  applicationDate   DateTime?            @db.Date
-  interviewStatus   Status               @default(UnAssigned)
-  interviewDate     DateTime?            @db.Date
-  admissionStatus   Status               @default(New)
-  admissionComments String?              @db.VarChar(255)
-  active            Int                  @default(1) @db.TinyInt
+  applicationStatus Status                @default(Initiate)
+  applicationDate   DateTime?             @db.Date
+  interviewStatus   Status                @default(UnAssigned)
+  interviewDate     DateTime?             @db.Date
+  admissionStatus   Status                @default(New)
+  admissionComments String?               @db.VarChar(255)
+  active            Int                   @default(1) @db.TinyInt
   created_by        Int
   updated_by        Int
-  created_at        DateTime             @default(now()) @db.DateTime(6)
-  updated_at        DateTime             @default(now()) @db.DateTime(6)
+  created_at        DateTime              @default(now()) @db.DateTime(6)
+  updated_at        DateTime              @default(now()) @db.DateTime(6)
   ongoingSessionId  Int?
-  campus            Campus               @relation(fields: [campusId], references: [id])
-  session           Sessions?            @relation(fields: [ongoingSessionId], references: [id])
-  user              User?                @relation(fields: [userId], references: [id])
+  campus            Campus                @relation(fields: [campusId], references: [id])
+  session           Sessions?             @relation(fields: [ongoingSessionId], references: [id])
+  user              User?                 @relation(fields: [userId], references: [id])
 
   @@index([campusId], map: "AdmissionRecord_campusId_fkey")
   @@index([ongoingSessionId], map: "AdmissionRecord_ongoingSessionId_fkey")
@@ -1025,29 +1024,31 @@ model StudentFees {
 }
 
 model MYAALInvoices {
-  id            Int         @id @default(autoincrement())
-  userId        Int
-  campusId      Int
-  feeType       FeeType     @default(MONTHLY)
-  feeStatus     FeeStatus   @default(Unpaid)
-  year          Int
-  month         Int
-  dueDate       DateTime    @default(now()) @db.DateTime(6)
-  amount        Float       @default(0)
-  created_by    Int
-  updated_by    Int
-  created_at    DateTime    @default(now()) @db.DateTime(6)
-  updated_at    DateTime    @default(now()) @db.DateTime(6)
-  invoiceNumber String      @unique @db.VarChar(255)
-  paidAmount    Float       @default(0)
-  paidOn        DateTime?   @db.DateTime(6)
-  paymentType   PaymentType @default(Cash)
-  classId       Int?
-  sectionId     Int?
-  campus        Campus      @relation(fields: [campusId], references: [id])
-  class         Class?      @relation(fields: [classId], references: [id])
-  section       Section?    @relation(fields: [sectionId], references: [id])
-  user          User        @relation(fields: [userId], references: [id])
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  campusId       Int
+  feeType        FeeType     @default(MONTHLY)
+  feeStatus      FeeStatus   @default(Unpaid)
+  year           Int
+  month          Int
+  dueDate        DateTime    @default(now()) @db.DateTime(6)
+  amount         Float       @default(0)
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime    @default(now()) @db.DateTime(6)
+  updated_at     DateTime    @default(now()) @db.DateTime(6)
+  invoiceNumber  String      @unique @db.VarChar(255)
+  paidAmount     Float       @default(0)
+  paidOn         DateTime?   @db.DateTime(6)
+  paymentType    PaymentType @default(Cash)
+  classId        Int?
+  sectionId      Int?
+  ongoingSession Int?
+  session        Sessions?   @relation(fields: [ongoingSession], references: [id])
+  campus         Campus      @relation(fields: [campusId], references: [id])
+  class          Class?      @relation(fields: [classId], references: [id])
+  section        Section?    @relation(fields: [sectionId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
 
   @@index([campusId], map: "MYAALInvoices_campusId_fkey")
   @@index([classId], map: "MYAALInvoices_classId_fkey")

@@ -170,7 +170,6 @@ CREATE TABLE `Class` (
     `updated_by` INTEGER NOT NULL,
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    `sessionId` INTEGER NULL,
 
     INDEX `Class_campusId_fkey`(`campusId`),
     PRIMARY KEY (`id`)
@@ -183,7 +182,6 @@ CREATE TABLE `Section` (
     `classId` INTEGER NOT NULL,
     `campusId` INTEGER NOT NULL,
     `active` TINYINT NOT NULL DEFAULT 1,
-    `sessionId` INTEGER NULL,
     `created_by` INTEGER NOT NULL,
     `updated_by` INTEGER NOT NULL,
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -258,6 +256,7 @@ CREATE TABLE `User` (
     `resetPasswordFlag` TINYINT NOT NULL DEFAULT 1,
     `leftMenuExpanded` TINYINT NOT NULL DEFAULT 1,
     `emergencyContact` VARCHAR(255) NULL,
+    `ongoingSession` INTEGER NULL,
 
     UNIQUE INDEX `User_idCardNumber_key`(`idCardNumber`),
     INDEX `User_campusId_fkey`(`campusId`),
@@ -338,7 +337,7 @@ CREATE TABLE `AdmissionRecord` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NULL,
     `campusId` INTEGER NOT NULL,
-    `studentId` INTEGER NOT NULL,
+    `studentId` INTEGER NULL,
     `applicationStatus` ENUM('New', 'Initiate', 'UnAssigned', 'Assigned', 'InReview', 'Processing', 'Approved', 'Passed', 'Completed', 'Failed', 'Cancelled') NOT NULL DEFAULT 'Initiate',
     `applicationDate` DATE NULL,
     `interviewStatus` ENUM('New', 'Initiate', 'UnAssigned', 'Assigned', 'InReview', 'Processing', 'Approved', 'Passed', 'Completed', 'Failed', 'Cancelled') NOT NULL DEFAULT 'UnAssigned',
@@ -1594,12 +1593,6 @@ ALTER TABLE `TransportRoutes` ADD CONSTRAINT `TransportRoutes_campusId_fkey` FOR
 ALTER TABLE `Class` ADD CONSTRAINT `Class_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Class` ADD CONSTRAINT `Class_sessionId_fkey` FOREIGN KEY (`sessionId`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Section` ADD CONSTRAINT `Section_sessionId_fkey` FOREIGN KEY (`sessionId`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `Section` ADD CONSTRAINT `Section_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1613,6 +1606,9 @@ ALTER TABLE `TeachersInSection` ADD CONSTRAINT `TeachersInSection_sectionId_fkey
 
 -- AddForeignKey
 ALTER TABLE `TeachersInSection` ADD CONSTRAINT `TeachersInSection_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `User` ADD CONSTRAINT `User_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `User` ADD CONSTRAINT `User_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1648,7 +1644,7 @@ ALTER TABLE `AdmissionRequestUser` ADD CONSTRAINT `AdmissionRequestUser_campusId
 ALTER TABLE `AdmissionRequestUser` ADD CONSTRAINT `AdmissionRequestUser_sessionId_fkey` FOREIGN KEY (`sessionId`) REFERENCES `Sessions`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `AdmissionRecord` ADD CONSTRAINT `AdmissionRecord_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `AdmissionRequestUser`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `AdmissionRecord` ADD CONSTRAINT `AdmissionRecord_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `AdmissionRequestUser`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AdmissionRecord` ADD CONSTRAINT `AdmissionRecord_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
