@@ -819,7 +819,7 @@ export class AccountingController {
     let studentsWithoutFeesOrDues = [];
     let invoicesGenerated = [];
     let singleInvoiceGenerate: boolean = false;
-
+    const institute = await prisma.institute.findFirst();
     let latestInvoiceObj = await prisma.mYAALInvoices.findFirst({
       orderBy: {
         id: 'desc',
@@ -868,6 +868,7 @@ export class AccountingController {
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(feePlanActive.monthlyAmt),
                       updated_by: formData.curretUserId,
+                      ongoingSession: Number(institute.sessionId),
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
                       created_at: new Date()
@@ -890,6 +891,7 @@ export class AccountingController {
                       month: Number(formData.month),
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(feePlanActive.yearlyAmt),
+                      ongoingSession: Number(institute.sessionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
@@ -912,6 +914,7 @@ export class AccountingController {
                       month: Number(formData.month),
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(formData.adhocAmount),
+                      ongoingSession: Number(institute.sessionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
@@ -934,6 +937,7 @@ export class AccountingController {
                       month: Number(formData.month),
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(formData.adhocAmount),
+                      ongoingSession: Number(institute.sessionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
@@ -965,91 +969,150 @@ export class AccountingController {
 
 
   public async updateStudentFeePlan(req: Request, res: Response) {
+  const formData: any = req.body;
+  console.log(formData);
+  const institute = await prisma.institute.findFirst();
 
-    const formData: any = req.body;
-    console.log(formData);
-
-    try {
-      if (formData.studentId !== null && formData.studentId !== undefined && formData.feePlanId !== null && formData.feePlanId !== undefined) {
-        const existingstudentWithFees = await prisma.user.findUnique({
-          where: {
-            id: Number(formData.studentId),
-            campusId: Number(formData.campusId)
+  try {
+    if (
+      formData.studentId &&
+      formData.feePlanId &&
+      formData.campusId &&
+      formData.currentUserId
+    ) {
+      const existingstudentWithFees = await prisma.user.findUnique({
+        where: {
+          id: Number(formData.studentId),
+          campusId: Number(formData.campusId),
+        },
+        include: {
+          StudentFees: {
+            where: { active: 1 },
           },
-          include: {
-            StudentFees: {
-              where: {
-                active: 1
-              }
-            }
-          }
-        })
-        if (existingstudentWithFees !== null && existingstudentWithFees !== undefined) {
-          let feePlan;
+        },
+      });
 
+      if (existingstudentWithFees) {
+        let updatedFeeRecord;
 
-          if (existingstudentWithFees.StudentFees !== null && existingstudentWithFees.StudentFees !== undefined && existingstudentWithFees.StudentFees.length === 1) {
-            await prisma.studentFees.update({
-              where: {
-                id: existingstudentWithFees.StudentFees[0].id,
-                campusId: Number(formData.campusId)
-              },
-              data: {
-                feePlanId: Number(formData.feePlanId),
-                updated_by: Number(formData.currentUserId),
-                updated_at: new Date(),
-              },
-            });
-
-          } else if (existingstudentWithFees.StudentFees !== null && existingstudentWithFees.StudentFees !== undefined && existingstudentWithFees.StudentFees.length === 0) {
-            await prisma.studentFees.create({
-              data: {
-                userId: Number(formData.studentId),
-                campusId: Number(formData.campusId),
-                feePlanId: Number(formData.feePlanId),
-                active: 1,
-                updated_by: Number(formData.currentUserId),
-                updated_at: new Date(),
-                created_by: Number(formData.currentUserId),
-                created_at: new Date()
-              },
-            });
-          }
-
-          await prisma.user.findUnique({
+        // -----------------------------
+        // CASE 1: Student has an active fee plan → Update it
+        // -----------------------------
+        if (
+          existingstudentWithFees.StudentFees &&
+          existingstudentWithFees.StudentFees.length === 1
+        ) {
+          updatedFeeRecord = await prisma.studentFees.update({
             where: {
-              active: 1,
-              id: Number(formData.currentUserId),
-              campusId: Number(formData.campusId)
+              id: existingstudentWithFees.StudentFees[0].id,
+              campusId: Number(formData.campusId),
             },
-          }).then(async (res) => {
-            await prisma.user.findUnique({
-              where: {
-                active: 1,
-                id: Number(formData.studentId),
-                campusId: Number(formData.campusId)
-              },
-            }).then((student) => {
-
-              addANotification(Number(formData.campusId),
-                Number(formData.currentUserId),
-                Number(formData.currentUserId),
-                buildMessage(FEE_PLAN_UPDATED, student.displayName, res.displayName, moment(new Date()).format('DD-MMM-YYYY HH:mm')));
-            });
+            data: {
+              feePlanId: Number(formData.feePlanId),
+              updated_by: Number(formData.currentUserId),
+              updated_at: new Date(),
+            },
           });
 
+          // ---- AUDIT ENTRY FOR UPDATE ----
+          await prisma.studentFeesAudit.create({
+            data: {
+              studentFeesId: updatedFeeRecord.id,
+              campusId: Number(formData.campusId),
+              userId: Number(formData.studentId),
+              feePlanId: Number(formData.feePlanId),
+              created_by: Number(formData.currentUserId),
+              updated_by: Number(formData.currentUserId),
+              created_at: new Date(),
+              updated_at: new Date(),
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              active: 1,
+            },
+          });
         }
 
+        // -----------------------------
+        // CASE 2: No fee plan exists → Create new one
+        // -----------------------------
+        else if (
+          existingstudentWithFees.StudentFees &&
+          existingstudentWithFees.StudentFees.length === 0
+        ) {
+          const createdFeeRecord = await prisma.studentFees.create({
+            data: {
+              userId: Number(formData.studentId),
+              campusId: Number(formData.campusId),
+              feePlanId: Number(formData.feePlanId),
+              active: 1,
+              created_by: Number(formData.currentUserId),
+              created_at: new Date(),
+              updated_by: Number(formData.currentUserId),
+              updated_at: new Date(),
+            },
+          });
+
+          // ---- AUDIT ENTRY FOR CREATE ----
+          await prisma.studentFeesAudit.create({
+            data: {
+              studentFeesId: createdFeeRecord.id,
+              campusId: Number(formData.campusId),
+              userId: Number(formData.studentId),
+              feePlanId: Number(formData.feePlanId),
+              created_by: Number(formData.currentUserId),
+              updated_by: Number(formData.currentUserId),
+              created_at: new Date(),
+              updated_at: new Date(),
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              active: 1,
+            },
+          });
+        }
+
+        // -----------------------------
+        // SEND NOTIFICATION (unchanged)
+        // -----------------------------
+        const currentUser = await prisma.user.findUnique({
+          where: {
+            active: 1,
+            id: Number(formData.currentUserId),
+            campusId: Number(formData.campusId),
+          },
+        });
+
+        const student = await prisma.user.findUnique({
+          where: {
+            active: 1,
+            id: Number(formData.studentId),
+            campusId: Number(formData.campusId),
+          },
+        });
+
+        if (student && currentUser) {
+          addANotification(
+            Number(formData.campusId),
+            Number(formData.currentUserId),
+            Number(formData.currentUserId),
+            buildMessage(
+              FEE_PLAN_UPDATED,
+              student.displayName,
+              currentUser.displayName,
+              moment(new Date()).format("DD-MMM-YYYY HH:mm")
+            )
+          );
+        }
       }
-
-      return res.json({ status: true, data: null, message: 'Fee Plan updated' });
-
-    } catch (error) {
-      console.error(error);
-
-      return res.json({ status: false, data: null, message: 'Some error occured. Try later.' });
     }
+
+    return res.json({ status: true, data: null, message: "Fee Plan updated" });
+  } catch (error) {
+    console.error(error);
+    return res.json({
+      status: false,
+      data: null,
+      message: "Some error occurred. Try later.",
+    });
   }
+}
 
   public async acceptFamilyCredit(req: Request, res: Response) {
     const formData: any = req.body;

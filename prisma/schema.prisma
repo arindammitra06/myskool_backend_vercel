@@ -41,8 +41,34 @@ model Sessions {
   AdmissionRequestUser  AdmissionRequestUser[]
   User                  User[]
   MYAALInvoices         MYAALInvoices[]
+  StudentSessionHistory StudentSessionHistory[]
+  StudentFeesAudit      StudentFeesAudit[]
+  StudentToEngagements  StudentToEngagements[]
+  Leaves                Leaves[]
+  StudentRatings        StudentRatings[]
 
   @@index([campusId], map: "Sessions_campusId_fkey")
+}
+
+model StudentSessionHistory {
+  id          Int      @id @default(autoincrement())
+  active      Int      @default(1) @db.TinyInt
+  studentId   Int
+  displayName String   @db.VarChar(255)
+  sessionId   Int
+  campusId    Int?
+  classId     Int?
+  sectionId   Int?
+  rollNumber  Int?
+  status      String   @default("active") // active, promoted, left, passed_out
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user    User     @relation(fields: [studentId], references: [id])
+  session Sessions @relation(fields: [sessionId], references: [id])
+  campus  Campus?  @relation(fields: [campusId], references: [id])
+  class   Class?   @relation(fields: [classId], references: [id])
+  section Section? @relation(fields: [sectionId], references: [id])
 }
 
 model Institute {
@@ -181,6 +207,8 @@ model Campus {
   UserPermission              UserPermission[]
   BankInformation             BankInformation[]
   AdmissionRequestUser        AdmissionRequestUser[]
+  StudentSessionHistory       StudentSessionHistory[]
+  StudentFeesAudit            StudentFeesAudit[]
 
   @@index([instituteId], map: "Campus_instituteId_fkey")
 }
@@ -263,6 +291,7 @@ model Class {
   TimeTable                   TimeTable[]
   Transactions                Transactions[]
   User                        User[]
+  StudentSessionHistory       StudentSessionHistory[]
 
   @@index([campusId], map: "Class_campusId_fkey")
 }
@@ -293,6 +322,7 @@ model Section {
   Transactions          Transactions[]
   User                  User[]
   subjects              Subject[]               @relation("SectionToSubject")
+  StudentSessionHistory StudentSessionHistory[]
 
   @@index([campusId], map: "Section_campusId_fkey")
   @@index([classId], map: "Section_classId_fkey")
@@ -396,6 +426,8 @@ model User {
   subjects              Subject[]               @relation("SubjectToUser")
   AllBonusInfo          AllBonusInfo[]
   BankInformation       BankInformation[]
+  StudentSessionHistory StudentSessionHistory[]
+  StudentFeesAudit      StudentFeesAudit[]
 
   @@index([campusId], map: "User_campusId_fkey")
   @@index([classId], map: "User_classId_fkey")
@@ -952,20 +984,22 @@ model Engagements {
 }
 
 model StudentToEngagements {
-  id           Int          @id @default(autoincrement())
-  campusId     Int
-  engagementId Int?
-  userId       Int?
-  completed    Int          @default(0) @db.TinyInt
-  rating       Float        @default(0)
-  comments     String?      @db.LongText
-  created_by   Int
-  updated_by   Int
-  created_at   DateTime     @default(now()) @db.DateTime(6)
-  updated_at   DateTime     @default(now()) @db.DateTime(6)
-  campus       Campus       @relation(fields: [campusId], references: [id])
-  engagement   Engagements? @relation(fields: [engagementId], references: [id])
-  user         User?        @relation(fields: [userId], references: [id])
+  id             Int          @id @default(autoincrement())
+  campusId       Int
+  engagementId   Int?
+  userId         Int?
+  completed      Int          @default(0) @db.TinyInt
+  rating         Float        @default(0)
+  comments       String?      @db.LongText
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime     @default(now()) @db.DateTime(6)
+  updated_at     DateTime     @default(now()) @db.DateTime(6)
+  campus         Campus       @relation(fields: [campusId], references: [id])
+  engagement     Engagements? @relation(fields: [engagementId], references: [id])
+  user           User?        @relation(fields: [userId], references: [id])
+  ongoingSession Int?
+  session        Sessions?    @relation(fields: [ongoingSession], references: [id])
 
   @@index([campusId], map: "StudentToEngagements_campusId_fkey")
   @@index([engagementId], map: "StudentToEngagements_engagementId_fkey")
@@ -973,19 +1007,20 @@ model StudentToEngagements {
 }
 
 model FeePlan {
-  id             Int              @id @default(autoincrement())
-  campusId       Int
-  active         Int              @default(1) @db.TinyInt
-  name           String?          @db.VarChar(255)
-  monthlyAmt     Float            @default(0)
-  yearlyAmt      Float            @default(0)
-  created_by     Int
-  updated_by     Int
-  created_at     DateTime         @default(now()) @db.DateTime(6)
-  updated_at     DateTime         @default(now()) @db.DateTime(6)
-  campus         Campus           @relation(fields: [campusId], references: [id])
-  FeePlanBreakup FeePlanBreakup[]
-  StudentFees    StudentFees[]
+  id               Int                @id @default(autoincrement())
+  campusId         Int
+  active           Int                @default(1) @db.TinyInt
+  name             String?            @db.VarChar(255)
+  monthlyAmt       Float              @default(0)
+  yearlyAmt        Float              @default(0)
+  created_by       Int
+  updated_by       Int
+  created_at       DateTime           @default(now()) @db.DateTime(6)
+  updated_at       DateTime           @default(now()) @db.DateTime(6)
+  campus           Campus             @relation(fields: [campusId], references: [id])
+  FeePlanBreakup   FeePlanBreakup[]
+  StudentFees      StudentFees[]
+  StudentFeesAudit StudentFeesAudit[]
 
   @@index([campusId], map: "FeePlan_campusId_fkey")
 }
@@ -1005,22 +1040,42 @@ model FeePlanBreakup {
 }
 
 model StudentFees {
-  id         Int      @id @default(autoincrement())
-  campusId   Int
-  userId     Int
-  feePlanId  Int
-  created_by Int
-  updated_by Int
-  created_at DateTime @default(now()) @db.DateTime(6)
-  updated_at DateTime @default(now()) @db.DateTime(6)
-  active     Int      @default(1) @db.TinyInt
-  campus     Campus   @relation(fields: [campusId], references: [id])
-  feePlan    FeePlan  @relation(fields: [feePlanId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  id               Int                @id @default(autoincrement())
+  campusId         Int
+  userId           Int
+  feePlanId        Int
+  created_by       Int
+  updated_by       Int
+  created_at       DateTime           @default(now()) @db.DateTime(6)
+  updated_at       DateTime           @default(now()) @db.DateTime(6)
+  active           Int                @default(1) @db.TinyInt
+  campus           Campus             @relation(fields: [campusId], references: [id])
+  feePlan          FeePlan            @relation(fields: [feePlanId], references: [id])
+  user             User               @relation(fields: [userId], references: [id])
+  StudentFeesAudit StudentFeesAudit[]
 
   @@index([campusId], map: "StudentFees_campusId_fkey")
   @@index([feePlanId], map: "StudentFees_feePlanId_fkey")
   @@index([userId], map: "StudentFees_userId_fkey")
+}
+
+model StudentFeesAudit {
+  id             Int         @id @default(autoincrement())
+  studentFeesId  Int
+  campusId       Int
+  userId         Int
+  feePlanId      Int
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime    @default(now()) @db.DateTime(6)
+  updated_at     DateTime    @default(now()) @db.DateTime(6)
+  ongoingSession Int?
+  session        Sessions?   @relation(fields: [ongoingSession], references: [id])
+  active         Int         @default(1) @db.TinyInt
+  studentFees    StudentFees @relation(fields: [studentFeesId], references: [id])
+  campus         Campus      @relation(fields: [campusId], references: [id])
+  feePlan        FeePlan     @relation(fields: [feePlanId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
 }
 
 model MYAALInvoices {
@@ -1501,6 +1556,8 @@ model Leaves {
   created_at          DateTime     @default(now()) @db.DateTime(6)
   updated_at          DateTime     @default(now()) @db.DateTime(6)
   rejectApproveReason String?      @db.VarChar(255)
+  ongoingSession      Int?
+  session             Sessions?    @relation(fields: [ongoingSession], references: [id])
   LeaveDates          LeaveDates[]
   campus              Campus       @relation(fields: [campusId], references: [id])
   user                User?        @relation(fields: [userId], references: [id])
@@ -1522,24 +1579,27 @@ model LeaveDates {
 }
 
 model StudentRatings {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   campusId         Int
   userId           Int
-  rating           Float    @default(0)
-  comments         String?  @db.LongText
+  rating           Float     @default(0)
+  comments         String?   @db.LongText
   created_by       Int
   updated_by       Int
-  created_at       DateTime @default(now()) @db.DateTime(6)
-  updated_at       DateTime @default(now()) @db.DateTime(6)
+  created_at       DateTime  @default(now()) @db.DateTime(6)
+  updated_at       DateTime  @default(now()) @db.DateTime(6)
   classId          Int?
-  previousComments String?  @db.LongText
-  previousRating   Float    @default(0)
+  previousComments String?   @db.LongText
+  previousRating   Float     @default(0)
   ratingFrom       Int
   sectionId        Int?
-  campus           Campus   @relation(fields: [campusId], references: [id])
-  class            Class?   @relation(fields: [classId], references: [id])
-  ratingFromUser   User     @relation(fields: [ratingFrom], references: [id])
-  section          Section? @relation(fields: [sectionId], references: [id])
+  ongoingSession   Int?
+  session          Sessions? @relation(fields: [ongoingSession], references: [id])
+
+  campus         Campus   @relation(fields: [campusId], references: [id])
+  class          Class?   @relation(fields: [classId], references: [id])
+  ratingFromUser User     @relation(fields: [ratingFrom], references: [id])
+  section        Section? @relation(fields: [sectionId], references: [id])
 
   @@index([campusId], map: "StudentRatings_campusId_fkey")
   @@index([classId], map: "StudentRatings_classId_fkey")

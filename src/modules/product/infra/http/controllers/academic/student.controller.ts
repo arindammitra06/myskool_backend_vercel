@@ -109,6 +109,9 @@ export class StudentController {
                 ceratedStudentResponse !== undefined &&
                 ceratedStudentResponse.id !== null
               ) {
+
+                
+
                 const fatherId = generateIdsForParentAndStudent(
                   latestUserID.id + 2,
                   'P1'
@@ -359,6 +362,50 @@ export class StudentController {
                 ceratedStudentResponse !== undefined &&
                 ceratedStudentResponse.id !== null
               ) {
+
+                const history = await prisma.studentSessionHistory.create({
+                  data: {
+                    displayName:
+                  studentWithParents.form.firstName +
+                  ' ' +
+                  middleName +
+                  ' ' +
+                  studentWithParents.form.lastName,
+                  rollNumber: Number(ceratedStudentResponse.rollNumber),
+                  status :"active", // active, promoted, left, passed_out
+                  created_at: new Date(),
+                  updated_at: new Date(),
+                  user: {
+                      connect: {
+                        id: Number(ceratedStudentResponse.id),
+                      },
+                  },
+                  session: {
+                      connect: {
+                        id: Number(ceratedStudentResponse.ongoingSession),
+                      },
+                  },
+                  class: {
+                      connect: {
+                        id: Number(ceratedStudentResponse.classId),
+                      },
+                  },
+                  section: {
+                      connect: {
+                        id: Number(ceratedStudentResponse.sectionId),
+                      },
+                  },
+                  campus: {
+                      connect: {
+                        id: Number(ceratedStudentResponse.campusId),
+                      },
+                    },
+                    active: 1,
+                  },
+                  },
+                );
+
+
                 //create Student User Permission
                 console.log(ceratedStudentResponse);
                 const createUserPermission = await prisma.userPermission.create(
@@ -671,7 +718,7 @@ export class StudentController {
                   }
                 }
 
-                await prisma.studentFees.create({
+               const createdFeeRecord =  await prisma.studentFees.create({
                   data: {
                     userId: ceratedStudentResponse.id,
                     campusId: Number(studentWithParents.form.campusId),
@@ -683,6 +730,21 @@ export class StudentController {
                     created_at: new Date(),
                   },
                 });
+                await prisma.studentFeesAudit.create({
+                            data: {
+                              studentFeesId: createdFeeRecord.id,
+                              campusId: Number(studentWithParents.form.campusId),
+                              userId: Number(ceratedStudentResponse.id),
+                              feePlanId: Number(studentWithParents.form.feePlanId),
+                              created_by: Number(studentWithParents.created_by),
+                              updated_by: Number(studentWithParents.updated_by),
+                              created_at: new Date(),
+                              updated_at: new Date(),
+                              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                              active: 1,
+                            },
+                });
+
                 let feePlan = await prisma.feePlan.findUnique({
                   where: {
                     id: Number(studentWithParents.form.feePlanId),
@@ -706,6 +768,7 @@ export class StudentController {
                     year: new Date().getFullYear(),
                     month: new Date().getMonth(),
                     dueDate: futureMonth.toDate(),
+                    ongoingSession: Number(institute.sessionId),
                     amount: feePlan.yearlyAmt,
                     updated_by: studentWithParents.updated_by,
                     updated_at: new Date(),
@@ -896,6 +959,43 @@ export class StudentController {
                       ceratedStudentResponse !== undefined &&
                       ceratedStudentResponse.id !== null
                     ) {
+
+                      const history = await prisma.studentSessionHistory.create({
+                          data: {
+                          displayName:ceratedStudentResponse.displayName,
+                          rollNumber: Number(ceratedStudentResponse.rollNumber),
+                          status :"active", // active, promoted, left, passed_out
+                          created_at: new Date(),
+                          updated_at: new Date(),
+                          user: {
+                              connect: {
+                                id: Number(ceratedStudentResponse.id),
+                              },
+                          },
+                          session: {
+                              connect: {
+                                id: Number(ceratedStudentResponse.ongoingSession),
+                              },
+                          },
+                          class: {
+                              connect: {
+                                id: Number(ceratedStudentResponse.classId),
+                              },
+                          },
+                          section: {
+                              connect: {
+                                id: Number(ceratedStudentResponse.sectionId),
+                              },
+                          },
+                          campus: {
+                              connect: {
+                                id: Number(ceratedStudentResponse.campusId),
+                              },
+                            },
+                            active: 1,
+                          },
+                          },
+                        );
                       //create Student User Permission
                       const createUserPermission =
                         await prisma.userPermission.create({
@@ -1220,6 +1320,7 @@ export class StudentController {
                           USER_CREATED + parent2.displayName
                         );
                       }
+                      
 
                       await prisma.admissionRecord.create({
                         data: {
@@ -1891,6 +1992,7 @@ export class StudentController {
         campus: true,
         class: true,
         section: true,
+        session: true,
         StudentFees: {
           include: {
             feePlan: true,
@@ -2570,6 +2672,8 @@ export class StudentController {
 
   public async saveStudentRating(req: Request, res: Response) {
     const input: any = req.body;
+    const institute = await prisma.institute.findFirst();
+        
     console.log(input);
 
     try {
@@ -2613,6 +2717,7 @@ export class StudentController {
                 sectionId: Number(input.form.sectionId),
                 ratingFrom: Number(input.form.currentUserId),
                 rating: Number(input.form.rating),
+                ongoingSession: institute.sessionId,
                 previousRating: 0,
                 previousComments: '',
                 comments: input.form.comment,

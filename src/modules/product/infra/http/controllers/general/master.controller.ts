@@ -2326,6 +2326,7 @@ export class MasterController {
       include: {
         campus: true,
         engagement: true,
+        session: true,
       },
       orderBy: {
         updated_at: 'desc',
@@ -2344,6 +2345,9 @@ export class MasterController {
 
   public async saveStudentEngagement(req: Request, res: Response) {
     const formData: any = req.body;
+    const institute = await prisma.institute.findFirst();
+            
+        
     console.log(formData);
     try {
       if (formData !== null && formData !== undefined) {
@@ -2354,6 +2358,7 @@ export class MasterController {
             userId: Number(formData.form.studentId),
             completed: 0,
             rating: 0,
+            ongoingSession: institute.sessionId,
             comments: null,
             created_by: Number(formData.form.currentUserId),
             created_at: new Date(),
@@ -2826,6 +2831,7 @@ export class MasterController {
       ],
       include: {
         campus: true,
+        session: true,
         LeaveDates: {
           orderBy: [
             {
@@ -2886,6 +2892,7 @@ export class MasterController {
         },
         include: {
           user: true,
+          session: true,
           LeaveDates: {
             orderBy: [
               {
@@ -3024,6 +3031,7 @@ export class MasterController {
       },
       include: {
         campus: true,
+        session: true,
         LeaveDates: {
           orderBy: [
             {
@@ -3044,7 +3052,8 @@ export class MasterController {
 
   public async addUpdateLeaves(req: Request, res: Response) {
     const leaveForm: any = req.body;
-
+    const institute = await prisma.institute.findFirst();
+    
     try {
       if (
         leaveForm !== null &&
@@ -3100,6 +3109,7 @@ export class MasterController {
                   userId: leaveForm.form.userId,
                   userType: leaveForm.form.userType,
                   isApproved: 0,
+                  ongoingSession: institute.sessionId,
                   reason: leaveForm.form.reason,
                   created_by: leaveForm.form.created_by,
                   created_at: new Date(),
