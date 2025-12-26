@@ -31,12 +31,11 @@ import {
 } from '../../../../../../shared/constants/notification.constants';
 
 export class StudentController {
-  
   public async submitApplicationForm(req: Request, res: Response) {
     const studentWithParents: any = req.body;
-    
-    console.log(studentWithParents)
-    
+
+    console.log(studentWithParents);
+
     let latestUserID = await prisma.user.findFirst({
       orderBy: {
         id: 'desc',
@@ -109,9 +108,6 @@ export class StudentController {
                 ceratedStudentResponse !== undefined &&
                 ceratedStudentResponse.id !== null
               ) {
-
-                
-
                 const fatherId = generateIdsForParentAndStudent(
                   latestUserID.id + 2,
                   'P1'
@@ -322,8 +318,8 @@ export class StudentController {
                   'DD-MM-YYYY'
                 ).toDate(),
                 placeOfBirth: studentWithParents.form.placeOfBirth,
-               // photo: studentWithParents.photo,
-               // thumbnailUrl: studentWithParents.thumbnailUrl,
+                // photo: studentWithParents.photo,
+                // thumbnailUrl: studentWithParents.thumbnailUrl,
                 homeAddress: studentWithParents.form.homeAddress,
                 routeId:
                   studentWithParents.form.routeId !== null &&
@@ -362,49 +358,46 @@ export class StudentController {
                 ceratedStudentResponse !== undefined &&
                 ceratedStudentResponse.id !== null
               ) {
-
                 const history = await prisma.studentSessionHistory.create({
                   data: {
                     displayName:
-                  studentWithParents.form.firstName +
-                  ' ' +
-                  middleName +
-                  ' ' +
-                  studentWithParents.form.lastName,
-                  rollNumber: Number(ceratedStudentResponse.rollNumber),
-                  status :"active", // active, promoted, left, passed_out
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                  user: {
+                      studentWithParents.form.firstName +
+                      ' ' +
+                      middleName +
+                      ' ' +
+                      studentWithParents.form.lastName,
+                    rollNumber: Number(ceratedStudentResponse.rollNumber),
+                    status: 'active', // active, promoted, left, passed_out
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    user: {
                       connect: {
                         id: Number(ceratedStudentResponse.id),
                       },
-                  },
-                  session: {
+                    },
+                    session: {
                       connect: {
                         id: Number(ceratedStudentResponse.ongoingSession),
                       },
-                  },
-                  class: {
+                    },
+                    class: {
                       connect: {
                         id: Number(ceratedStudentResponse.classId),
                       },
-                  },
-                  section: {
+                    },
+                    section: {
                       connect: {
                         id: Number(ceratedStudentResponse.sectionId),
                       },
-                  },
-                  campus: {
+                    },
+                    campus: {
                       connect: {
                         id: Number(ceratedStudentResponse.campusId),
                       },
                     },
                     active: 1,
                   },
-                  },
-                );
-
+                });
 
                 //create Student User Permission
                 console.log(ceratedStudentResponse);
@@ -718,7 +711,7 @@ export class StudentController {
                   }
                 }
 
-               const createdFeeRecord =  await prisma.studentFees.create({
+                const createdFeeRecord = await prisma.studentFees.create({
                   data: {
                     userId: ceratedStudentResponse.id,
                     campusId: Number(studentWithParents.form.campusId),
@@ -731,18 +724,20 @@ export class StudentController {
                   },
                 });
                 await prisma.studentFeesAudit.create({
-                            data: {
-                              studentFeesId: createdFeeRecord.id,
-                              campusId: Number(studentWithParents.form.campusId),
-                              userId: Number(ceratedStudentResponse.id),
-                              feePlanId: Number(studentWithParents.form.feePlanId),
-                              created_by: Number(studentWithParents.created_by),
-                              updated_by: Number(studentWithParents.updated_by),
-                              created_at: new Date(),
-                              updated_at: new Date(),
-                              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
-                              active: 1,
-                            },
+                  data: {
+                    studentFeesId: createdFeeRecord.id,
+                    campusId: Number(studentWithParents.form.campusId),
+                    userId: Number(ceratedStudentResponse.id),
+                    feePlanId: Number(studentWithParents.form.feePlanId),
+                    created_by: Number(studentWithParents.created_by),
+                    updated_by: Number(studentWithParents.updated_by),
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    ongoingSession: institute?.sessionId
+                      ? Number(institute.sessionId)
+                      : null,
+                    active: 1,
+                  },
                 });
 
                 let feePlan = await prisma.feePlan.findUnique({
@@ -800,7 +795,6 @@ export class StudentController {
                   data: ceratedStudentResponse,
                   message: 'Student added successfully',
                 });
-
               } else {
                 return res.json({
                   status: false,
@@ -812,9 +806,6 @@ export class StudentController {
         },
         { timeout: 20000 }
       );
-
-      
-    
     } catch (err) {
       console.log(err);
       return res.json({
@@ -959,43 +950,47 @@ export class StudentController {
                       ceratedStudentResponse !== undefined &&
                       ceratedStudentResponse.id !== null
                     ) {
-
-                      const history = await prisma.studentSessionHistory.create({
+                      const history = await prisma.studentSessionHistory.create(
+                        {
                           data: {
-                          displayName:ceratedStudentResponse.displayName,
-                          rollNumber: Number(ceratedStudentResponse.rollNumber),
-                          status :"active", // active, promoted, left, passed_out
-                          created_at: new Date(),
-                          updated_at: new Date(),
-                          user: {
+                            displayName: ceratedStudentResponse.displayName,
+                            rollNumber: Number(
+                              ceratedStudentResponse.rollNumber
+                            ),
+                            status: 'active', // active, promoted, left, passed_out
+                            created_at: new Date(),
+                            updated_at: new Date(),
+                            user: {
                               connect: {
                                 id: Number(ceratedStudentResponse.id),
                               },
-                          },
-                          session: {
+                            },
+                            session: {
                               connect: {
-                                id: Number(ceratedStudentResponse.ongoingSession),
+                                id: Number(
+                                  ceratedStudentResponse.ongoingSession
+                                ),
                               },
-                          },
-                          class: {
+                            },
+                            class: {
                               connect: {
                                 id: Number(ceratedStudentResponse.classId),
                               },
-                          },
-                          section: {
+                            },
+                            section: {
                               connect: {
                                 id: Number(ceratedStudentResponse.sectionId),
                               },
-                          },
-                          campus: {
+                            },
+                            campus: {
                               connect: {
                                 id: Number(ceratedStudentResponse.campusId),
                               },
                             },
                             active: 1,
                           },
-                          },
-                        );
+                        }
+                      );
                       //create Student User Permission
                       const createUserPermission =
                         await prisma.userPermission.create({
@@ -1320,7 +1315,6 @@ export class StudentController {
                           USER_CREATED + parent2.displayName
                         );
                       }
-                      
 
                       await prisma.admissionRecord.create({
                         data: {
@@ -1398,7 +1392,6 @@ export class StudentController {
     }
 
     try {
-      
       const updatedstudent = await prisma.user.update({
         where: {
           id: id,
@@ -1649,35 +1642,73 @@ export class StudentController {
   }
 
   public async promoteStudent(req: Request, res: Response) {
-    const input: any = req.body;
-    console.log(input);
+    const { form, selectedStudents } = req.body;
 
-    if (input.form.id !== null && input.form.id !== undefined) {
-      const student = await prisma.user.findUnique({
-        where: {
-          id: Number(input.form.id),
-          campusId: Number(input.form.campusId),
-        },
-      });
-
-      if (!student) {
-        return res.json({
-          status: false,
-          data: student,
-          message: 'Failed to find student',
-        });
+    try {
+      if (
+        !form ||
+        !form.campusId ||
+        !form.sessionIdTo ||
+        !form.classIdTo ||
+        !form.sectionIdTo
+      ) {
+        return res.json({ status: false, message: 'Invalid promotion data' });
       }
-      try {
-        const updatedstudent = await prisma.user
-          .update({
+
+      if (!selectedStudents || selectedStudents.length === 0) {
+        return res.json({ status: false, message: 'No students selected' });
+      }
+
+      const updatedStudents = await prisma.$transaction(async (tx) => {
+        const results: any[] = [];
+
+        for (const student of selectedStudents) {
+          const studentId = Number(student.id);
+
+          // -------------------------------------------
+          // 1️⃣ Fetch last roll number in destination class+section
+          // -------------------------------------------
+          const lastStudent = await tx.user.findFirst({
             where: {
-              id: Number(input.form.id),
-              campusId: Number(input.form.campusId),
+              active: 1,
+              campusId: Number(form.campusId),
+              classId: Number(form.classIdTo),
+              sectionId: Number(form.sectionIdTo),
+              ongoingSession: Number(form.sessionIdTo),
             },
+            orderBy: { rollNumber: 'desc' },
+            select: { rollNumber: true },
+          });
+
+          const nextRollNo = (lastStudent?.rollNumber ?? 0) + 1;
+
+          // -------------------------------------------
+          // 2️⃣ Insert StudentSessionHistory record
+          // -------------------------------------------
+          await tx.studentSessionHistory.create({
             data: {
-              classId: Number(input.form.classIdTo),
-              sectionId: Number(input.form.sectionIdTo),
-              updated_by: Number(input.form.updated_by),
+              studentId: studentId,
+              displayName: student.displayName,
+              sessionId: Number(form.sessionIdTo),
+              campusId: Number(form.campusId),
+              classId: Number(form.classIdTo),
+              sectionId: Number(form.sectionIdTo),
+              rollNumber: nextRollNo,
+              status: 'promoted',
+            },
+          });
+
+          // -------------------------------------------
+          // 3️⃣ Update student record
+          // -------------------------------------------
+          const updatedStudent = await tx.user.update({
+            where: { id: studentId },
+            data: {
+              classId: Number(form.classIdTo),
+              sectionId: Number(form.sectionIdTo),
+              ongoingSession: Number(form.sessionIdTo),
+              rollNumber: nextRollNo,
+              updated_by: Number(form.updated_by),
               updated_at: new Date(),
             },
             include: {
@@ -1685,128 +1716,52 @@ export class StudentController {
               class: true,
               section: true,
             },
-          })
-          .then((studentNew) => {
-            //Add notification
-            addANotification(
-              Number(input.form.campusId),
-              Number(studentNew.id),
-              Number(input.form.updated_by),
-              `Student ${studentNew.displayName} has been promoted to Class ${studentNew.class.className}, Section ${studentNew.section.sectionName}`
-            );
+          });
 
-            if (
-              studentNew.parent !== null &&
-              studentNew.parent !== undefined &&
-              studentNew.parent.length > 0
-            ) {
-              studentNew.parent.forEach((eachParent: any) => {
-                addANotification(
-                  Number(input.form.campusId),
-                  Number(eachParent.parentId),
-                  Number(input.form.updated_by),
-                  `Student ${studentNew.displayName} has been promoted to Class ${studentNew.class.className}, Section ${studentNew.section.sectionName}`
-                );
-              });
+          // -------------------------------------------
+          // 4️⃣ Add notifications for student + parents
+          // -------------------------------------------
+          const msg = `Student ${updatedStudent.displayName} has been promoted to Class ${updatedStudent.class.className}, Section ${updatedStudent.section.sectionName}`;
+
+          addANotification(
+            Number(form.campusId),
+            updatedStudent.id,
+            Number(form.updated_by),
+            msg
+          );
+
+          if (updatedStudent.parent?.length > 0) {
+            for (const p of updatedStudent.parent) {
+              addANotification(
+                Number(form.campusId),
+                p.parentId,
+                Number(form.updated_by),
+                msg
+              );
             }
-          });
-        return res.json({
-          status: true,
-          data: updatedstudent,
-          message: 'Student Promoted Successfully',
-        });
-      } catch (error) {
-        console.error(error);
-        return res.json({
-          status: false,
-          data: student,
-          message: 'Failed to promote student',
-        });
-      }
-    } else {
-      try {
-        const studentsToPromote = await prisma.user.findMany({
-          where: {
-            active: 1,
-            userType: UserType.student,
-            campusId: Number(input.form.campusId),
-            classId: Number(input.form.classId),
-            sectionId: Number(input.form.sectionId),
-          },
-          include: {
-            campus: true,
-            class: true,
-            section: true,
-            parent: true,
-          },
-        });
+          }
 
-        if (
-          studentsToPromote !== null &&
-          studentsToPromote !== undefined &&
-          studentsToPromote.length > 0
-        ) {
-          studentsToPromote.forEach(async (eachStudent: any) => {
-            await prisma.user
-              .update({
-                where: {
-                  id: eachStudent.id,
-                },
-                data: {
-                  classId: Number(input.form.classIdTo),
-                  sectionId: Number(input.form.sectionIdTo),
-                  updated_by: Number(input.form.updated_by),
-                  updated_at: new Date(),
-                },
-                include: {
-                  campus: true,
-                  class: true,
-                  section: true,
-                  parent: true,
-                },
-              })
-              .then((updatedStudent) => {
-                //Add notification
-                addANotification(
-                  Number(input.form.campusId),
-                  Number(updatedStudent.id),
-                  Number(input.form.updated_by),
-                  `Student ${updatedStudent.displayName} has been promoted to Class ${updatedStudent.class.className}, Section ${updatedStudent.section.sectionName}`
-                );
-
-                if (
-                  updatedStudent.parent !== null &&
-                  updatedStudent.parent !== undefined &&
-                  updatedStudent.parent.length > 0
-                ) {
-                  updatedStudent.parent.forEach((eachParent: any) => {
-                    addANotification(
-                      Number(input.form.campusId),
-                      Number(eachParent.parentId),
-                      Number(input.form.updated_by),
-                      `Student ${updatedStudent.displayName} has been promoted to Class ${updatedStudent.class.className}, Section ${updatedStudent.section.sectionName}`
-                    );
-                  });
-                }
-              });
-          });
+          results.push(updatedStudent);
         }
 
-        return res.json({
-          status: true,
-          data: null,
-          message: 'Students Promoted Successfully',
-        });
-      } catch (error) {
-        console.error(error);
-        return res.json({
-          status: false,
-          data: null,
-          message: 'Failed to promote student',
-        });
-      }
+        return results;
+      });
+
+      return res.json({
+        status: true,
+        message: 'Students promoted successfully',
+        data: updatedStudents,
+      });
+    } catch (error) {
+      console.error('Promotion Error:', error);
+      return res.json({
+        status: false,
+        message: 'Failed to promote students',
+        data: null,
+      });
     }
   }
+
   public async deleteStudent(req: Request, res: Response) {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
@@ -1971,18 +1926,50 @@ export class StudentController {
     const classId = Number(req.params.classId);
     const sectionId = Number(req.params.sectionId);
     const active = Number(req.params.active);
+    const institute = await prisma.institute.findFirst();
+
     const students = await prisma.user.findMany({
       where: {
         campusId: Number(campusId),
         classId: Number(classId),
         sectionId: Number(sectionId),
         active: Number(active),
+        ongoingSession: Number(institute.sessionId),
       },
       include: {
         parent: {
           include: {
             parent: true,
           },
+        },
+        StudentRatings:{
+          where:{
+              ongoingSession: Number(institute.sessionId)
+          },
+          include: {
+            ratingFromUser: true,
+            session: true
+          }
+        },
+        badgesOfStudent: {
+          where:{
+              ongoingSession: Number(institute.sessionId)
+          },
+          include: {
+            badge: true,
+            teacher: true,
+            session: true
+          }
+        },
+        behaviourOfStudent: {
+          where:{
+              ongoingSession: Number(institute.sessionId)
+          },
+          include: {
+            teacher: true,
+            session: true,
+
+          }
         },
         children: {
           include: {
@@ -2635,11 +2622,32 @@ export class StudentController {
     });
   }
 
+  public async deleteRating(req: Request, res: Response) {
+      const id = Number(req.params.id);
+      const campusId = Number(req.params.campusId);
+  
+      await prisma.studentRatings.delete({
+        where: {
+          id: id,
+          campusId:campusId
+        },
+      });
+  
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Rating deleted successfully',
+      });
+    }
+
+
   public async getStudingRatingAndComments(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const classId = Number(req.params.classId);
     const sectionId = Number(req.params.sectionId);
     const userId = Number(req.params.userId);
+    const institute = await prisma.institute.findFirst();
+
     let ratingCalc = 0;
 
     const rating = await prisma.studentRatings.findMany({
@@ -2648,6 +2656,7 @@ export class StudentController {
         userId: userId,
         classId: Number(classId),
         sectionId: Number(sectionId),
+        ongoingSession: Number(institute.sessionId)
       },
       orderBy: {
         updated_at: 'desc',
@@ -2670,46 +2679,137 @@ export class StudentController {
     });
   }
 
+   public async deleteDailyNote(req: Request, res: Response) {
+      const id = Number(req.params.id);
+      const campusId = Number(req.params.campusId);
+  
+      await prisma.dailyNotes.delete({
+        where: {
+          id: id,
+          campusId:campusId
+        },
+      });
+  
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Note deleted successfully',
+      });
+    }
+
+  public async saveStudentDailyNotes(req: Request, res: Response) {
+    const input: any = req.body.form;
+    const institute = await prisma.institute.findFirst();
+
+    try {
+      await prisma.dailyNotes.create({
+        data: {
+          campusId: Number(input.campusId),
+          studentId: Number(input.studentId),
+          classId: Number(input.classId),
+          sectionId: Number(input.sectionId),
+          teacherId: Number(input.currentUserId),
+          ongoingSession: institute.sessionId,
+          notesType: input.notesType,
+          notes: input.notes,
+          notesDate: new Date(),
+          active: 1,
+          created_by: Number(input.currentUserId),
+          created_at: new Date(),
+          updated_by: Number(input.currentUserId),
+          updated_at: new Date(),
+        },
+      });
+
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Note added',
+      });
+    } catch (error) {
+      console.error(error);
+      return res.json({
+        status: false,
+        data: null,
+        message: 'Failed to add note',
+      });
+    }
+  }
+
+
+   public async deleteStudentReward(req: Request, res: Response) {
+      const id = Number(req.params.id);
+      const currentUserID = Number(req.params.currentUserID);
+  
+      await prisma.studentBadge.delete({
+        where: {
+          id: id,
+        },
+      });
+  
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Reward deleted successfully',
+      });
+    }
+
+
+     public async deleteStudentBehavior(req: Request, res: Response) {
+      const id = Number(req.params.id);
+      const currentUserID = Number(req.params.currentUserID);
+  
+      await prisma.behaviourLog.delete({
+        where: {
+          id: id,
+        },
+      });
+  
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Behavior info deleted successfully',
+      });
+    }
+    
+  public async getStudentNotes(req: Request, res: Response) {
+    const campusId = Number(req.params.campusId);
+    const classId = Number(req.params.classId);
+    const sectionId = Number(req.params.sectionId);
+    const userId = Number(req.params.userId);
+    const institute = await prisma.institute.findFirst();
+    console.log(req.params)
+    const notesForThisSession = await prisma.dailyNotes.findMany({
+      where: {
+        campusId: Number(campusId),
+        studentId: userId,
+        classId: Number(classId),
+        sectionId: Number(sectionId),
+        ongoingSession: Number(institute.sessionId),
+      },
+      orderBy: {
+        updated_at: 'desc',
+      },
+      include: {
+        teacher: true,
+      },
+    });
+console.log(notesForThisSession)
+    return res.json({
+      status: true,
+      data: { notesForThisSession: notesForThisSession },
+      message: 'Notes fetched',
+    });
+  }
+
   public async saveStudentRating(req: Request, res: Response) {
     const input: any = req.body;
     const institute = await prisma.institute.findFirst();
-        
+
     console.log(input);
 
     try {
-      await prisma.studentRatings
-        .findFirst({
-          where: {
-            campusId: Number(input.form.campusId),
-            userId: Number(input.form.studentId),
-            classId: Number(input.form.classId),
-            sectionId: Number(input.form.sectionId),
-            ratingFrom: Number(input.form.currentUserId),
-          },
-        })
-        .then(async (rating) => {
-          if (rating !== null && rating !== undefined) {
-            await prisma.studentRatings.update({
-              where: {
-                id: rating.id,
-                campusId: Number(input.form.campusId),
-              },
-              data: {
-                rating: Number(input.form.rating),
-                previousRating: rating.rating,
-                previousComments: rating.comments,
-                comments: input.form.comment,
-                updated_by: Number(input.form.currentUserId),
-                updated_at: new Date(),
-              },
-            });
-            return res.json({
-              status: true,
-              data: null,
-              message: 'Feedback updated',
-            });
-          } else {
-            await prisma.studentRatings.create({
+      await prisma.studentRatings.create({
               data: {
                 campusId: Number(input.form.campusId),
                 userId: Number(input.form.studentId),
@@ -2728,13 +2828,11 @@ export class StudentController {
               },
             });
 
-            return res.json({
-              status: true,
-              data: null,
-              message: 'Feedback added',
-            });
-          }
-        });
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Rating added',
+    });
     } catch (error) {
       console.error(error);
       return res.json({
@@ -2775,6 +2873,7 @@ export class StudentController {
                 section: true,
               },
             },
+            session: true,
             class: true,
             section: true,
             MYAALInvoices: {
@@ -2837,6 +2936,7 @@ export class StudentController {
                 },
               },
               class: true,
+              session: true,
               section: true,
               MYAALInvoices: {
                 include: {
@@ -2879,6 +2979,147 @@ export class StudentController {
         status: false,
         data: null,
         message: 'Failed to fetch students. Try later.',
+      });
+    }
+  }
+
+  public async getStudentHistoryByIdAndSession(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+    const userId = Number(req.params.userId);
+
+    let history = {};
+    try {
+      if (
+        sessionId !== null &&
+        sessionId !== undefined &&
+        userId !== null &&
+        userId !== undefined
+      ) {
+        //Attendance
+        const attendance = await prisma.attendance.findMany({
+          where: {
+            userId: Number(userId),
+          },
+          include: {
+            class: true,
+            section: true,
+          },
+        });
+        history['attendance'] = attendance;
+
+        //Leaves
+        const leaves = await prisma.leaves.findMany({
+          where: {
+            userId: Number(userId),
+            ongoingSession: Number(sessionId),
+          },
+          include: {
+            LeaveDates: true,
+            session: true,
+          },
+        });
+        history['leaves'] = leaves;
+
+        //Fees
+        const fees = await prisma.studentFeesAudit.findMany({
+          where: {
+            userId: Number(userId),
+            ongoingSession: Number(sessionId),
+          },
+          include: {
+            feePlan: true,
+            session: true,
+          },
+        });
+        history['fees'] = fees;
+
+        //Results
+        const results = await prisma.result.findMany({
+          where: {
+            userId: Number(userId),
+            sessionId: Number(sessionId),
+          },
+          include: {
+            exam: true,
+            class: true,
+            section: true,
+            session: true,
+            gradeDivision: true,
+          },
+        });
+        history['results'] = results;
+
+        //MyAAL Invoices
+        const myaalInvoices = await prisma.mYAALInvoices.findMany({
+          where: {
+            userId: Number(userId),
+            ongoingSession: Number(sessionId),
+          },
+          include: {
+            class: true,
+            section: true,
+            session: true,
+          },
+        });
+        history['myaaLInvoices'] = myaalInvoices;
+
+        //Student Session History
+        const sessionHistory = await prisma.studentSessionHistory.findMany({
+          where: {
+            studentId: Number(userId),
+          },
+          include: {
+            class: true,
+            campus: true,
+            section: true,
+            session: true,
+          },
+        });
+        history['sessionHistory'] = sessionHistory;
+
+        //Student rating
+        const studentRatings = await prisma.studentRatings.findMany({
+          where: {
+            userId: Number(userId),
+            ongoingSession: Number(sessionId),
+          },
+          include: {
+            ratingFromUser: true,
+          },
+        });
+        history['studentRatings'] = studentRatings;
+
+        //Student Engagements
+        const studentEngagements = await prisma.studentToEngagements.findMany({
+          where: {
+            userId: Number(userId),
+            ongoingSession: Number(sessionId),
+          },
+          include: {
+            engagement: true,
+            session: true,
+          },
+        });
+        history['studentEngagements'] = studentEngagements;
+      } else {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Failed to fetch history. Try later.',
+        });
+      }
+      console.log(history);
+      return res.json({
+        status: true,
+        data: history,
+        message: 'Search completed',
+      });
+    } catch (err) {
+      console.log(err);
+      return res.json({
+        status: false,
+        data: null,
+        message: 'Failed to fetch history. Try later.',
       });
     }
   }

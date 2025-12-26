@@ -723,313 +723,231 @@ export class UserController {
 
   public async addUpdateRoles(req: Request, res: Response) {
 
-    const roleDetails: any = req.body;
+  const roleDetails: any = req.body;
 
-    try {
+  try {
+    // ---------------------------------------------
+    // UPDATE PERMISSION
+    // ---------------------------------------------
+    if (roleDetails && roleDetails.id != null) {
 
-      if (roleDetails !== null && roleDetails.id !== null && roleDetails.id !== undefined) {
-
-        const updatePermission = await prisma.permission.update({
-          where: {
-            id: roleDetails.id,
-            campusId: roleDetails.campusId,
-          },
-          data: {
-            permissionName: roleDetails.permissionName,
-            permissionType: roleDetails.permissionType,
-            isReadonly: roleDetails.readonly,
-            dashboardUrl: roleDetails.dashboardUrl,
-            updated_by: roleDetails.currentUserId,
-            updated_at: new Date()
-          }
-
-        });
-
-
-        //Add Access Permissions
-        if (roleDetails.permissionAccess !== null && roleDetails.permissionAccess !== undefined
-          && Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
-
-          const deletingAccessPermissions = await prisma.accessPermission.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
-          roleDetails.permissionAccess.forEach(async (id) => {
-            await prisma.accessPermission.create({
-              data: {
-                permissionId: Number(roleDetails.id),
-                accessId: Number(id),
-                campusId: roleDetails.campusId,
-                created_by: roleDetails.currentUserId,
-                created_at: new Date(),
-                updated_by: roleDetails.currentUserId,
-                updated_at: new Date()
-              },
-            },);
-          });
-
-        } else {
-          const deletingAccessPermissions = await prisma.accessPermission.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
+      await prisma.permission.update({
+        where: {
+          id: roleDetails.id,
+          campusId: roleDetails.campusId,
+        },
+        data: {
+          permissionName: roleDetails.permissionName,
+          permissionType: roleDetails.permissionType,
+          isReadonly: roleDetails.readonly,
+          dashboardUrl: roleDetails.dashboardUrl,
+          updated_by: roleDetails.currentUserId,
+          updated_at: new Date()
         }
+      });
 
+      // ---------------------------------------------------
+      // ACCESS PERMISSIONS
+      // ---------------------------------------------------
+      await prisma.accessPermission.deleteMany({
+        where: {
+          permissionId: roleDetails.id,
+          campusId: roleDetails.campusId,
+        },
+      });
 
-        //Menu related
-        if (roleDetails.selected !== null && roleDetails.selected !== undefined
-          && Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
-
-          let menuCategories = [];
-          let menuItems = [];
-          roleDetails.selected.forEach(async (idsEach) => {
-            let splitMenu = idsEach.split("|");
-            if (splitMenu !== null && splitMenu !== undefined && splitMenu.length == 3) {
-              if (splitMenu[1] !== null && splitMenu[1] !== undefined && splitMenu[1] === 'MENU_CAT') {
-                menuCategories.push(Number(splitMenu[0]));
-              } else if (splitMenu[1] !== null && splitMenu[1] !== undefined && splitMenu[1] === 'MENU_ITEM') {
-                menuItems.push(Number(splitMenu[0]));
-              }
-            }
-
-          });
-
-
-          const deletingCatReferences = await prisma.menuCategoryPermissions.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
-
-          const deletingItemReferences = await prisma.menuItemPermissions.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
-
-          if (menuCategories !== null && menuCategories.length > 0) {
-            menuCategories.forEach(async (id) => {
-
-
-              await prisma.menuCategoryPermissions.create({
-                data: {
-                  permissionId: Number(roleDetails.id),
-                  menuCategoryId: Number(id),
-                  campusId: roleDetails.campusId,
-                  active: 1,
-                  created_by: roleDetails.currentUserId,
-                  updated_by: roleDetails.currentUserId
-                },
-              },);
-            });
-          }
-
-
-          if (menuItems !== null && menuItems.length > 0) {
-            menuItems.forEach(async (id) => {
-
-              await prisma.menuItemPermissions.create({
-                data: {
-                  permissionId: Number(roleDetails.id),
-                  menuItemId: Number(id),
-                  campusId: roleDetails.campusId,
-                  active: 1,
-                  created_by: roleDetails.currentUserId,
-                  updated_by: roleDetails.currentUserId
-                },
-              },);
-            });
-          }
-
-          //TBD This is to be done
-          //update user permission type in users with permission ID
-          let userpermissions = await prisma.userPermission.findMany({
-            where: {
-              permissionId: Number(roleDetails.id),
-              campusId: roleDetails.campusId,
-              active: 1
-            },
-            include: {
-              User: true,
-            },
-          });
-
-          if (userpermissions !== null && userpermissions !== undefined && userpermissions.length > 0) {
-            userpermissions.forEach(async (userPerm) => {
-              if (userPerm !== null && userPerm !== undefined && userPerm.User !== null && userPerm.User !== null) {
-                console.log('User present for permission id -->' + userPerm.User.displayName)
-
-              }
-            });
-          }
-
-          //Add notification
-          addANotification(Number(roleDetails.campusId),
-            Number(roleDetails.currentUserId),
-            Number(roleDetails.currentUserId),
-            roleDetails.permissionName + ROLE_UPDATES);
-
-
-          //END
-          //TBD This is to be done
-          //update user permission type in users with permission ID
-
-          return res.json({ status: true, data: null, message: 'Updated Role' });
-        } else {
-          console.log('Clear references if nothing is selected or unselected')
-          const deletingCatReferences = await prisma.menuCategoryPermissions.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
-
-          const deletingItemReferences = await prisma.menuItemPermissions.deleteMany({
-            where: {
-              permissionId: roleDetails.id,
-              campusId: roleDetails.campusId,
-            },
-          });
-
-          //TBD This is to be done
-          //update user permission type in users with permission ID
-          let userpermissions = await prisma.userPermission.findMany({
-            where: {
-              permissionId: Number(roleDetails.id),
-              campusId: roleDetails.campusId,
-              active: 1
-            },
-            include: {
-              User: true,
-            },
-          });
-
-          if (userpermissions !== null && userpermissions !== undefined && userpermissions.length > 0) {
-            userpermissions.forEach(async (userPerm) => {
-              if (userPerm !== null && userPerm !== undefined && userPerm.User !== null && userPerm.User !== null) {
-                console.log('User present for permission id -->' + userPerm.User.displayName)
-
-              }
-            });
-          }
-          //END
-          //TBD This is to be done
-          //update user permission type in users with permission ID
-
-          return res.json({ status: true, data: null, message: 'Updated Role' });
-        }
-
-
-      } else {
-
-        const createPermission = await prisma.permission.create({
-          data: {
-            active: 1,
-            isMobile: 0,
-            permissionName: roleDetails.permissionName,
-            permissionType: roleDetails.permissionType,
+      if (Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
+        await prisma.accessPermission.createMany({
+          data: roleDetails.permissionAccess.map((id: number) => ({
+            permissionId: Number(roleDetails.id),
+            accessId: Number(id),
             campusId: roleDetails.campusId,
-            dashboardUrl: roleDetails.dashboardUrl,
-            isReadonly: roleDetails.readonly,
             created_by: roleDetails.currentUserId,
             created_at: new Date(),
             updated_by: roleDetails.currentUserId,
             updated_at: new Date()
-          }
-
+          }))
         });
-        console.log('Created role with id -->' + createPermission.id)
-
-        console.log('Going to create Access permissions for role with id -->' + createPermission.id)
-        if (createPermission !== null && createPermission.id !== null
-          && roleDetails.permissionAccess !== null && roleDetails.permissionAccess !== undefined
-          && Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
-
-          roleDetails.permissionAccess.forEach(async (id) => {
-            await prisma.accessPermission.create({
-              data: {
-                permissionId: Number(createPermission.id),
-                accessId: Number(id),
-                campusId: roleDetails.campusId,
-                created_by: roleDetails.currentUserId,
-                created_at: new Date(),
-                updated_by: roleDetails.currentUserId,
-                updated_at: new Date()
-              },
-            },);
-          });
-        }
-
-        if (createPermission !== null && createPermission.id !== null && roleDetails.selected !== null && roleDetails.selected !== undefined
-          && Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
-
-          let menuCategories = [];
-          let menuItems = [];
-          roleDetails.selected.forEach(async (idsEach) => {
-            let splitMenu = idsEach.split("|");
-            if (splitMenu !== null && splitMenu !== undefined && splitMenu.length == 3) {
-              if (splitMenu[1] !== null && splitMenu[1] !== undefined && splitMenu[1] === 'MENU_CAT') {
-                menuCategories.push(Number(splitMenu[0]));
-              } else if (splitMenu[1] !== null && splitMenu[1] !== undefined && splitMenu[1] === 'MENU_ITEM') {
-                menuItems.push(Number(splitMenu[0]));
-              }
-            }
-
-          });
-
-          if (menuCategories !== null && menuCategories.length > 0) {
-            menuCategories.forEach(async (id) => {
-              await prisma.menuCategoryPermissions.create({
-                data: {
-                  permissionId: Number(createPermission.id),
-                  menuCategoryId: Number(id),
-                  campusId: roleDetails.campusId,
-                  active: 1,
-                  created_by: roleDetails.currentUserId,
-                  updated_by: roleDetails.currentUserId
-                },
-              },);
-            });
-          }
-
-          if (menuItems !== null && menuItems.length > 0) {
-            menuItems.forEach(async (id) => {
-              await prisma.menuItemPermissions.create({
-                data: {
-                  permissionId: Number(createPermission.id),
-                  menuItemId: Number(id),
-                  active: 1,
-                  campusId: roleDetails.campusId,
-                  created_by: roleDetails.currentUserId,
-                  updated_by: roleDetails.currentUserId
-                },
-              },);
-            });
-          }
-          //Add notification
-          addANotification(Number(roleDetails.campusId),
-            Number(roleDetails.currentUserId),
-            Number(roleDetails.currentUserId),
-            roleDetails.permissionName + ROLE_UPDATES);
-
-        }
-        return res.json({ status: true, data: null, message: 'Created new role' });
       }
 
+      // ---------------------------------------------------
+      // MENU PERMISSIONS
+      // ---------------------------------------------------
+      if (Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
 
+        let menuCategories: number[] = [];
+        let menuItems: number[] = [];
 
-    } catch (error) {
-      console.error(error);
+        roleDetails.selected.forEach((idsEach: string) => {
+          const split = idsEach.split("|");
+          if (split && split.length === 3) {
+            if (split[1] === "MENU_CAT") menuCategories.push(Number(split[0]));
+            if (split[1] === "MENU_ITEM") menuItems.push(Number(split[0]));
+          }
+        });
 
-      return res.json({ status: false, data: null, message: 'Failed to update role' });
+        await prisma.menuCategoryPermissions.deleteMany({
+          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
+        });
+
+        await prisma.menuItemPermissions.deleteMany({
+          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
+        });
+
+        if (menuCategories.length > 0) {
+          await prisma.menuCategoryPermissions.createMany({
+            data: menuCategories.map((id) => ({
+              permissionId: Number(roleDetails.id),
+              menuCategoryId: id,
+              campusId: roleDetails.campusId,
+              active: 1,
+              created_by: roleDetails.currentUserId,
+              updated_by: roleDetails.currentUserId
+            }))
+          });
+        }
+
+        if (menuItems.length > 0) {
+          await prisma.menuItemPermissions.createMany({
+            data: menuItems.map((id) => ({
+              permissionId: Number(roleDetails.id),
+              menuItemId: id,
+              campusId: roleDetails.campusId,
+              active: 1,
+              created_by: roleDetails.currentUserId,
+              updated_by: roleDetails.currentUserId
+            }))
+          });
+        }
+
+        // Existing logic preserved
+        let userpermissions = await prisma.userPermission.findMany({
+          where: {
+            permissionId: Number(roleDetails.id),
+            campusId: roleDetails.campusId,
+            active: 1
+          },
+          include: { User: true }
+        });
+
+        if (userpermissions?.length) {
+          userpermissions.forEach(up => {
+            if (up?.User) console.log("User present for permission id --> " + up.User.displayName);
+          });
+        }
+
+        addANotification(
+          Number(roleDetails.campusId),
+          Number(roleDetails.currentUserId),
+          Number(roleDetails.currentUserId),
+          roleDetails.permissionName + ROLE_UPDATES
+        );
+
+        return res.json({ status: true, data: null, message: "Updated Role" });
+      }
+
+      // NO MENU SELECTED
+      await prisma.menuCategoryPermissions.deleteMany({
+        where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
+      });
+
+      await prisma.menuItemPermissions.deleteMany({
+        where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
+      });
+
+      return res.json({ status: true, data: null, message: "Updated Role" });
     }
+
+    // -----------------------------------------------------
+    // CREATE NEW PERMISSION
+    // -----------------------------------------------------
+    const createPermission = await prisma.permission.create({
+      data: {
+        active: 1,
+        isMobile: 0,
+        permissionName: roleDetails.permissionName,
+        permissionType: roleDetails.permissionType,
+        campusId: roleDetails.campusId,
+        dashboardUrl: roleDetails.dashboardUrl,
+        isReadonly: roleDetails.readonly,
+        created_by: roleDetails.currentUserId,
+        created_at: new Date(),
+        updated_by: roleDetails.currentUserId,
+        updated_at: new Date()
+      }
+    });
+
+    // ACCESS PERMISSIONS
+    if (Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
+      await prisma.accessPermission.createMany({
+        data: roleDetails.permissionAccess.map((id: number) => ({
+          permissionId: Number(createPermission.id),
+          accessId: Number(id),
+          campusId: roleDetails.campusId,
+          created_by: roleDetails.currentUserId,
+          created_at: new Date(),
+          updated_by: roleDetails.currentUserId,
+          updated_at: new Date()
+        }))
+      });
+    }
+
+    // MENU PERMISSIONS
+    if (Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
+
+      let menuCategories: number[] = [];
+      let menuItems: number[] = [];
+
+      roleDetails.selected.forEach((idsEach: string) => {
+        const split = idsEach.split("|");
+        if (split && split.length === 3) {
+          if (split[1] === "MENU_CAT") menuCategories.push(Number(split[0]));
+          if (split[1] === "MENU_ITEM") menuItems.push(Number(split[0]));
+        }
+      });
+
+      if (menuCategories.length > 0) {
+        await prisma.menuCategoryPermissions.createMany({
+          data: menuCategories.map((id) => ({
+            permissionId: Number(createPermission.id),
+            menuCategoryId: id,
+            campusId: roleDetails.campusId,
+            active: 1,
+            created_by: roleDetails.currentUserId,
+            updated_by: roleDetails.currentUserId
+          }))
+        });
+      }
+
+      if (menuItems.length > 0) {
+        await prisma.menuItemPermissions.createMany({
+          data: menuItems.map((id) => ({
+            permissionId: Number(createPermission.id),
+            menuItemId: id,
+            active: 1,
+            campusId: roleDetails.campusId,
+            created_by: roleDetails.currentUserId,
+            updated_by: roleDetails.currentUserId
+          }))
+        });
+      }
+
+      addANotification(
+        Number(roleDetails.campusId),
+        Number(roleDetails.currentUserId),
+        Number(roleDetails.currentUserId),
+        roleDetails.permissionName + ROLE_UPDATES
+      );
+    }
+
+    return res.json({ status: true, data: null, message: 'Created new role' });
+
+  } catch (error) {
+    console.error(error);
+    return res.json({ status: false, data: null, message: 'Failed to update role' });
   }
+}
+
 
 
   public async deleteUserRole(req: Request, res: Response) {
@@ -1188,6 +1106,17 @@ export class UserController {
           active: 0,
           updated_at: new Date(),
           updated_by: Number(req.params.currentUserId)
+        }
+      });
+
+      await prisma.studentSessionHistory.updateMany({
+        where: {
+          studentId: Number(id),
+        },
+        data: {
+          active: 0,
+          status: 'Deactivated',
+          updated_at: new Date(),
         }
       });
 

@@ -1609,7 +1609,7 @@ export class AccountingController {
               productName: productForm.form.productName,
               productCode: productForm.form.productCode,
               appUniqueCode: appProdId,
-              categoryId: productForm.form.categoryId,
+              categoryId: Number(productForm.form.categoryId),
               purchasePrice: Number(productForm.form.purchasePrice),
               sellPrice: Number(productForm.form.sellPrice),
               stock: Number(productForm.form.stock),

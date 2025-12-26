@@ -492,7 +492,7 @@ export class AttendanceController {
   public async fetchAttendance(req: Request, res: Response) {
     const attendanceForm: any = req.body;
     let attendanceRecordsFetched: Attendance[] = [];
-
+    const institute = await prisma.institute.findFirst();
 
 
     console.log(attendanceForm);
@@ -504,6 +504,7 @@ export class AttendanceController {
           campusId: attendanceForm.campusId,
           classId: attendanceForm.classId,
           sectionId: attendanceForm.sectionId,
+          ongoingSession: Number(institute.sessionId),
           userType: UserType[attendanceForm.userType]
         },
         include: {

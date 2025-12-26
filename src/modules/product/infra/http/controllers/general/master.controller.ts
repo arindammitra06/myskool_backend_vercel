@@ -13,6 +13,7 @@ import jwt from 'jsonwebtoken';
 import {
   addANotification,
   buildTheme,
+  formatDateTime,
   getBlankMonthWiseHolidayList,
   getCurrencySymbol,
   getIsoDay,
@@ -38,7 +39,7 @@ import {
   UPDATE_MASTER_NOTIFICATION,
   USER_CREATED,
 } from '../../../../../../shared/constants/notification.constants';
-import path from "path";
+import path from 'path';
 import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit';
 import imagekit from '../../../../../../shared/helpers/utils/imagekitClient';
 const fs = require('fs');
@@ -48,15 +49,12 @@ interface MulterMemoryRequest extends Request {
 }
 
 export class MasterController {
-
-  
-  public async getImagekitAuth (req: Request, res: Response) {
+  public async getImagekitAuth(req: Request, res: Response) {
     try {
       console.log(req);
       const auth = imagekit.getAuthenticationParameters();
 
       return res.json(auth);
-
     } catch (error) {
       return res.json({
         status: false,
@@ -65,93 +63,95 @@ export class MasterController {
       });
     }
   }
-  
+
   public async uploadImageToImageKit(req: MulterMemoryRequest, res: Response) {
-  try {
-    const uid = req.body.uid || req.query.uid || null;
+    try {
+      const uid = req.body.uid || req.query.uid || null;
 
-    // Handle both single and multiple files
-    const files: Express.Multer.File[] = [];
-    if (req.file) files.push(req.file);
-    if (req.files && Array.isArray(req.files)) files.push(...req.files);
+      // Handle both single and multiple files
+      const files: Express.Multer.File[] = [];
+      if (req.file) files.push(req.file);
+      if (req.files && Array.isArray(req.files)) files.push(...req.files);
 
-    if (files.length === 0) {
+      if (files.length === 0) {
+        return res.json({
+          status: false,
+          message: 'No file provided',
+          data: null,
+        });
+      }
+
+      // Target folder on ImageKit
+      const folderPath = uid ? `/uploads/${uid}` : `/assets`;
+
+      const uploadedFiles = [];
+
+      for (const file of files) {
+        const fileName = uuidv4() + '-' + file.originalname;
+
+        const uploadResponse = await uploadImageToImageKit(
+          file.buffer,
+          fileName,
+          folderPath
+        );
+
+        uploadedFiles.push({
+          fileType: uploadResponse.fileType,
+          url: uploadResponse.url,
+          thumbnailUrl: uploadResponse.thumbnailUrl,
+        });
+      }
+
+      return res.json({
+        status: true,
+        count: uploadedFiles.length,
+        files: uploadedFiles,
+      });
+    } catch (error) {
+      console.error(error);
       return res.json({
         status: false,
-        message: "No file provided",
-        data: null
+        message: 'File upload error',
+        data: null,
       });
     }
-
-    // Target folder on ImageKit
-    const folderPath = uid ? `/uploads/${uid}` : `/assets`;
-
-    const uploadedFiles = [];
-
-    for (const file of files) {
-      const fileName = uuidv4() + "-" + file.originalname;
-
-      const uploadResponse = await uploadImageToImageKit(file.buffer, fileName, folderPath);
-
-      uploadedFiles.push({
-        fileType: uploadResponse.fileType,
-        url: uploadResponse.url,
-        thumbnailUrl: uploadResponse.thumbnailUrl
-      });
-    }
-
-    return res.json({
-      status: true,
-      count: uploadedFiles.length,
-      files: uploadedFiles
-    });
-
-  } catch (error) {
-    console.error(error);
-    return res.json({
-      status: false,
-      message: "File upload error",
-      data: null
-    });
   }
-}
 
-
-   public async uploadDocument(req: Request, res: Response) {
+  public async uploadDocument(req: Request, res: Response) {
     try {
       const uid = req.params.uid || req.body.uid;
 
       if (!uid) {
         return res.status(400).json({
           status: false,
-          message: "UID is required",
+          message: 'UID is required',
         });
       }
 
       if (!req.file) {
         return res.status(400).json({
           status: false,
-          message: "No file uploaded",
+          message: 'No file uploaded',
         });
       }
 
-      const serverUrl = process.env.SERVER_API_URL?.replace(/\/$/, "") || ""; 
+      const serverUrl = process.env.SERVER_API_URL?.replace(/\/$/, '') || '';
       const fileUrl = `${serverUrl}/uploads/${uid}/${req.file.filename}`;
 
-      const filePath = path.join("uploads", uid, req.file.filename);
+      const filePath = path.join('uploads', uid, req.file.filename);
 
       return res.json({
         status: true,
-        message: "File uploaded successfully",
+        message: 'File uploaded successfully',
         fileName: req.file.filename,
         filePath,
-        url: fileUrl,       // FULL URL here
+        url: fileUrl, // FULL URL here
       });
     } catch (error: any) {
       console.error(error);
       return res.status(500).json({
         status: false,
-        message: "File upload failed",
+        message: 'File upload failed',
       });
     }
   }
@@ -318,6 +318,167 @@ export class MasterController {
     return res.json({ status: true, data: sessionSelectItems, message: '' });
   }
 
+   public async getAllBadges(req: Request, res: Response) {
+    const badges = await prisma.badge.findMany({});
+
+    return res.json({
+      status: true,
+      data: badges,
+      message: 'Badges fetched',
+    });
+  }
+
+  public async addUpdateExtracurricular(req: Request, res: Response) {
+    const inputData: any = req.body.form;
+    console.log(req.body);
+    try {
+      if (
+        inputData !== null &&
+        inputData !== undefined &&
+        inputData.id !== null &&
+        inputData.id !== undefined
+      ) {
+        await prisma.extracurricular.update({
+          where: {
+            id: inputData.id,
+          },
+          data: {
+            name: inputData.name,
+            details: inputData.details,
+            updated_by: inputData.currentUserId,
+            updated_at: new Date(),
+          },
+        });
+
+        return res.json({
+        data: null,
+        status: true,
+        message: 'Extracurricular updated',
+      });
+      } else {
+        await prisma.extracurricular.create({
+          data: {
+            name: inputData.name,
+            details: inputData.details,
+            active: 1,
+            created_by: inputData.currentUserId,
+            created_at: new Date(),
+            updated_by: inputData.currentUserId,
+            updated_at: new Date(),
+          },
+        });
+
+        return res.json({
+        data: null,
+        status: true,
+        message: 'Extracurricular created',
+      });
+      }
+      
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
+    }
+  }
+
+  public async getAllExtracurricular(req: Request, res: Response) {
+    const extracurricular = await prisma.extracurricular.findMany({
+      where: { active: 1 },
+    });
+
+    return res.json({
+      status: true,
+      data: extracurricular,
+      message: 'Extracurricular fetched',
+    });
+  }
+
+  public async deleteExtracurricular(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.extracurricular.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Extracurricular deleted successfully',
+    });
+  }
+
+  public async deleteBadge(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.badge.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Badge deleted successfully',
+    });
+  }
+
+  public async addUpdateBadge(req: Request, res: Response) {
+    const settings: any = req.body.form;
+    console.log(req.body);
+    try {
+      if (
+        settings !== null &&
+        settings !== undefined &&
+        settings.id !== null &&
+        settings.id !== undefined
+      ) {
+        await prisma.badge.update({
+          where: {
+            id: settings.id,
+          },
+          data: {
+            name: settings.name,
+            description: settings.description,
+            iconUrl: req.body.attachmentUrls[0],
+          },
+        });
+
+        return res.json({
+        data: null,
+        status: true,
+        message: 'Badge updated',
+      });
+      } else {
+        await prisma.badge.create({
+          data: {
+            name: settings.name,
+            description: settings.description,
+            iconUrl: req.body.attachmentUrls[0],
+          },
+        });
+
+        return res.json({
+        data: null,
+        status: true,
+        message: 'Badge created',
+      });
+      }
+      
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
+    }
+  }
+
   public async getAllSessionsCompleteData(req: Request, res: Response) {
     const sessions = await prisma.sessions.findMany({});
 
@@ -415,7 +576,6 @@ export class MasterController {
     }
   }
 
-
   public async deleteSession(req: Request, res: Response) {
     const id = Number(req.params.id);
     const currentUserID = Number(req.params.currentUserID);
@@ -434,69 +594,68 @@ export class MasterController {
   }
 
   public async addUpdateSession(req: Request, res: Response) {
-  const settings = req.body.form;
-    console.log(settings)
-  try {
-    if (!settings) {
+    const settings = req.body.form;
+    console.log(settings);
+    try {
+      if (!settings) {
+        return res.status(400).json({
+          status: false,
+          message: 'Invalid request data',
+          data: null,
+        });
+      }
+
+      const {
+        id,
+        session,
+        campusId,
+        startMonth,
+        startYear,
+        endMonth,
+        endYear,
+      } = settings;
+
+      if (id) {
+        // ---- UPDATE SESSION ----
+        await prisma.sessions.update({
+          where: { id: Number(id) },
+          data: {
+            session: session,
+            campusId: Number(campusId),
+            startMonth: Number(startMonth),
+            startYear: Number(startYear),
+            endMonth: Number(endMonth),
+            endYear: Number(endYear),
+          },
+        });
+      } else {
+        // ---- CREATE SESSION ----
+        await prisma.sessions.create({
+          data: {
+            session: session,
+            campusId: Number(campusId),
+            startMonth: Number(startMonth),
+            startYear: Number(startYear),
+            endMonth: Number(endMonth),
+            endYear: Number(endYear),
+          },
+        });
+      }
+
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Session info saved',
+      });
+    } catch (error: any) {
+      console.error(error);
       return res.status(400).json({
+        message: error.message,
         status: false,
-        message: "Invalid request data",
         data: null,
       });
     }
-
-    const {
-      id,
-      session,
-      campusId,
-      startMonth,
-      startYear,
-      endMonth,
-      endYear
-    } = settings;
-
-    if (id) {
-      // ---- UPDATE SESSION ----
-      await prisma.sessions.update({
-        where: { id: Number(id) },
-        data: {
-          session: session,
-          campusId: Number(campusId),
-          startMonth: Number(startMonth),
-          startYear : Number(startYear),
-          endMonth : Number(endMonth),
-          endYear : Number(endYear),
-        },
-      });
-    } else {
-      // ---- CREATE SESSION ----
-      await prisma.sessions.create({
-        data: {
-          session: session,
-          campusId: Number(campusId),
-          startMonth: Number(startMonth),
-          startYear : Number(startYear),
-          endMonth : Number(endMonth),
-          endYear : Number(endYear),
-        },
-      });
-    }
-
-    return res.json({
-      data: null,
-      status: true,
-      message: "Session info saved",
-    });
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({
-      message: error.message,
-      status: false,
-      data: null,
-    });
   }
-}
-
 
   //ID Card Images Folder
 
@@ -985,7 +1144,6 @@ export class MasterController {
     console.log(timetable.form.startDate);
     console.log(timetable.form.endDate);
     const year = moment(timetable.form.startDate).year();
-    console.log(timetable);
 
     const institute = await prisma.institute.findFirst();
 
@@ -1046,6 +1204,137 @@ export class MasterController {
       return res
         .status(400)
         .json({ message: error.message, status: true, data: null });
+    }
+  }
+
+  public async saveWeeklyHoliday(req: Request, res: Response) {
+    const { form } = req.body;
+
+    if (!form || !form.sessionId || !form.weeklyHolidays) {
+      return res.status(400).json({ status: false, message: 'Invalid input' });
+    }
+
+    try {
+      const session = await prisma.sessions.findUnique({
+        where: { id: Number(form.sessionId) },
+      });
+
+      if (!session) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Session not found' });
+      }
+
+      // Formatter with leading zero support
+      const pad = (n: number) => String(n).padStart(2, '0');
+
+      const formatDateTime = (date: Date, end = false) => {
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1); // FIXED
+        const day = pad(date.getDate());
+        const time = end ? '23:59:00' : '00:00:00';
+        return `${year}-${month}-${day} ${time}`;
+      };
+
+      // Correct session range dates
+      const startDate = new Date(session.startYear, session.startMonth, 1);
+      const endDate = new Date(session.endYear, session.endMonth, 0);
+
+      const weekdayMap: Record<string, number> = {
+        su: 0,
+        mo: 1,
+        tu: 2,
+        we: 3,
+        th: 4,
+        fr: 5,
+        sa: 6,
+      };
+
+      const selectedWeekdays = form.weeklyHolidays
+        .map((x: string) => weekdayMap[x])
+        .filter((v) => v !== undefined);
+
+      if (selectedWeekdays.length === 0) {
+        return res.status(400).json({
+          status: false,
+          message: 'Invalid weekly holiday format',
+        });
+      }
+
+      let current = new Date(startDate);
+      const timetableRows: any[] = [];
+      const holidayList: any[] = [];
+
+      while (current <= endDate) {
+        if (selectedWeekdays.includes(current.getDay())) {
+          // FIXED --> Proper padded format
+          const start = formatDateTime(current, false);
+          const end = formatDateTime(current, true);
+
+          timetableRows.push({
+            classId: null,
+            sectionId: null,
+            year: form.year,
+            campusId: Number(form.campusId),
+            subject: 'Weekly Holiday',
+            ongoingSessionId: Number(form.sessionId),
+            active: 1,
+            day: '',
+            duration: '',
+            startTime: '',
+            endTime: '',
+            start: start,
+            end: end,
+            isRecurring: 0,
+            bgcolor: form.color,
+            color: form.color,
+            created_by: form.created_by,
+            created_at: new Date(),
+            updated_by: form.updated_by,
+            updated_at: new Date(),
+          });
+
+          holidayList.push({
+            classId: form.classId ? Number(form.classId) : null,
+            sectionId: form.sectionId ? Number(form.sectionId) : null,
+            ongoingSessionId: Number(form.sessionId),
+            campusId: Number(form.campusId),
+            name: 'Weekly Holiday',
+            active: 1,
+            holidayStart: start,
+            holidayEnd: end,
+            created_by: form.created_by,
+            updated_by: form.updated_by,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+        }
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      if (timetableRows.length > 0) {
+        await prisma.timeTable.createMany({
+          data: timetableRows,
+          skipDuplicates: true,
+        });
+      }
+
+      if (holidayList.length > 0) {
+        await prisma.holidays.createMany({
+          data: holidayList,
+          skipDuplicates: true,
+        });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: 'Weekly holidays added',
+        count: holidayList.length,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(500).json({ status: false, message: error.message });
     }
   }
 
@@ -2264,6 +2553,55 @@ export class MasterController {
     }
   }
 
+  public async updateEngagementResponse(req: Request, res: Response) {
+  const formData: any = req.body;
+    console.log(formData)
+  try {
+    if (!formData || !formData.form) {
+      return res.json({
+        data: null,
+        status: false,
+        message: 'Invalid request',
+      });
+    }
+
+    const form = formData.form;
+
+    // ---- UPDATE ----
+    if (form.id) {
+      await prisma.studentToEngagements.update({
+        where: {
+          id: form.id,
+          campusId: form.campusId,
+        },
+        data: {
+          response: form.response ?? null,
+          fileUrl: formData.attachmentUrls!==null && formData.attachmentUrls!==undefined && formData.attachmentUrls.length>0 ? formData.attachmentUrls[0] : null,
+          submittedAt: new Date(),
+          updated_by: form.created_by,
+          updated_at: new Date(),
+        },
+      });
+
+      return res.json({
+        data: null,
+        status: true,
+        message: 'Response updated',
+      });
+    }
+
+
+  } catch (error: any) {
+    console.error(error);
+    return res.status(400).json({
+      message: error.message,
+      status: false,
+      data: null,
+    });
+  }
+}
+
+
   public async fetchEngagements(req: Request, res: Response) {
     const engagemntForm: any = req.body;
     console.log(engagemntForm);
@@ -2346,45 +2684,354 @@ export class MasterController {
   public async saveStudentEngagement(req: Request, res: Response) {
     const formData: any = req.body;
     const institute = await prisma.institute.findFirst();
-            
-        
-    console.log(formData);
+
     try {
-      if (formData !== null && formData !== undefined) {
-        await prisma.studentToEngagements.create({
-          data: {
-            campusId: Number(formData.form.campusId),
-            engagementId: Number(formData.form.engagementId),
-            userId: Number(formData.form.studentId),
-            completed: 0,
-            rating: 0,
-            ongoingSession: institute.sessionId,
-            comments: null,
-            created_by: Number(formData.form.currentUserId),
-            created_at: new Date(),
-            updated_by: Number(formData.form.currentUserId),
-            updated_at: new Date(),
-          },
-        });
-        return res.json({
-          data: null,
-          status: true,
-          message: 'Engagement is assigned to ' + formData.form.displayName,
-        });
-      } else {
+      if (!formData || !formData.form) {
         return res.json({
           data: null,
           status: false,
-          message: 'Some error occured. Please try later',
+          message: 'Invalid data received.',
         });
       }
-    } catch (error) {
+
+      const { campusId, engagementId, studentId, currentUserId } =
+        formData.form;
+
+      // ✅ Check if already assigned in the same session
+      const exists = await prisma.studentToEngagements.findFirst({
+        where: {
+          campusId: Number(campusId),
+          engagementId: Number(engagementId),
+          userId: Number(studentId),
+          ongoingSession: institute.sessionId, // important
+        },
+      });
+
+      if (exists) {
+        return res.json({
+          data: null,
+          status: false,
+          message: `This engagement is already assigned to ${formData.form.displayName} for the current session.`,
+        });
+      }
+
+      // ✅ Save new engagement
+      await prisma.studentToEngagements.create({
+        data: {
+          campusId: Number(campusId),
+          engagementId: Number(engagementId),
+          userId: Number(studentId),
+          completed: 0,
+          rating: 0,
+          ongoingSession: institute.sessionId,
+          comments: null,
+          created_by: Number(currentUserId),
+          created_at: new Date(),
+          updated_by: Number(currentUserId),
+          updated_at: new Date(),
+        },
+      });
+
+      return res.json({
+        data: null,
+        status: true,
+        message: `Engagement is assigned to ${formData.form.displayName}`,
+      });
+    } catch (error: any) {
       console.error(error);
-      return res
-        .status(400)
-        .json({ message: error.message, status: true, data: null });
+      return res.status(400).json({
+        message: error.message,
+        status: false,
+        data: null,
+      });
     }
   }
+
+  public async bulkSaveStudentEngagement(req: Request, res: Response) {
+    const formData: any = req.body;
+
+    try {
+      if (!formData || !formData.form) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Invalid data received.',
+        });
+      }
+
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute.sessionId;
+
+      const { campusId, classId, sectionId, created_by } = formData.form;
+      const selectedStudents = formData.selectedStudents || [];
+      const selectedEngagements = formData.selectedEngagements || [];
+
+      if (selectedStudents.length === 0 || selectedEngagements.length === 0) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'No students or engagements selected.',
+        });
+      }
+
+      // ------------------------------------------
+      // 1️⃣ Build all possible assignments
+      // ------------------------------------------
+      const allAssignments = [];
+
+      for (const student of selectedStudents) {
+        for (const eng of selectedEngagements) {
+          allAssignments.push({
+            campusId: Number(campusId),
+            engagementId: Number(eng.id),
+            userId: Number(student.id),
+            ongoingSession: sessionId,
+          });
+        }
+      }
+
+      // ------------------------------------------
+      // 2️⃣ Fetch already existing assignments
+      // ------------------------------------------
+      const existing = await prisma.studentToEngagements.findMany({
+        where: {
+          OR: allAssignments.map((a) => ({
+            campusId: a.campusId,
+            engagementId: a.engagementId,
+            userId: a.userId,
+            ongoingSession: a.ongoingSession,
+          })),
+        },
+      });
+
+      // Build a lookup set for fast skip-checking
+      const existingSet = new Set(
+        existing.map((e) => `${e.userId}-${e.engagementId}-${e.ongoingSession}`)
+      );
+
+      // ------------------------------------------
+      // 3️⃣ Filter new insert list
+      // ------------------------------------------
+      const toInsert = allAssignments
+        .filter(
+          (a) =>
+            !existingSet.has(
+              `${a.userId}-${a.engagementId}-${a.ongoingSession}`
+            )
+        )
+        .map((a) => ({
+          ...a,
+          completed: 0,
+          rating: 0,
+          comments: null,
+          created_by: Number(created_by),
+          created_at: new Date(),
+          updated_by: Number(created_by),
+          updated_at: new Date(),
+        }));
+
+      // ------------------------------------------
+      // 4️⃣ Bulk insert
+      // ------------------------------------------
+      if (toInsert.length > 0) {
+        await prisma.studentToEngagements.createMany({
+          data: toInsert,
+          skipDuplicates: true, // safety
+        });
+      }
+
+      return res.json({
+        status: true,
+        data: null,
+        message: `Assigned ${toInsert.length} new engagement(s). Skipped ${existing.length} already existing item(s).`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        message: error.message,
+        status: false,
+        data: null,
+      });
+    }
+  }
+
+  public async bulkSaveStudentBadges(req: Request, res: Response) {
+  const formData: any = req.body;
+  try {
+    if (!formData || !formData.form) {
+      return res.json({
+        data: null,
+        status: false,
+        message: 'Invalid data received.',
+      });
+    }
+    console.log(formData)
+    const institute = await prisma.institute.findFirst();
+    const sessionId = institute?.sessionId ?? null;
+
+    const { created_by , reason} = formData.form;
+    const selectedStudents = formData.selectedStudents || [];
+    const selectedBadges = formData.selectedBadges || [];
+    
+    if (selectedStudents.length === 0 || selectedBadges.length === 0) {
+      return res.json({
+        data: null,
+        status: false,
+        message: 'No students or badges selected.',
+      });
+    }
+
+    // ------------------------------------------
+    // 1️⃣ Build all possible assignments
+    // ------------------------------------------
+    const allAssignments: any[] = [];
+
+    for (const student of selectedStudents) {
+      for (const badge of selectedBadges) {
+        allAssignments.push({
+          studentId: Number(student.id),
+          badgeId: Number(badge.id),
+          teacherId: Number(created_by),
+          ongoingSession: sessionId,
+        });
+      }
+    }
+
+    // ------------------------------------------
+    // 2️⃣ Fetch already existing assignments
+    // ------------------------------------------
+    const existing = await prisma.studentBadge.findMany({
+      where: {
+        OR: allAssignments.map((a) => ({
+          studentId: a.studentId,
+          badgeId: a.badgeId,
+          ongoingSession: a.ongoingSession,
+        })),
+      },
+      select: {
+        studentId: true,
+        badgeId: true,
+        ongoingSession: true,
+      },
+    });
+
+    const existingSet = new Set(
+      existing.map(
+        (e) => `${e.studentId}-${e.badgeId}-${e.ongoingSession}`
+      )
+    );
+
+    // ------------------------------------------
+    // 3️⃣ Filter new inserts
+    // ------------------------------------------
+    const toInsert = allAssignments
+      .filter(
+        (a) =>
+          !existingSet.has(
+            `${a.studentId}-${a.badgeId}-${a.ongoingSession}`
+          )
+      )
+      .map((a) => ({
+        ...a,
+        active: 1,
+        reason,
+        awardedAt: new Date(),
+      }));
+
+    // ------------------------------------------
+    // 4️⃣ Bulk insert
+    // ------------------------------------------
+    if (toInsert.length > 0) {
+      await prisma.studentBadge.createMany({
+        data: toInsert,
+        skipDuplicates: true,
+      });
+    }
+
+    return res.json({
+      status: true,
+      data: null,
+      message: `Awarded ${toInsert.length} new badge(s). Skipped ${existing.length} already existing badge(s).`,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(400).json({
+      message: error.message,
+      status: false,
+      data: null,
+    });
+  }
+}
+
+public async bulkSaveStudentBehaviour(req: Request, res: Response) {
+  const formData: any = req.body;
+  console.log(formData)
+  try {
+    if (!formData || !formData.form) {
+      return res.json({
+        data: null,
+        status: false,
+        message: "Invalid data received.",
+      });
+    }
+
+    const institute = await prisma.institute.findFirst();
+    const sessionId = institute?.sessionId ?? null;
+
+    const { behaviour, points, note, created_by,campusId, classId,  sectionId} = formData.form;
+    const selectedStudents = formData.selectedStudents || [];
+
+    if (!behaviour || points === undefined) {
+      return res.json({
+        data: null,
+        status: false,
+        message: "Behaviour category and points are required.",
+      });
+    }
+
+    if (selectedStudents.length === 0) {
+      return res.json({
+        data: null,
+        status: false,
+        message: "No students selected.",
+      });
+    }
+
+    // ------------------------------------------
+    // 1️⃣ Build behaviour logs
+    // ------------------------------------------
+    const logs = selectedStudents.map((student: any) => ({
+      studentId: Number(student.id),
+      teacherId: Number(created_by),
+      category: behaviour,
+      points: Number(points),
+      note: note ?? null,
+      ongoingSession: sessionId,
+      created_by: Number(created_by),
+    }));
+
+    // ------------------------------------------
+    // 2️⃣ Bulk insert
+    // ------------------------------------------
+    await prisma.behaviourLog.createMany({
+      data: logs,
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: `Behaviour logged for ${logs.length} student(s).`,
+    });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(400).json({
+      message: error.message,
+      status: false,
+      data: null,
+    });
+  }
+}
+
 
   public async updateStudentEngagementRatingAndComments(
     req: Request,
@@ -3053,7 +3700,7 @@ export class MasterController {
   public async addUpdateLeaves(req: Request, res: Response) {
     const leaveForm: any = req.body;
     const institute = await prisma.institute.findFirst();
-    
+
     try {
       if (
         leaveForm !== null &&
@@ -3156,13 +3803,11 @@ export class MasterController {
               });
           }
         } else {
-          return res
-            .status(400)
-            .json({
-              message: 'Please select dates',
-              status: false,
-              data: null,
-            });
+          return res.status(400).json({
+            message: 'Please select dates',
+            status: false,
+            data: null,
+          });
         }
       }
       return res.json({

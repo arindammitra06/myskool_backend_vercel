@@ -21,6 +21,15 @@ StudentRouter.get("/deleteAdmissionEnquiry/:campusId/:id/:currentUserid", studen
 StudentRouter.get("/fetchAdmissionFormStats/:campusId", studentControllerInstance.fetchAdmissionFormStats);
 StudentRouter.post("/updateStudent/:campusId/:id", studentControllerInstance.updateStudent);
 StudentRouter.get("/getStudingRatingAndComments/:campusId/:classId/:sectionId/:userId", studentControllerInstance.getStudingRatingAndComments);
+StudentRouter.get("/getStudentNotes/:campusId/:classId/:sectionId/:userId", studentControllerInstance.getStudentNotes);
+StudentRouter.delete("/deleteDailyNote/:id/:campusId", studentControllerInstance.deleteDailyNote);
+StudentRouter.delete("/deleteStudentReward/:id/:userId", studentControllerInstance.deleteStudentReward);
+StudentRouter.delete("/deleteStudentBehavior/:id/:userId", studentControllerInstance.deleteStudentBehavior);
+
+
+StudentRouter.post("/saveStudentDailyNotes", studentControllerInstance.saveStudentDailyNotes);
 StudentRouter.post("/saveStudentRating", studentControllerInstance.saveStudentRating);
+StudentRouter.delete("/deleteRating/:id/:campusId", studentControllerInstance.deleteRating);
 StudentRouter.post("/getStudentsByStudentPatialNameOrId", studentControllerInstance.getStudentsByStudentPatialNameOrId);
+StudentRouter.get("/getStudentHistoryByIdAndSession/:userId/:sessionId", studentControllerInstance.getStudentHistoryByIdAndSession);
 export default StudentRouter;

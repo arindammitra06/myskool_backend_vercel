@@ -13,6 +13,15 @@ MasterRouter.post("/upload/:uid", uploadSingleFile, masterControllerInstance.upl
 MasterRouter.get("/getAllThemes/:campusId/:userId", masterControllerInstance.getAllThemes);
 MasterRouter.post("/saveATheme", masterControllerInstance.saveATheme);
 
+MasterRouter.get("/getAllBadges", masterControllerInstance.getAllBadges);
+MasterRouter.post("/addUpdateBadge", masterControllerInstance.addUpdateBadge);
+MasterRouter.delete("/deleteBadge/:id/:userId", masterControllerInstance.deleteBadge);
+
+
+MasterRouter.get("/getAllExtracurricular", masterControllerInstance.getAllExtracurricular);
+MasterRouter.post("/addUpdateExtracurricular", masterControllerInstance.addUpdateExtracurricular);
+MasterRouter.delete("/deleteExtracurricular/:id/:userId", masterControllerInstance.deleteExtracurricular);
+
 MasterRouter.get("/getAllSessions", masterControllerInstance.getAllSessions);
 MasterRouter.get("/getAllSessionsCompleteData", masterControllerInstance.getAllSessionsCompleteData);
 MasterRouter.post("/addUpdateFinancialYear", masterControllerInstance.addUpdateFinancialYear);
@@ -39,7 +48,7 @@ MasterRouter.get("/getTimeTable/:campusId/:classId/:sectionId/:sessionId", maste
 MasterRouter.post("/saveTimeTable", masterControllerInstance.saveTimeTable);
 MasterRouter.post("/saveAdhocTimeTable", masterControllerInstance.saveAdhocTimeTable);
 MasterRouter.post("/saveHoliday", masterControllerInstance.saveHoliday);
-
+MasterRouter.post("/saveWeeklyHoliday", masterControllerInstance.saveWeeklyHoliday);
 
 MasterRouter.get("/deleteTimeTableEvent/:campusId/:id", masterControllerInstance.deleteTimeTableEvent);
 MasterRouter.get("/getAllHolidays/:campusId/:classId/:sectionId/:sessionId", masterControllerInstance.getAllHolidays);
@@ -77,6 +86,10 @@ MasterRouter.post("/fetchStudentEngagements", masterControllerInstance.fetchStud
 MasterRouter.post("/addEngagement", masterControllerInstance.addEngagement);
 MasterRouter.post("/changeEngagementStatus", masterControllerInstance.changeEngagementStatus);
 MasterRouter.post("/saveStudentEngagement", masterControllerInstance.saveStudentEngagement);
+MasterRouter.post("/updateEngagementResponse", masterControllerInstance.updateEngagementResponse);
+MasterRouter.post("/bulkSaveStudentEngagement", masterControllerInstance.bulkSaveStudentEngagement);
+MasterRouter.post("/bulkSaveStudentBadges", masterControllerInstance.bulkSaveStudentBadges);
+MasterRouter.post("/bulkSaveStudentBehaviour", masterControllerInstance.bulkSaveStudentBehaviour);
 MasterRouter.post("/updateStudentEngagementRatingAndComments", masterControllerInstance.updateStudentEngagementRatingAndComments);
 MasterRouter.get("/deleteStudentEngagement/:campusId/:id/:currentUserId", masterControllerInstance.deleteStudentEngagement);
 

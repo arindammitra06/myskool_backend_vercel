@@ -29,6 +29,24 @@ CREATE TABLE `Sessions` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `StudentSessionHistory` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `active` TINYINT NOT NULL DEFAULT 1,
+    `studentId` INTEGER NOT NULL,
+    `displayName` VARCHAR(255) NOT NULL,
+    `sessionId` INTEGER NOT NULL,
+    `campusId` INTEGER NULL,
+    `classId` INTEGER NULL,
+    `sectionId` INTEGER NULL,
+    `rollNumber` INTEGER NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'active',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Institute` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `instituteName` VARCHAR(255) NOT NULL,
@@ -804,10 +822,12 @@ CREATE TABLE `StudentToEngagements` (
     `completed` TINYINT NOT NULL DEFAULT 0,
     `rating` DOUBLE NOT NULL DEFAULT 0,
     `comments` LONGTEXT NULL,
+    `response` LONGTEXT NULL,
     `created_by` INTEGER NOT NULL,
     `updated_by` INTEGER NOT NULL,
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `ongoingSession` INTEGER NULL,
 
     INDEX `StudentToEngagements_campusId_fkey`(`campusId`),
     INDEX `StudentToEngagements_engagementId_fkey`(`engagementId`),
@@ -865,6 +885,23 @@ CREATE TABLE `StudentFees` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `StudentFeesAudit` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `studentFeesId` INTEGER NOT NULL,
+    `campusId` INTEGER NOT NULL,
+    `userId` INTEGER NOT NULL,
+    `feePlanId` INTEGER NOT NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `ongoingSession` INTEGER NULL,
+    `active` TINYINT NOT NULL DEFAULT 1,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `MYAALInvoices` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
@@ -885,6 +922,7 @@ CREATE TABLE `MYAALInvoices` (
     `paymentType` ENUM('Cash', 'Cheque', 'Online', 'Wallet', 'Credit') NOT NULL DEFAULT 'Cash',
     `classId` INTEGER NULL,
     `sectionId` INTEGER NULL,
+    `ongoingSession` INTEGER NULL,
 
     UNIQUE INDEX `MYAALInvoices_invoiceNumber_key`(`invoiceNumber`),
     INDEX `MYAALInvoices_campusId_fkey`(`campusId`),
@@ -1324,6 +1362,7 @@ CREATE TABLE `Leaves` (
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `rejectApproveReason` VARCHAR(255) NULL,
+    `ongoingSession` INTEGER NULL,
 
     INDEX `Leaves_campusId_fkey`(`campusId`),
     INDEX `Leaves_userId_fkey`(`userId`),
@@ -1358,6 +1397,7 @@ CREATE TABLE `StudentRatings` (
     `previousRating` DOUBLE NOT NULL DEFAULT 0,
     `ratingFrom` INTEGER NOT NULL,
     `sectionId` INTEGER NULL,
+    `ongoingSession` INTEGER NULL,
 
     INDEX `StudentRatings_campusId_fkey`(`campusId`),
     INDEX `StudentRatings_classId_fkey`(`classId`),
@@ -1567,6 +1607,21 @@ CREATE TABLE `_SubjectToUser` (
 
 -- AddForeignKey
 ALTER TABLE `Sessions` ADD CONSTRAINT `Sessions_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentSessionHistory` ADD CONSTRAINT `StudentSessionHistory_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentSessionHistory` ADD CONSTRAINT `StudentSessionHistory_sessionId_fkey` FOREIGN KEY (`sessionId`) REFERENCES `Sessions`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentSessionHistory` ADD CONSTRAINT `StudentSessionHistory_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentSessionHistory` ADD CONSTRAINT `StudentSessionHistory_classId_fkey` FOREIGN KEY (`classId`) REFERENCES `Class`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentSessionHistory` ADD CONSTRAINT `StudentSessionHistory_sectionId_fkey` FOREIGN KEY (`sectionId`) REFERENCES `Section`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Institute` ADD CONSTRAINT `Institute_sessionId_fkey` FOREIGN KEY (`sessionId`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1803,6 +1858,9 @@ ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_engageme
 ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `FeePlan` ADD CONSTRAINT `FeePlan_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1819,6 +1877,24 @@ ALTER TABLE `StudentFees` ADD CONSTRAINT `StudentFees_feePlanId_fkey` FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE `StudentFees` ADD CONSTRAINT `StudentFees_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentFeesAudit` ADD CONSTRAINT `StudentFeesAudit_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentFeesAudit` ADD CONSTRAINT `StudentFeesAudit_studentFeesId_fkey` FOREIGN KEY (`studentFeesId`) REFERENCES `StudentFees`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentFeesAudit` ADD CONSTRAINT `StudentFeesAudit_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentFeesAudit` ADD CONSTRAINT `StudentFeesAudit_feePlanId_fkey` FOREIGN KEY (`feePlanId`) REFERENCES `FeePlan`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentFeesAudit` ADD CONSTRAINT `StudentFeesAudit_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MYAALInvoices` ADD CONSTRAINT `MYAALInvoices_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `MYAALInvoices` ADD CONSTRAINT `MYAALInvoices_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1974,6 +2050,9 @@ ALTER TABLE `SellDetails` ADD CONSTRAINT `SellDetails_campusId_fkey` FOREIGN KEY
 ALTER TABLE `SellDetails` ADD CONSTRAINT `SellDetails_soldToId_fkey` FOREIGN KEY (`soldToId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Leaves` ADD CONSTRAINT `Leaves_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Leaves` ADD CONSTRAINT `Leaves_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1984,6 +2063,9 @@ ALTER TABLE `LeaveDates` ADD CONSTRAINT `LeaveDates_campusId_fkey` FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE `LeaveDates` ADD CONSTRAINT `LeaveDates_leaveId_fkey` FOREIGN KEY (`leaveId`) REFERENCES `Leaves`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentRatings` ADD CONSTRAINT `StudentRatings_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `StudentRatings` ADD CONSTRAINT `StudentRatings_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

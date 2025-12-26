@@ -23,6 +23,9 @@
     "postinstall": "prisma generate",
     "swagger-autogen": "node swagger.js"
   },
+  "prisma": {
+  "seed": "ts-node prisma/seed.ts"
+  },
   "engines": {
     "node": "20.x"
   },

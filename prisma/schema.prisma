@@ -23,29 +23,33 @@ model FinancialYear {
 }
 
 model Sessions {
-  id                    Int                     @id @default(autoincrement())
-  session               String                  @db.VarChar(255)
-  campusId              Int
-  endMonth              Int
-  endYear               Int
-  startMonth            Int
-  startYear             Int
-  AdmissionRecord       AdmissionRecord[]
-  Exam                  Exam[]
-  Holidays              Holidays[]
-  Institute             Institute[]
-  Result                Result[]
-  campus                Campus                  @relation(fields: [campusId], references: [id])
-  SubjectMarksTimeTable SubjectMarksTimeTable[]
-  TimeTable             TimeTable[]
-  AdmissionRequestUser  AdmissionRequestUser[]
-  User                  User[]
-  MYAALInvoices         MYAALInvoices[]
-  StudentSessionHistory StudentSessionHistory[]
-  StudentFeesAudit      StudentFeesAudit[]
-  StudentToEngagements  StudentToEngagements[]
-  Leaves                Leaves[]
-  StudentRatings        StudentRatings[]
+  id                       Int                        @id @default(autoincrement())
+  session                  String                     @db.VarChar(255)
+  campusId                 Int
+  endMonth                 Int
+  endYear                  Int
+  startMonth               Int
+  startYear                Int
+  AdmissionRecord          AdmissionRecord[]
+  Exam                     Exam[]
+  Holidays                 Holidays[]
+  Institute                Institute[]
+  Result                   Result[]
+  campus                   Campus                     @relation(fields: [campusId], references: [id])
+  SubjectMarksTimeTable    SubjectMarksTimeTable[]
+  TimeTable                TimeTable[]
+  AdmissionRequestUser     AdmissionRequestUser[]
+  User                     User[]
+  MYAALInvoices            MYAALInvoices[]
+  StudentSessionHistory    StudentSessionHistory[]
+  StudentFeesAudit         StudentFeesAudit[]
+  StudentToEngagements     StudentToEngagements[]
+  Leaves                   Leaves[]
+  StudentRatings           StudentRatings[]
+  BehaviourLog             BehaviourLog[]
+  StudentBadge             StudentBadge[]
+  DailyNotes               DailyNotes[]
+  StudentToExtracurricular StudentToExtracurricular[]
 
   @@index([campusId], map: "Sessions_campusId_fkey")
 }
@@ -209,6 +213,7 @@ model Campus {
   AdmissionRequestUser        AdmissionRequestUser[]
   StudentSessionHistory       StudentSessionHistory[]
   StudentFeesAudit            StudentFeesAudit[]
+  DailyNotes                  DailyNotes[]
 
   @@index([instituteId], map: "Campus_instituteId_fkey")
 }
@@ -292,6 +297,7 @@ model Class {
   Transactions                Transactions[]
   User                        User[]
   StudentSessionHistory       StudentSessionHistory[]
+  DailyNotes                  DailyNotes[]
 
   @@index([campusId], map: "Class_campusId_fkey")
 }
@@ -323,6 +329,7 @@ model Section {
   User                  User[]
   subjects              Subject[]               @relation("SectionToSubject")
   StudentSessionHistory StudentSessionHistory[]
+  DailyNotes            DailyNotes[]
 
   @@index([campusId], map: "Section_campusId_fkey")
   @@index([classId], map: "Section_classId_fkey")
@@ -428,6 +435,17 @@ model User {
   BankInformation       BankInformation[]
   StudentSessionHistory StudentSessionHistory[]
   StudentFeesAudit      StudentFeesAudit[]
+  behaviourOfStudent    BehaviourLog[]          @relation("StudentRelation")
+  behaviourByTeacher    BehaviourLog[]          @relation("TeacherRelation")
+
+  badgesOfStudent   StudentBadge[] @relation("StudentBadgeRelation")
+  badgesFromTeacher StudentBadge[] @relation("TeacherBadgeRelation")
+
+  extracurricularOfStudent         StudentToExtracurricular[] @relation("StudentExtracurricularRelation")
+  extracurricularAccessedByTeacher StudentToExtracurricular[] @relation("TeacherExtracurricularRelation")
+
+  notesOfStudent   DailyNotes[] @relation("StudentNotesRelation")
+  notesFromTeacher DailyNotes[] @relation("TeacherNotesRelation")
 
   @@index([campusId], map: "User_campusId_fkey")
   @@index([classId], map: "User_classId_fkey")
@@ -964,6 +982,32 @@ model DailyHomework {
   @@index([sectionId], map: "DailyHomework_sectionId_fkey")
 }
 
+model DailyNotes {
+  id             Int        @id @default(autoincrement())
+  campusId       Int
+  classId        Int?
+  sectionId      Int?
+  active         Int        @default(1) @db.TinyInt
+  notesType      NotesTypes @default(Miscellaneous)
+  notesDate      DateTime?  @db.Date
+  notes          String?    @db.LongText
+  studentId      Int
+  teacherId      Int
+  ongoingSession Int?
+  created_by     Int
+  updated_by     Int
+  created_at     DateTime   @default(now()) @db.DateTime(6)
+  updated_at     DateTime   @default(now()) @db.DateTime(6)
+
+  session Sessions? @relation(fields: [ongoingSession], references: [id])
+
+  student User     @relation("StudentNotesRelation", fields: [studentId], references: [id])
+  teacher User     @relation("TeacherNotesRelation", fields: [teacherId], references: [id])
+  campus  Campus   @relation(fields: [campusId], references: [id])
+  class   Class?   @relation(fields: [classId], references: [id])
+  section Section? @relation(fields: [sectionId], references: [id])
+}
+
 model Engagements {
   id                   Int                    @id @default(autoincrement())
   campusId             Int
@@ -983,6 +1027,42 @@ model Engagements {
   @@index([classId], map: "Engagements_classId_fkey")
 }
 
+model Extracurricular {
+  id                       Int                        @id @default(autoincrement())
+  active                   Int                        @default(1) @db.TinyInt
+  name                     String?                    @db.VarChar(255)
+  details                  String?                    @db.LongText
+  created_by               Int
+  updated_by               Int
+  created_at               DateTime                   @default(now()) @db.DateTime(6)
+  updated_at               DateTime                   @default(now()) @db.DateTime(6)
+  studentToExtracurricular StudentToExtracurricular[]
+}
+
+model StudentToExtracurricular {
+  id                Int       @id @default(autoincrement())
+  studentId         Int
+  teacherId         Int
+  extracurricularId Int
+  completed         Int       @default(0) @db.TinyInt
+  minutes           Int
+  rating            Float     @default(0)
+  comments          String?   @db.LongText
+  proofUrl          String?   @db.Text
+  completedAt       DateTime?
+  created_by        Int
+  updated_by        Int
+  created_at        DateTime  @default(now()) @db.DateTime(6)
+  updated_at        DateTime  @default(now()) @db.DateTime(6)
+
+  extracurricular Extracurricular @relation(fields: [extracurricularId], references: [id])
+  student         User            @relation("StudentExtracurricularRelation", fields: [studentId], references: [id])
+  teacher         User            @relation("TeacherExtracurricularRelation", fields: [teacherId], references: [id])
+
+  ongoingSession Int?
+  session        Sessions? @relation(fields: [ongoingSession], references: [id])
+}
+
 model StudentToEngagements {
   id             Int          @id @default(autoincrement())
   campusId       Int
@@ -991,6 +1071,9 @@ model StudentToEngagements {
   completed      Int          @default(0) @db.TinyInt
   rating         Float        @default(0)
   comments       String?      @db.LongText
+  response       String?      @db.LongText
+  fileUrl        String?      @db.Text
+  submittedAt    DateTime?
   created_by     Int
   updated_by     Int
   created_at     DateTime     @default(now()) @db.DateTime(6)
@@ -1004,6 +1087,45 @@ model StudentToEngagements {
   @@index([campusId], map: "StudentToEngagements_campusId_fkey")
   @@index([engagementId], map: "StudentToEngagements_engagementId_fkey")
   @@index([userId], map: "StudentToEngagements_userId_fkey")
+}
+
+model BehaviourLog {
+  id             Int                @id @default(autoincrement())
+  studentId      Int
+  teacherId      Int
+  category       BehaviourCategory?
+  points         Int
+  note           String?
+  ongoingSession Int?
+  session        Sessions?          @relation(fields: [ongoingSession], references: [id])
+  created_at     DateTime           @default(now()) @db.DateTime(6)
+  created_by     Int
+  student        User               @relation("StudentRelation", fields: [studentId], references: [id])
+  teacher        User               @relation("TeacherRelation", fields: [teacherId], references: [id])
+}
+
+model Badge {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  iconUrl      String         @db.Text
+  StudentBadge StudentBadge[]
+}
+
+model StudentBadge {
+  id             Int       @id @default(autoincrement())
+  studentId      Int
+  teacherId      Int
+  active         Int       @default(1) @db.TinyInt
+  reason         String?
+  ongoingSession Int?
+  session        Sessions? @relation(fields: [ongoingSession], references: [id])
+  badgeId        Int
+  badge          Badge?    @relation(fields: [badgeId], references: [id])
+
+  awardedAt DateTime @default(now())
+  student   User     @relation("StudentBadgeRelation", fields: [studentId], references: [id])
+  teacher   User     @relation("TeacherBadgeRelation", fields: [teacherId], references: [id])
 }
 
 model FeePlan {
@@ -1972,4 +2094,56 @@ enum FileType {
   URL
   Audio
   Video
+}
+
+enum NotesTypes {
+  Health
+  Food
+  Miscellaneous
+}
+
+enum BehaviourCategory {
+  ATTENTION
+  CLASS_PARTICIPATION
+  HOMEWORK
+  WORK_HABITS
+  LEARNING_SKILLS
+  ORGANIZATION
+  COMPLETES_TASKS_ON_TIME
+  FOLLOWS_INSTRUCTIONS
+
+  PUNCTUALITY
+  DISCIPLINE
+  ATTENDANCE
+  UNIFORM
+  CLEANLINESS
+  COURTESY
+  RESPECT
+  BEHAVIOUR_WITH_TEACHERS
+  BEHAVIOUR_WITH_PEERS
+  SCHOOL_PROPERTY_CARE
+  RULES_COMPLIANCE
+
+  COMMUNICATION_SKILLS
+  TEAMWORK
+  COOPERATION
+  SOCIAL_SKILLS
+  EMPATHY
+  CONFLICT_RESOLUTION
+  LEADERSHIP
+  INITIATIVE
+  ADAPTABILITY
+  CONFIDENCE
+
+  RESPONSIBILITY
+  SELF_CONTROL
+  SELF_MOTIVATION
+  ATTITUDE
+  PERSEVERANCE
+  PROBLEM_SOLVING
+  CREATIVITY
+  CRITICAL_THINKING
+  DECISION_MAKING
+  TIME_MANAGEMENT
+  GOAL_SETTING
 }
