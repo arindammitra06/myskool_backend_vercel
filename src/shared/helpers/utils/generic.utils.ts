@@ -831,16 +831,16 @@ export function getMenuCategory(currentUser: any) {
             //console.log(itemRevisited.links);
             let sortedLinks = itemRevisited.links.sort((a, b) => a.order - b.order);
             if (sortedLinks !== null && sortedLinks !== undefined && sortedLinks.length > 0) {
-              returnObj["firstPage"] = "/home/" + sortedLinks[0].route;
+              returnObj["firstPage"] = "/app/" + sortedLinks[0].route;
             } else {
-              returnObj["firstPage"] = "/home/" + itemRevisited.links[0].route;
+              returnObj["firstPage"] = "/app/" + itemRevisited.links[0].route;
             }
 
           }
-        } else if (itemRevisited.route === 'home') {
+        } else if (itemRevisited.route === 'app') {
           returnObj["firstPage"] = "/" + itemRevisited.route;
         } else {
-          returnObj["firstPage"] = "/home/" + itemRevisited.route;
+          returnObj["firstPage"] = "/app/" + itemRevisited.route;
         }
       }
 

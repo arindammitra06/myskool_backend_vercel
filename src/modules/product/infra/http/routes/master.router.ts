@@ -92,6 +92,8 @@ MasterRouter.post("/bulkSaveStudentBadges", masterControllerInstance.bulkSaveStu
 MasterRouter.post("/bulkSaveStudentBehaviour", masterControllerInstance.bulkSaveStudentBehaviour);
 MasterRouter.post("/updateStudentEngagementRatingAndComments", masterControllerInstance.updateStudentEngagementRatingAndComments);
 MasterRouter.get("/deleteStudentEngagement/:campusId/:id/:currentUserId", masterControllerInstance.deleteStudentEngagement);
+MasterRouter.post("/bulkSaveStudenExtracurricular", masterControllerInstance.bulkSaveStudentExtracurricular);
+
 
 //reset email
 MasterRouter.post("/resetPassword", masterControllerInstance.resetPassword);

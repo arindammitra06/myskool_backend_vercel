@@ -1061,6 +1061,7 @@ model StudentToExtracurricular {
 
   ongoingSession Int?
   session        Sessions? @relation(fields: [ongoingSession], references: [id])
+  @@unique([studentId, extracurricularId, ongoingSession])
 }
 
 model StudentToEngagements {

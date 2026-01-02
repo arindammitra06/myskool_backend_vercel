@@ -318,7 +318,7 @@ export class MasterController {
     return res.json({ status: true, data: sessionSelectItems, message: '' });
   }
 
-   public async getAllBadges(req: Request, res: Response) {
+  public async getAllBadges(req: Request, res: Response) {
     const badges = await prisma.badge.findMany({});
 
     return res.json({
@@ -351,10 +351,10 @@ export class MasterController {
         });
 
         return res.json({
-        data: null,
-        status: true,
-        message: 'Extracurricular updated',
-      });
+          data: null,
+          status: true,
+          message: 'Extracurricular updated',
+        });
       } else {
         await prisma.extracurricular.create({
           data: {
@@ -369,12 +369,11 @@ export class MasterController {
         });
 
         return res.json({
-        data: null,
-        status: true,
-        message: 'Extracurricular created',
-      });
+          data: null,
+          status: true,
+          message: 'Extracurricular created',
+        });
       }
-      
     } catch (error) {
       console.error(error);
       return res
@@ -451,10 +450,10 @@ export class MasterController {
         });
 
         return res.json({
-        data: null,
-        status: true,
-        message: 'Badge updated',
-      });
+          data: null,
+          status: true,
+          message: 'Badge updated',
+        });
       } else {
         await prisma.badge.create({
           data: {
@@ -465,12 +464,11 @@ export class MasterController {
         });
 
         return res.json({
-        data: null,
-        status: true,
-        message: 'Badge created',
-      });
+          data: null,
+          status: true,
+          message: 'Badge created',
+        });
       }
-      
     } catch (error) {
       console.error(error);
       return res
@@ -2554,53 +2552,55 @@ export class MasterController {
   }
 
   public async updateEngagementResponse(req: Request, res: Response) {
-  const formData: any = req.body;
-    console.log(formData)
-  try {
-    if (!formData || !formData.form) {
-      return res.json({
-        data: null,
+    const formData: any = req.body;
+    console.log(formData);
+    try {
+      if (!formData || !formData.form) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Invalid request',
+        });
+      }
+
+      const form = formData.form;
+
+      // ---- UPDATE ----
+      if (form.id) {
+        await prisma.studentToEngagements.update({
+          where: {
+            id: form.id,
+            campusId: form.campusId,
+          },
+          data: {
+            response: form.response ?? null,
+            fileUrl:
+              formData.attachmentUrls !== null &&
+              formData.attachmentUrls !== undefined &&
+              formData.attachmentUrls.length > 0
+                ? formData.attachmentUrls[0]
+                : null,
+            submittedAt: new Date(),
+            updated_by: form.created_by,
+            updated_at: new Date(),
+          },
+        });
+
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Response updated',
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        message: error.message,
         status: false,
-        message: 'Invalid request',
-      });
-    }
-
-    const form = formData.form;
-
-    // ---- UPDATE ----
-    if (form.id) {
-      await prisma.studentToEngagements.update({
-        where: {
-          id: form.id,
-          campusId: form.campusId,
-        },
-        data: {
-          response: form.response ?? null,
-          fileUrl: formData.attachmentUrls!==null && formData.attachmentUrls!==undefined && formData.attachmentUrls.length>0 ? formData.attachmentUrls[0] : null,
-          submittedAt: new Date(),
-          updated_by: form.created_by,
-          updated_at: new Date(),
-        },
-      });
-
-      return res.json({
         data: null,
-        status: true,
-        message: 'Response updated',
       });
     }
-
-
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({
-      message: error.message,
-      status: false,
-      data: null,
-    });
   }
-}
-
 
   public async fetchEngagements(req: Request, res: Response) {
     const engagemntForm: any = req.body;
@@ -2856,182 +2856,284 @@ export class MasterController {
   }
 
   public async bulkSaveStudentBadges(req: Request, res: Response) {
-  const formData: any = req.body;
-  try {
-    if (!formData || !formData.form) {
-      return res.json({
-        data: null,
-        status: false,
-        message: 'Invalid data received.',
-      });
-    }
-    console.log(formData)
-    const institute = await prisma.institute.findFirst();
-    const sessionId = institute?.sessionId ?? null;
-
-    const { created_by , reason} = formData.form;
-    const selectedStudents = formData.selectedStudents || [];
-    const selectedBadges = formData.selectedBadges || [];
-    
-    if (selectedStudents.length === 0 || selectedBadges.length === 0) {
-      return res.json({
-        data: null,
-        status: false,
-        message: 'No students or badges selected.',
-      });
-    }
-
-    // ------------------------------------------
-    // 1️⃣ Build all possible assignments
-    // ------------------------------------------
-    const allAssignments: any[] = [];
-
-    for (const student of selectedStudents) {
-      for (const badge of selectedBadges) {
-        allAssignments.push({
-          studentId: Number(student.id),
-          badgeId: Number(badge.id),
-          teacherId: Number(created_by),
-          ongoingSession: sessionId,
+    const formData: any = req.body;
+    try {
+      if (!formData || !formData.form) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Invalid data received.',
         });
       }
+      console.log(formData);
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId ?? null;
+
+      const { created_by, reason } = formData.form;
+      const selectedStudents = formData.selectedStudents || [];
+      const selectedBadges = formData.selectedBadges || [];
+
+      if (selectedStudents.length === 0 || selectedBadges.length === 0) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'No students or badges selected.',
+        });
+      }
+
+      // ------------------------------------------
+      // 1️⃣ Build all possible assignments
+      // ------------------------------------------
+      const allAssignments: any[] = [];
+
+      for (const student of selectedStudents) {
+        for (const badge of selectedBadges) {
+          allAssignments.push({
+            studentId: Number(student.id),
+            badgeId: Number(badge.id),
+            teacherId: Number(created_by),
+            ongoingSession: sessionId,
+          });
+        }
+      }
+
+      // ------------------------------------------
+      // 2️⃣ Fetch already existing assignments
+      // ------------------------------------------
+      const existing = await prisma.studentBadge.findMany({
+        where: {
+          OR: allAssignments.map((a) => ({
+            studentId: a.studentId,
+            badgeId: a.badgeId,
+            ongoingSession: a.ongoingSession,
+          })),
+        },
+        select: {
+          studentId: true,
+          badgeId: true,
+          ongoingSession: true,
+        },
+      });
+
+      const existingSet = new Set(
+        existing.map((e) => `${e.studentId}-${e.badgeId}-${e.ongoingSession}`)
+      );
+
+      // ------------------------------------------
+      // 3️⃣ Filter new inserts
+      // ------------------------------------------
+      const toInsert = allAssignments
+        .filter(
+          (a) =>
+            !existingSet.has(`${a.studentId}-${a.badgeId}-${a.ongoingSession}`)
+        )
+        .map((a) => ({
+          ...a,
+          active: 1,
+          reason,
+          awardedAt: new Date(),
+        }));
+
+      // ------------------------------------------
+      // 4️⃣ Bulk insert
+      // ------------------------------------------
+      if (toInsert.length > 0) {
+        await prisma.studentBadge.createMany({
+          data: toInsert,
+          skipDuplicates: true,
+        });
+      }
+
+      return res.json({
+        status: true,
+        data: null,
+        message: `Awarded ${toInsert.length} new badge(s). Skipped ${existing.length} already existing badge(s).`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        message: error.message,
+        status: false,
+        data: null,
+      });
     }
+  }
 
-    // ------------------------------------------
-    // 2️⃣ Fetch already existing assignments
-    // ------------------------------------------
-    const existing = await prisma.studentBadge.findMany({
-      where: {
-        OR: allAssignments.map((a) => ({
-          studentId: a.studentId,
-          badgeId: a.badgeId,
-          ongoingSession: a.ongoingSession,
-        })),
-      },
-      select: {
-        studentId: true,
-        badgeId: true,
-        ongoingSession: true,
-      },
-    });
+  public async bulkSaveStudentBehaviour(req: Request, res: Response) {
+    const formData: any = req.body;
+    console.log(formData);
+    try {
+      if (!formData || !formData.form) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Invalid data received.',
+        });
+      }
 
-    const existingSet = new Set(
-      existing.map(
-        (e) => `${e.studentId}-${e.badgeId}-${e.ongoingSession}`
-      )
-    );
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId ?? null;
 
-    // ------------------------------------------
-    // 3️⃣ Filter new inserts
-    // ------------------------------------------
-    const toInsert = allAssignments
-      .filter(
-        (a) =>
-          !existingSet.has(
-            `${a.studentId}-${a.badgeId}-${a.ongoingSession}`
-          )
-      )
-      .map((a) => ({
-        ...a,
-        active: 1,
-        reason,
-        awardedAt: new Date(),
+      const {
+        behaviour,
+        points,
+        note,
+        created_by,
+        campusId,
+        classId,
+        sectionId,
+      } = formData.form;
+      const selectedStudents = formData.selectedStudents || [];
+
+      if (!behaviour || points === undefined) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'Behaviour category and points are required.',
+        });
+      }
+
+      if (selectedStudents.length === 0) {
+        return res.json({
+          data: null,
+          status: false,
+          message: 'No students selected.',
+        });
+      }
+
+      // ------------------------------------------
+      // 1️⃣ Build behaviour logs
+      // ------------------------------------------
+      const logs = selectedStudents.map((student: any) => ({
+        studentId: Number(student.id),
+        teacherId: Number(created_by),
+        category: behaviour,
+        points: Number(points),
+        note: note ?? null,
+        ongoingSession: sessionId,
+        created_by: Number(created_by),
       }));
 
-    // ------------------------------------------
-    // 4️⃣ Bulk insert
-    // ------------------------------------------
-    if (toInsert.length > 0) {
-      await prisma.studentBadge.createMany({
-        data: toInsert,
-        skipDuplicates: true,
+      // ------------------------------------------
+      // 2️⃣ Bulk insert
+      // ------------------------------------------
+      await prisma.behaviourLog.createMany({
+        data: logs,
+      });
+
+      return res.json({
+        status: true,
+        data: null,
+        message: `Behaviour logged for ${logs.length} student(s).`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        message: error.message,
+        status: false,
+        data: null,
       });
     }
-
-    return res.json({
-      status: true,
-      data: null,
-      message: `Awarded ${toInsert.length} new badge(s). Skipped ${existing.length} already existing badge(s).`,
-    });
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({
-      message: error.message,
-      status: false,
-      data: null,
-    });
   }
-}
 
-public async bulkSaveStudentBehaviour(req: Request, res: Response) {
-  const formData: any = req.body;
-  console.log(formData)
-  try {
-    if (!formData || !formData.form) {
+  public async bulkSaveStudentExtracurricular(req: Request, res: Response) {
+    const payload: any = req.body;
+
+    try {
+      if (!payload?.form) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Invalid data received.',
+        });
+      }
+
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Active session not found.',
+        });
+      }
+
+      const {
+        extracurricularId,
+        comments,
+        created_by,
+      } = payload.form;
+
+      const selectedStudents = payload.selectedStudents ?? [];
+
+      if (!extracurricularId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Extracurricular is required.',
+        });
+      }
+
+      if (selectedStudents.length === 0) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'No students selected.',
+        });
+      }
+
+      // ------------------------------------------
+      // Upsert per student (session-based)
+      // ------------------------------------------
+      await prisma.$transaction(
+        selectedStudents.map((student: any) =>
+          prisma.studentToExtracurricular.upsert({
+            where: {
+              studentId_extracurricularId_ongoingSession: {
+                studentId: Number(student.id),
+                extracurricularId: Number(extracurricularId),
+                ongoingSession: sessionId,
+              },
+            },
+            update: {
+              comments,
+              updated_by: Number(created_by),
+            },
+            create: {
+              studentId: Number(student.id),
+              teacherId: Number(created_by),
+              extracurricularId: Number(extracurricularId),
+              ongoingSession: sessionId,
+              comments: comments,
+              minutes:  0,
+              completed: 0,
+              created_at: new Date(),
+              updated_at: new Date(),
+              created_by: Number(created_by),
+              updated_by: Number(created_by),
+            },
+          })
+        )
+      );
+
       return res.json({
+        status: true,
         data: null,
+        message: `Extracurricular saved/updated for ${selectedStudents.length} student(s).`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
         status: false,
-        message: "Invalid data received.",
+        data: null,
+        message: error.message,
       });
     }
-
-    const institute = await prisma.institute.findFirst();
-    const sessionId = institute?.sessionId ?? null;
-
-    const { behaviour, points, note, created_by,campusId, classId,  sectionId} = formData.form;
-    const selectedStudents = formData.selectedStudents || [];
-
-    if (!behaviour || points === undefined) {
-      return res.json({
-        data: null,
-        status: false,
-        message: "Behaviour category and points are required.",
-      });
-    }
-
-    if (selectedStudents.length === 0) {
-      return res.json({
-        data: null,
-        status: false,
-        message: "No students selected.",
-      });
-    }
-
-    // ------------------------------------------
-    // 1️⃣ Build behaviour logs
-    // ------------------------------------------
-    const logs = selectedStudents.map((student: any) => ({
-      studentId: Number(student.id),
-      teacherId: Number(created_by),
-      category: behaviour,
-      points: Number(points),
-      note: note ?? null,
-      ongoingSession: sessionId,
-      created_by: Number(created_by),
-    }));
-
-    // ------------------------------------------
-    // 2️⃣ Bulk insert
-    // ------------------------------------------
-    await prisma.behaviourLog.createMany({
-      data: logs,
-    });
-
-    return res.json({
-      status: true,
-      data: null,
-      message: `Behaviour logged for ${logs.length} student(s).`,
-    });
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({
-      message: error.message,
-      status: false,
-      data: null,
-    });
   }
-}
-
 
   public async updateStudentEngagementRatingAndComments(
     req: Request,

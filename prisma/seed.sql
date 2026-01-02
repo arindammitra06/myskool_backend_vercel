@@ -188,7 +188,7 @@ insert into myskool.User(firstName,lastName, displayName, idCardNumber, userType
 
 
 -- Adding Menu categories
-insert into myskool.MenuCategory values (1,'Dashboard','home',1, 1, 1,1, CURDATE(),CURDATE(),'Dashboard');
+insert into myskool.MenuCategory values (1,'Dashboard','app',1, 1, 1,1, CURDATE(),CURDATE(),'Dashboard');
 insert into myskool.MenuCategory values (2,'My Profile','myProfile',2, 1, 1,1, CURDATE(),CURDATE(),'My Profile');
 insert into myskool.MenuCategory values (3,'Admissions Management','',3, 1, 1,1, CURDATE(),CURDATE(),'Admissions Management');
 insert into myskool.MenuCategory values (4,'Student Management','',4, 1, 1,1, CURDATE(),CURDATE(),'Student Management');
