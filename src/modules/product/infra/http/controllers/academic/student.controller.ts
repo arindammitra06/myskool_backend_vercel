@@ -45,7 +45,7 @@ export class StudentController {
     const studentID = generateIdsForParentAndStudent(latestUserID.id + 1, 'ST');
     const middleName =
       studentWithParents.form.middleName !== null &&
-      studentWithParents.form.middleName !== undefined
+        studentWithParents.form.middleName !== undefined
         ? studentWithParents.form.middleName
         : '';
 
@@ -78,8 +78,8 @@ export class StudentController {
                 homeAddress: studentWithParents.form.homeAddress,
                 routeId:
                   studentWithParents.form.routeId !== null &&
-                  studentWithParents.form.routeId !== undefined &&
-                  studentWithParents.form.routeId !== ''
+                    studentWithParents.form.routeId !== undefined &&
+                    studentWithParents.form.routeId !== ''
                     ? Number(studentWithParents.form.routeId)
                     : (null as never),
                 classId: Number(studentWithParents.form.classId),
@@ -289,7 +289,7 @@ export class StudentController {
     const studentID = generateIdsForParentAndStudent(latestUserID.id + 1, 'ST');
     const middleName =
       studentWithParents.form.middleName !== null &&
-      studentWithParents.form.middleName !== undefined
+        studentWithParents.form.middleName !== undefined
         ? studentWithParents.form.middleName
         : '';
 
@@ -323,8 +323,8 @@ export class StudentController {
                 homeAddress: studentWithParents.form.homeAddress,
                 routeId:
                   studentWithParents.form.routeId !== null &&
-                  studentWithParents.form.routeId !== undefined &&
-                  studentWithParents.form.routeId !== ''
+                    studentWithParents.form.routeId !== undefined &&
+                    studentWithParents.form.routeId !== ''
                     ? Number(studentWithParents.form.routeId)
                     : (null as never),
                 classId: Number(studentWithParents.form.classId),
@@ -526,8 +526,8 @@ export class StudentController {
                   if (parent1Present !== null && parent1Present !== undefined) {
                     console.log(
                       'Parent 1 already exists --' +
-                        parent1Present.displayName +
-                        ', Hence mapping to student'
+                      parent1Present.displayName +
+                      ', Hence mapping to student'
                     );
                     await prisma.parentChildRelation.create({
                       data: {
@@ -629,8 +629,8 @@ export class StudentController {
                   if (parent2Present !== null && parent2Present !== undefined) {
                     console.log(
                       'Parent 2 already exists --' +
-                        parent2Present.displayName +
-                        ', Hence mapping to student'
+                      parent2Present.displayName +
+                      ', Hence mapping to student'
                     );
 
                     await prisma.parentChildRelation.create({
@@ -1115,8 +1115,8 @@ export class StudentController {
                       ) {
                         console.log(
                           'Parent 1 already exists --' +
-                            parent1Present.displayName +
-                            ', Hence mapping to student'
+                          parent1Present.displayName +
+                          ', Hence mapping to student'
                         );
 
                         await prisma.parentChildRelation.create({
@@ -1146,14 +1146,14 @@ export class StudentController {
                             email: formContent.data[i]['Father Email'],
                             mobile:
                               formContent.data[i]['Father Mobile'] !== null &&
-                              formContent.data[i]['Father Mobile'] !==
+                                formContent.data[i]['Father Mobile'] !==
                                 undefined &&
-                              String(
-                                formContent.data[i]['Father Mobile']
-                              ).startsWith('+')
+                                String(
+                                  formContent.data[i]['Father Mobile']
+                                ).startsWith('+')
                                 ? String(formContent.data[i]['Father Mobile'])
                                 : '+' +
-                                  String(formContent.data[i]['Father Mobile']),
+                                String(formContent.data[i]['Father Mobile']),
                             parentType: ParentType.Father,
                             idCardNumber: fatherId,
                             updated_by: formContent.currentUserId,
@@ -1229,8 +1229,8 @@ export class StudentController {
                       ) {
                         console.log(
                           'Parent 2 already exists --' +
-                            parent2Present.displayName +
-                            ', Hence mapping to student'
+                          parent2Present.displayName +
+                          ', Hence mapping to student'
                         );
 
                         await prisma.parentChildRelation.create({
@@ -1260,14 +1260,14 @@ export class StudentController {
                             email: formContent.data[i]['Mother Email'],
                             mobile:
                               formContent.data[i]['Mother Mobile'] !== null &&
-                              formContent.data[i]['Mother Mobile'] !==
+                                formContent.data[i]['Mother Mobile'] !==
                                 undefined &&
-                              String(
-                                formContent.data[i]['Mother Mobile']
-                              ).startsWith('+')
+                                String(
+                                  formContent.data[i]['Mother Mobile']
+                                ).startsWith('+')
                                 ? String(formContent.data[i]['Mother Mobile'])
                                 : '+' +
-                                  String(formContent.data[i]['Mother Mobile']),
+                                String(formContent.data[i]['Mother Mobile']),
                             parentType: ParentType.Mother,
                             idCardNumber: motherId,
                             updated_by: formContent.currentUserId,
@@ -1942,18 +1942,28 @@ export class StudentController {
             parent: true,
           },
         },
-        StudentRatings:{
-          where:{
-              ongoingSession: Number(institute.sessionId)
+        StudentRatings: {
+          where: {
+            ongoingSession: Number(institute.sessionId)
           },
           include: {
             ratingFromUser: true,
             session: true
           }
         },
+        extracurricularOfStudent: {
+          where: {
+            ongoingSession: Number(institute.sessionId)
+          },
+          include: {
+            extracurricular: true,
+            teacher: true,
+            session: true
+          }
+        },
         badgesOfStudent: {
-          where:{
-              ongoingSession: Number(institute.sessionId)
+          where: {
+            ongoingSession: Number(institute.sessionId)
           },
           include: {
             badge: true,
@@ -1962,8 +1972,8 @@ export class StudentController {
           }
         },
         behaviourOfStudent: {
-          where:{
-              ongoingSession: Number(institute.sessionId)
+          where: {
+            ongoingSession: Number(institute.sessionId)
           },
           include: {
             teacher: true,
@@ -2021,7 +2031,7 @@ export class StudentController {
     const studentWithParents: any = req.body;
     const middleName =
       studentWithParents.form.middleName !== null &&
-      studentWithParents.form.middleName !== undefined
+        studentWithParents.form.middleName !== undefined
         ? studentWithParents.form.middleName
         : '';
 
@@ -2623,22 +2633,22 @@ export class StudentController {
   }
 
   public async deleteRating(req: Request, res: Response) {
-      const id = Number(req.params.id);
-      const campusId = Number(req.params.campusId);
-  
-      await prisma.studentRatings.delete({
-        where: {
-          id: id,
-          campusId:campusId
-        },
-      });
-  
-      return res.json({
-        status: true,
-        data: null,
-        message: 'Rating deleted successfully',
-      });
-    }
+    const id = Number(req.params.id);
+    const campusId = Number(req.params.campusId);
+
+    await prisma.studentRatings.delete({
+      where: {
+        id: id,
+        campusId: campusId
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Rating deleted successfully',
+    });
+  }
 
 
   public async getStudingRatingAndComments(req: Request, res: Response) {
@@ -2679,23 +2689,23 @@ export class StudentController {
     });
   }
 
-   public async deleteDailyNote(req: Request, res: Response) {
-      const id = Number(req.params.id);
-      const campusId = Number(req.params.campusId);
-  
-      await prisma.dailyNotes.delete({
-        where: {
-          id: id,
-          campusId:campusId
-        },
-      });
-  
-      return res.json({
-        status: true,
-        data: null,
-        message: 'Note deleted successfully',
-      });
-    }
+  public async deleteDailyNote(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const campusId = Number(req.params.campusId);
+
+    await prisma.dailyNotes.delete({
+      where: {
+        id: id,
+        campusId: campusId
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Note deleted successfully',
+    });
+  }
 
   public async saveStudentDailyNotes(req: Request, res: Response) {
     const input: any = req.body.form;
@@ -2737,41 +2747,58 @@ export class StudentController {
   }
 
 
-   public async deleteStudentReward(req: Request, res: Response) {
-      const id = Number(req.params.id);
-      const currentUserID = Number(req.params.currentUserID);
-  
-      await prisma.studentBadge.delete({
-        where: {
-          id: id,
-        },
-      });
-  
-      return res.json({
-        status: true,
-        data: null,
-        message: 'Reward deleted successfully',
-      });
-    }
+  public async deleteStudentReward(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.studentBadge.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Reward deleted successfully',
+    });
+  }
+
+  public async deleteStudentExtracurricular(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.studentToExtracurricular.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Extracurricular deleted successfully',
+    });
+  }
 
 
-     public async deleteStudentBehavior(req: Request, res: Response) {
-      const id = Number(req.params.id);
-      const currentUserID = Number(req.params.currentUserID);
-  
-      await prisma.behaviourLog.delete({
-        where: {
-          id: id,
-        },
-      });
-  
-      return res.json({
-        status: true,
-        data: null,
-        message: 'Behavior info deleted successfully',
-      });
-    }
-    
+  public async deleteStudentBehavior(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.behaviourLog.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Behavior info deleted successfully',
+    });
+  }
+
   public async getStudentNotes(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const classId = Number(req.params.classId);
@@ -2794,7 +2821,7 @@ export class StudentController {
         teacher: true,
       },
     });
-console.log(notesForThisSession)
+    console.log(notesForThisSession)
     return res.json({
       status: true,
       data: { notesForThisSession: notesForThisSession },
@@ -2810,29 +2837,29 @@ console.log(notesForThisSession)
 
     try {
       await prisma.studentRatings.create({
-              data: {
-                campusId: Number(input.form.campusId),
-                userId: Number(input.form.studentId),
-                classId: Number(input.form.classId),
-                sectionId: Number(input.form.sectionId),
-                ratingFrom: Number(input.form.currentUserId),
-                rating: Number(input.form.rating),
-                ongoingSession: institute.sessionId,
-                previousRating: 0,
-                previousComments: '',
-                comments: input.form.comment,
-                created_by: Number(input.form.currentUserId),
-                created_at: new Date(),
-                updated_by: Number(input.form.currentUserId),
-                updated_at: new Date(),
-              },
-            });
+        data: {
+          campusId: Number(input.form.campusId),
+          userId: Number(input.form.studentId),
+          classId: Number(input.form.classId),
+          sectionId: Number(input.form.sectionId),
+          ratingFrom: Number(input.form.currentUserId),
+          rating: Number(input.form.rating),
+          ongoingSession: institute.sessionId,
+          previousRating: 0,
+          previousComments: '',
+          comments: input.form.comment,
+          created_by: Number(input.form.currentUserId),
+          created_at: new Date(),
+          updated_by: Number(input.form.currentUserId),
+          updated_at: new Date(),
+        },
+      });
 
-    return res.json({
-      status: true,
-      data: null,
-      message: 'Rating added',
-    });
+      return res.json({
+        status: true,
+        data: null,
+        message: 'Rating added',
+      });
     } catch (error) {
       console.error(error);
       return res.json({

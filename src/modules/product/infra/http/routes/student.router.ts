@@ -25,6 +25,7 @@ StudentRouter.get("/getStudentNotes/:campusId/:classId/:sectionId/:userId", stud
 StudentRouter.delete("/deleteDailyNote/:id/:campusId", studentControllerInstance.deleteDailyNote);
 StudentRouter.delete("/deleteStudentReward/:id/:userId", studentControllerInstance.deleteStudentReward);
 StudentRouter.delete("/deleteStudentBehavior/:id/:userId", studentControllerInstance.deleteStudentBehavior);
+StudentRouter.delete("/deleteStudentExtracurricular/:id/:userId", studentControllerInstance.deleteStudentExtracurricular);
 
 
 StudentRouter.post("/saveStudentDailyNotes", studentControllerInstance.saveStudentDailyNotes);
