@@ -17,6 +17,9 @@ MasterRouter.get("/getAllBadges", masterControllerInstance.getAllBadges);
 MasterRouter.post("/addUpdateBadge", masterControllerInstance.addUpdateBadge);
 MasterRouter.delete("/deleteBadge/:id/:userId", masterControllerInstance.deleteBadge);
 
+MasterRouter.get("/getAllCompetitionMaster", masterControllerInstance.getAllCompetitionMaster);
+MasterRouter.delete("/deleteCompetitionMaster/:id/:userId", masterControllerInstance.deleteCompetitionMaster);
+MasterRouter.post("/addUpdateCompetitionMaster", masterControllerInstance.addUpdateCompetitionMaster);
 
 MasterRouter.get("/getAllExtracurricular", masterControllerInstance.getAllExtracurricular);
 MasterRouter.post("/addUpdateExtracurricular", masterControllerInstance.addUpdateExtracurricular);

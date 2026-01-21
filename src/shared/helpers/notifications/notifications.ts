@@ -3,6 +3,7 @@ import { EmailNotificationJson, NotificationModel, SendToAndFrom } from "./notif
 import moment from "moment";
 import { prisma } from "../../db-client";
 import accountCreationTemplate from "../../../emails/account-creation";
+import { sendEmailNotificationFinal } from "../utils/emailService";
 const SibApiV3Sdk = require('@getbrevo/brevo');
 
 export async function sendSms(name: string, model: NotificationModel, phoneNumber:string[]) {
@@ -11,32 +12,32 @@ export async function sendSms(name: string, model: NotificationModel, phoneNumbe
     //console.log('Print Model')
     //console.log(model)
     if(template!==null && template!==undefined){
-        let messageBody: string = template.body;
-        messageBody = evaluateVariables(messageBody, template.keywords ,model);
+    //     let messageBody: string = template.body;
+    //     messageBody = evaluateVariables(messageBody, template.keywords ,model);
         
         
-        if(currentInstitute!==null  && currentInstitute!==undefined && 
-            currentInstitute.allowSMS!==null && currentInstitute.allowSMS!==undefined && currentInstitute.allowSMS===1
-            && currentInstitute.SMSApiKey!==null && currentInstitute.SMSApiKey!==undefined && currentInstitute.SMSApiKey!==''){
+    //     if(currentInstitute!==null  && currentInstitute!==undefined && 
+    //         currentInstitute.allowSMS!==null && currentInstitute.allowSMS!==undefined && currentInstitute.allowSMS===1
+    //         && currentInstitute.SMSApiKey!==null && currentInstitute.SMSApiKey!==undefined && currentInstitute.SMSApiKey!==''){
     
-                                   let tosAsString = '';
-                                   phoneNumber.forEach((eachTo: string) =>{
-                                    tosAsString = tosAsString + eachTo+ ";"
-                                   });
+    //                                let tosAsString = '';
+    //                                phoneNumber.forEach((eachTo: string) =>{
+    //                                 tosAsString = tosAsString + eachTo+ ";"
+    //                                });
 
-                                   await prisma.sMSHistory.create({
-                                        data: {
-                                            campusId:model.campusId,
-                                            active:1,
-                                            smsTemplateId: template.id,
-                                            name:name,
-                                            tos:tosAsString,
-                                            body:messageBody,
-                                            created_by:model.loggedInUserId,
-                                            created_at: new Date(),
-                                        },
-                                      });
-        }
+    //                                await prisma.sMSHistory.create({
+    //                                     data: {
+    //                                         campusId:model.campusId,
+    //                                         active:1,
+    //                                         smsTemplateId: template.id,
+    //                                         name:name,
+    //                                         tos:tosAsString,
+    //                                         body:messageBody,
+    //                                         created_by:model.loggedInUserId,
+    //                                         created_at: new Date(),
+    //                                     },
+    //                                   });
+    //     }
     }
 }
 
@@ -360,7 +361,8 @@ export async function sendEmail(name: string, model: NotificationModel,  tos: Se
     }
 }
 
-export async function sendAdhocEmail(campusId, loggedInUserId, subject: string, body:string,  tos: SendToAndFrom[]) {
+export async function sendAdhocEmail(campusId, loggedInUserId, 
+                        subject: string, body:string,  tos: SendToAndFrom[]) {
     let currentInstitute = await getInstituteDetails();
     if(subject!==null && subject!==undefined && body!==null && body!==undefined){
         sendEmailCommon(currentInstitute, subject, body, tos, "ADHOC", campusId, null, loggedInUserId);
@@ -375,10 +377,10 @@ export async function sendAccountCreationEmail(currentInstitute: Institute,
                         userName: string, password:string) {
 
     if (currentInstitute !== null && currentInstitute !== undefined && 
-            currentInstitute.allowEmail !== null && currentInstitute.allowEmail !== undefined && currentInstitute.allowEmail === 1
-                && currentInstitute.emailApiKey !== null && currentInstitute.emailApiKey !== undefined && currentInstitute.emailApiKey !== '') {
-        console.log('Print User details before sending Account Creation email');
-        console.log(user);
+            currentInstitute.allowEmail !== null && currentInstitute.allowEmail !== undefined 
+                && currentInstitute.allowEmail === 1
+                && currentInstitute.emailProvider !== null 
+                && currentInstitute.emailProvider !== undefined) {
         try{  
             let template: EmailTemplate = await getEmailTemplateByName('Profile Created');
             let appUrl = process.env.WEB_APP_URL;
@@ -441,7 +443,7 @@ export async function changeAccountResetStatus(user:any, campusId:number, otp:st
 }
 
 
-export function sendEmailCommon(currentInstitute: Institute, 
+export async function sendEmailCommon(currentInstitute: Institute, 
                                 subject: string, 
                                 messageBody: string, 
                                 tos: SendToAndFrom[], 
@@ -451,62 +453,45 @@ export function sendEmailCommon(currentInstitute: Institute,
                                 currentUserid: number) {
   
   if (currentInstitute !== null && currentInstitute !== undefined &&
-        currentInstitute.allowEmail !== null && currentInstitute.allowEmail !== undefined && currentInstitute.allowEmail === 1
-        && currentInstitute.emailApiKey !== null && currentInstitute.emailApiKey !== undefined && currentInstitute.emailApiKey !== '') {
+        currentInstitute.allowEmail !== null 
+        && currentInstitute.allowEmail !== undefined 
+        && currentInstitute.allowEmail === 1
+        && currentInstitute.emailProvider !== null 
+        && currentInstitute.emailProvider !== undefined) {
 
         try{   
-                    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
-                    let apiKey = apiInstance.authentications['apiKey'];
-                    apiKey.apiKey = currentInstitute.emailApiKey;
-                    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-                    sendSmtpEmail.subject = subject;
-                    sendSmtpEmail.htmlContent = messageBody;
-                    sendSmtpEmail.sender = {
-                        name: currentInstitute.emailFromName,
-                        email: currentInstitute.emailFromId,
-                    };
-                    console.log(apiKey)
-                    //change this later on //TO DO
-                    //REMOVE THE BELOW CODE AND REPLACE WITH NEXT LINE
-                    //sendSmtpEmail.to = tos;
-                    if(tos!==null && tos.length>0){
-                        let dummytos= [];
-                        for(let i = 0;i<tos.length;i++){
-                            dummytos.push({name:tos[i].name,email: 'arindammitra06@gmail.com' })
-                        }
-                        sendSmtpEmail.to = dummytos;
-                    }
-                    //END change this later on //TO DO
-
-
-                    apiInstance.sendTransacEmail(sendSmtpEmail).then(async function (data) {
-
-                        //console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-                        let tosAsString = '';
-                        tos.forEach((eachTo: SendToAndFrom) => {
+            //change this later on //TO DO
+            //REMOVE THE BELOW CODE AND REPLACE WITH NEXT LINE
+            //sendSmtpEmail.to = tos;
+            console.log('Print TOS here');
+            if(tos!==null && tos.length>0){
+                let tosAsString = '';
+                tos.forEach(async (eachTo: SendToAndFrom) => {
+                            console.log(eachTo.email);
                             tosAsString = tosAsString + eachTo.email + ";";
-                        });
-                        console.log('Sent email to :- ' + tosAsString);
-                        
-                        await prisma.emailHistory.create({
-                            data: {
-                                campusId: campusId,
-                                active: 1,
-                                emailTemplateId: templateId,
-                                name: templateName,
-                                tos: tosAsString,
-                                subject: subject,
-                                body: messageBody,
-                                created_by:currentUserid,
-                                created_at: new Date(),
-                            },
-                        });
-
-                    }, function (error) {
-                        console.error(error);
+                            await sendEmailNotificationFinal(
+                            currentInstitute.emailProvider,
+                            currentInstitute.emailConfig,
+                            { to: 'arindammitra06@gmail.com', subject, messageBody }// change my email to eachTo.email later
+                        );
+                });
+            await prisma.emailHistory.create({
+                        data: {
+                            campusId: campusId,
+                            active: 1,
+                            emailTemplateId: templateId,
+                            name: templateName,
+                            tos: tosAsString,
+                            subject: subject,
+                            body: messageBody,
+                            created_by:currentUserid,
+                            created_at: new Date(),
+                        },
                     });
+
+            }
+            //END change this later on //TO DO
+
 
         } catch (error) {
              console.error(error);   
@@ -514,5 +499,4 @@ export function sendEmailCommon(currentInstitute: Institute,
 
     }
 }
-
 

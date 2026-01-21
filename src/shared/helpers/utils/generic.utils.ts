@@ -1,4 +1,4 @@
-import { FeeType, Gender, Permission, Regime, TimeTable } from '@prisma/client';
+import { FeeType, Gender, Permission, Regime, TimeTable, User } from '@prisma/client';
 import * as crypto from 'crypto';
 import { prisma } from '../../db-client';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +12,22 @@ const ENC = "bf3c199c2470cb477d907b1e0917c17b";
 const IV = "5183666c72eec9e4";
 const ALGO = "aes-256-cbc";
 
+export function buildChatTitle(users: User[], maxLength = 30): string {
+  if (!users || users.length === 0) return "Unknown Chat";
 
+  // 1. For single user
+  if (users.length === 1) return users[0].firstName;
+
+  // 2. For multiple users, join names with comma
+  const names = users.map((u) => u.firstName).join(", ");
+
+  // 3. Truncate if too long
+  if (names.length <= maxLength) return names;
+
+  // 4. If truncated, show first few names + count
+  const firstNames = users.slice(0, 2).map((u) => u.firstName).join(", ");
+  return `${firstNames} +${users.length - 2} more`;
+}
 
 export const monthsString = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 export const monthArray = [

@@ -26,8 +26,10 @@ StudentRouter.delete("/deleteDailyNote/:id/:campusId", studentControllerInstance
 StudentRouter.delete("/deleteStudentReward/:id/:userId", studentControllerInstance.deleteStudentReward);
 StudentRouter.delete("/deleteStudentBehavior/:id/:userId", studentControllerInstance.deleteStudentBehavior);
 StudentRouter.delete("/deleteStudentExtracurricular/:id/:userId", studentControllerInstance.deleteStudentExtracurricular);
-
-
+StudentRouter.post("/bulkSaveStudentCompetition", studentControllerInstance.bulkSaveStudentCompetition);
+StudentRouter.delete("/deleteStudentCompetition/:id/:userId", studentControllerInstance.deleteStudentCompetition);
+StudentRouter.post("/updateStudentCompetition", studentControllerInstance.updateStudentCompetition);
+StudentRouter.post("/updateStudentExtracurricular", studentControllerInstance.updateStudentExtracurricular);
 StudentRouter.post("/saveStudentDailyNotes", studentControllerInstance.saveStudentDailyNotes);
 StudentRouter.post("/saveStudentRating", studentControllerInstance.saveStudentRating);
 StudentRouter.delete("/deleteRating/:id/:campusId", studentControllerInstance.deleteRating);

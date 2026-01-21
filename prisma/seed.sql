@@ -239,7 +239,7 @@ insert into myskool.MenuItems values (21,'Manage Online Classes','createOnlineCl
 insert into myskool.MenuItems values (25,'View My Homeworks','viewHomework',1, 1, 1,1, CURDATE(),CURDATE(),15,'');
 insert into myskool.MenuItems values (26,'Manage Daily Notes','dailyHomework',2, 1, 1,1, CURDATE(),CURDATE(),15,'');
 insert into myskool.MenuItems values (87,'Manage Student Engagements','manageStudentEngagements',3, 1, 1,1, CURDATE(),CURDATE(),15,'');
-insert into myskool.MenuItems values (89,'Manage Extracurriculars','manageExtracurriculars',4, 1, 1,1, CURDATE(),CURDATE(),15,'');
+insert into myskool.MenuItems values (89,'Manage Co-Curricular','manageExtracurriculars',4, 1, 1,1, CURDATE(),CURDATE(),15,'');
 
 insert into myskool.MenuItems values (27,'View Attendance','viewMyAttendance',1, 1, 1,1, CURDATE(),CURDATE(),16,'');
 insert into myskool.MenuItems values (28,'Staff Attendance','staffAttendance',2, 1, 1,1, CURDATE(),CURDATE(),16,'');

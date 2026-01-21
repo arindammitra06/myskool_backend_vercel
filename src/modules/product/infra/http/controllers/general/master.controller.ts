@@ -20,14 +20,6 @@ import {
   processTimeTableJsonData,
 } from '../../../../../../shared/helpers/utils/generic.utils';
 import moment from 'moment';
-import {
-  changeAccountResetStatus,
-  getEmailTemplateByName,
-  sendAdhocEmail,
-  sendEmail,
-  sendEmailCommon,
-  sendSms,
-} from '../../../../../../shared/helpers/notifications/notifications';
 import resetPasswordTemplate from '../../../../../../emails/reset-password';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -42,6 +34,7 @@ import {
 import path from 'path';
 import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit';
 import imagekit from '../../../../../../shared/helpers/utils/imagekitClient';
+import { sendAdhocEmail, sendSms, sendEmail, getEmailTemplateByName, sendEmailCommon, changeAccountResetStatus } from '../../../../../../shared/helpers/notifications/notifications';
 const fs = require('fs');
 
 interface MulterMemoryRequest extends Request {
@@ -391,6 +384,108 @@ export class MasterController {
       status: true,
       data: extracurricular,
       message: 'Extracurricular fetched',
+    });
+  }
+
+   public async getAllCompetitionMaster(req: Request, res: Response) {
+    const institute = await prisma.institute.findFirst();
+    
+    const competitions = await prisma.competition.findMany({
+      where: { active: 1, ongoingSession: institute?.sessionId || 1 },
+      include: {session: true},
+    });
+
+    return res.json({
+      status: true,
+      data: competitions,
+      message: 'Competitions fetched',
+    });
+  }
+
+  public async addUpdateCompetitionMaster(req: Request, res: Response) {
+    const inputData: any = req.body.form;
+    console.log(inputData);
+    try {
+      if (
+        inputData !== null &&
+        inputData !== undefined &&
+        inputData.id !== null &&
+        inputData.id !== undefined
+      ) {
+        await prisma.competition.update({
+          where: {
+            id: inputData.id,
+          },
+          data: {
+            name: inputData.name,
+            details: inputData.details,
+            ongoingSession: Number(inputData.sessionId),
+            entryUrl: inputData.entryUrl,
+            eventDate: moment(
+                              inputData.eventDate,
+                              'DD-MM-YYYY'
+                            ).toDate(),
+            result: inputData.result,
+            attachment: req.body.attachmentUrls[0],
+            updated_by: Number(inputData.currentUserId),
+            updated_at: new Date(),
+          },
+        });
+
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Competition updated',
+        });
+      } else {
+        await prisma.competition.create({
+          data: {
+            name: inputData.name,
+            details: inputData.details,
+            ongoingSession: Number(inputData.sessionId),
+            entryUrl: inputData.entryUrl,
+            eventDate: moment(
+                              inputData.eventDate,
+                              'DD-MM-YYYY'
+                            ).toDate(),
+            result: inputData.result,
+            attachment: req.body.attachmentUrls[0],
+            active: 1,
+            created_by:  Number(inputData.currentUserId),
+            created_at: new Date(),
+            updated_by:  Number(inputData.currentUserId),
+            updated_at: new Date(),
+          },
+        });
+
+        return res.json({
+          data: null,
+          status: true,
+          message: 'Competition created',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(400)
+        .json({ message: error.message, status: true, data: null });
+    }
+  }
+
+  public async deleteCompetitionMaster(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const currentUserID = Number(req.params.currentUserID);
+
+    await prisma.competition.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    return res.json({
+      status: true,
+      data: null,
+      message: 'Competition deleted successfully',
     });
   }
 

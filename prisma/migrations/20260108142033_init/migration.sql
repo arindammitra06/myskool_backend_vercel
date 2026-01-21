@@ -69,12 +69,9 @@ CREATE TABLE `Institute` (
     `updated_by` INTEGER NOT NULL,
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    `emailApiKey` VARCHAR(255) NULL,
-    `emailFromId` VARCHAR(255) NULL,
-    `emailFromName` VARCHAR(255) NULL,
-    `SMSApiKey` VARCHAR(255) NULL,
     `allowEmail` INTEGER NOT NULL DEFAULT 0,
-    `allowSMS` INTEGER NOT NULL DEFAULT 0,
+    `emailProvider` ENUM('BREVO', 'MAILGUN', 'SENDPULSE', 'MSG91', 'SMTP') NULL,
+    `emailConfig` JSON NULL,
     `financialYearId` INTEGER NULL,
     `themeId` INTEGER NULL,
     `dateTimeFormat` VARCHAR(255) NOT NULL DEFAULT 'MM/DD/YYYY hh:mm A',
@@ -796,6 +793,27 @@ CREATE TABLE `DailyHomework` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `DailyNotes` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `campusId` INTEGER NOT NULL,
+    `classId` INTEGER NULL,
+    `sectionId` INTEGER NULL,
+    `active` TINYINT NOT NULL DEFAULT 1,
+    `notesType` ENUM('Health', 'Food', 'Miscellaneous') NOT NULL DEFAULT 'Miscellaneous',
+    `notesDate` DATE NULL,
+    `notes` LONGTEXT NULL,
+    `studentId` INTEGER NOT NULL,
+    `teacherId` INTEGER NOT NULL,
+    `ongoingSession` INTEGER NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Engagements` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `campusId` INTEGER NOT NULL,
@@ -814,6 +832,77 @@ CREATE TABLE `Engagements` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Competition` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `active` TINYINT NOT NULL DEFAULT 1,
+    `name` VARCHAR(255) NULL,
+    `details` LONGTEXT NULL,
+    `eventDate` DATETIME(3) NULL,
+    `ongoingSession` INTEGER NULL,
+    `attachment` TEXT NULL,
+    `entryUrl` TEXT NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `StudentToCompetition` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `studentId` INTEGER NOT NULL,
+    `teacherId` INTEGER NOT NULL,
+    `competitionId` INTEGER NOT NULL,
+    `score` INTEGER NULL,
+    `remark` VARCHAR(191) NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `ongoingSession` INTEGER NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Extracurricular` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `active` TINYINT NOT NULL DEFAULT 1,
+    `name` VARCHAR(255) NULL,
+    `details` LONGTEXT NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `StudentToExtracurricular` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `studentId` INTEGER NOT NULL,
+    `teacherId` INTEGER NOT NULL,
+    `extracurricularId` INTEGER NOT NULL,
+    `completed` TINYINT NOT NULL DEFAULT 0,
+    `minutes` INTEGER NOT NULL,
+    `rating` DOUBLE NOT NULL DEFAULT 0,
+    `comments` LONGTEXT NULL,
+    `proofUrl` TEXT NULL,
+    `completedAt` DATETIME(3) NULL,
+    `created_by` INTEGER NOT NULL,
+    `updated_by` INTEGER NOT NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `ongoingSession` INTEGER NULL,
+
+    UNIQUE INDEX `StudentToExtracurricular_studentId_extracurricularId_ongoing_key`(`studentId`, `extracurricularId`, `ongoingSession`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `StudentToEngagements` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `campusId` INTEGER NOT NULL,
@@ -823,6 +912,8 @@ CREATE TABLE `StudentToEngagements` (
     `rating` DOUBLE NOT NULL DEFAULT 0,
     `comments` LONGTEXT NULL,
     `response` LONGTEXT NULL,
+    `fileUrl` TEXT NULL,
+    `submittedAt` DATETIME(3) NULL,
     `created_by` INTEGER NOT NULL,
     `updated_by` INTEGER NOT NULL,
     `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -832,6 +923,45 @@ CREATE TABLE `StudentToEngagements` (
     INDEX `StudentToEngagements_campusId_fkey`(`campusId`),
     INDEX `StudentToEngagements_engagementId_fkey`(`engagementId`),
     INDEX `StudentToEngagements_userId_fkey`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `BehaviourLog` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `studentId` INTEGER NOT NULL,
+    `teacherId` INTEGER NOT NULL,
+    `category` ENUM('ATTENTION', 'CLASS_PARTICIPATION', 'HOMEWORK', 'WORK_HABITS', 'LEARNING_SKILLS', 'ORGANIZATION', 'COMPLETES_TASKS_ON_TIME', 'FOLLOWS_INSTRUCTIONS', 'PUNCTUALITY', 'DISCIPLINE', 'ATTENDANCE', 'UNIFORM', 'CLEANLINESS', 'COURTESY', 'RESPECT', 'BEHAVIOUR_WITH_TEACHERS', 'BEHAVIOUR_WITH_PEERS', 'SCHOOL_PROPERTY_CARE', 'RULES_COMPLIANCE', 'COMMUNICATION_SKILLS', 'TEAMWORK', 'COOPERATION', 'SOCIAL_SKILLS', 'EMPATHY', 'CONFLICT_RESOLUTION', 'LEADERSHIP', 'INITIATIVE', 'ADAPTABILITY', 'CONFIDENCE', 'RESPONSIBILITY', 'SELF_CONTROL', 'SELF_MOTIVATION', 'ATTITUDE', 'PERSEVERANCE', 'PROBLEM_SOLVING', 'CREATIVITY', 'CRITICAL_THINKING', 'DECISION_MAKING', 'TIME_MANAGEMENT', 'GOAL_SETTING') NULL,
+    `points` INTEGER NOT NULL,
+    `note` VARCHAR(191) NULL,
+    `ongoingSession` INTEGER NULL,
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `created_by` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Badge` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `iconUrl` TEXT NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `StudentBadge` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `studentId` INTEGER NOT NULL,
+    `teacherId` INTEGER NOT NULL,
+    `active` TINYINT NOT NULL DEFAULT 1,
+    `reason` VARCHAR(191) NULL,
+    `ongoingSession` INTEGER NULL,
+    `badgeId` INTEGER NOT NULL,
+    `awardedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -1843,10 +1973,55 @@ ALTER TABLE `DailyHomework` ADD CONSTRAINT `DailyHomework_classId_fkey` FOREIGN 
 ALTER TABLE `DailyHomework` ADD CONSTRAINT `DailyHomework_sectionId_fkey` FOREIGN KEY (`sectionId`) REFERENCES `Section`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_classId_fkey` FOREIGN KEY (`classId`) REFERENCES `Class`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `DailyNotes` ADD CONSTRAINT `DailyNotes_sectionId_fkey` FOREIGN KEY (`sectionId`) REFERENCES `Section`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Engagements` ADD CONSTRAINT `Engagements_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Engagements` ADD CONSTRAINT `Engagements_classId_fkey` FOREIGN KEY (`classId`) REFERENCES `Class`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Competition` ADD CONSTRAINT `Competition_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToCompetition` ADD CONSTRAINT `StudentToCompetition_competitionId_fkey` FOREIGN KEY (`competitionId`) REFERENCES `Competition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToCompetition` ADD CONSTRAINT `StudentToCompetition_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToCompetition` ADD CONSTRAINT `StudentToCompetition_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToCompetition` ADD CONSTRAINT `StudentToCompetition_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToExtracurricular` ADD CONSTRAINT `StudentToExtracurricular_extracurricularId_fkey` FOREIGN KEY (`extracurricularId`) REFERENCES `Extracurricular`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToExtracurricular` ADD CONSTRAINT `StudentToExtracurricular_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToExtracurricular` ADD CONSTRAINT `StudentToExtracurricular_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentToExtracurricular` ADD CONSTRAINT `StudentToExtracurricular_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1859,6 +2034,27 @@ ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_userId_f
 
 -- AddForeignKey
 ALTER TABLE `StudentToEngagements` ADD CONSTRAINT `StudentToEngagements_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `BehaviourLog` ADD CONSTRAINT `BehaviourLog_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `BehaviourLog` ADD CONSTRAINT `BehaviourLog_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `BehaviourLog` ADD CONSTRAINT `BehaviourLog_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentBadge` ADD CONSTRAINT `StudentBadge_ongoingSession_fkey` FOREIGN KEY (`ongoingSession`) REFERENCES `Sessions`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentBadge` ADD CONSTRAINT `StudentBadge_badgeId_fkey` FOREIGN KEY (`badgeId`) REFERENCES `Badge`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentBadge` ADD CONSTRAINT `StudentBadge_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StudentBadge` ADD CONSTRAINT `StudentBadge_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `FeePlan` ADD CONSTRAINT `FeePlan_campusId_fkey` FOREIGN KEY (`campusId`) REFERENCES `Campus`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

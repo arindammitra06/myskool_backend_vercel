@@ -14,6 +14,7 @@ import AttendanceRouter from '../../../modules/product/infra/http/routes/attenda
 import AccountingRouter from '../../../modules/product/infra/http/routes/accounting.router';
 import SalaryRouter from '../../../modules/product/infra/http/routes/salary.router';
 import ExamRouter from '../../../modules/product/infra/http/routes/exam.router';
+import ChatRouter from '../../../modules/product/infra/http/routes/chat.router';
 
 
 const Routes = Router();
@@ -31,5 +32,6 @@ Routes.use("/attendance", AttendanceRouter);
 Routes.use("/accounting", AccountingRouter);
 Routes.use("/salary", SalaryRouter);
 Routes.use("/exam", ExamRouter);
+Routes.use("/chat", ChatRouter);
 
 export default Routes;
