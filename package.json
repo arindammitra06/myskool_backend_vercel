@@ -31,9 +31,9 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.1.1",
-    "@pdfme/common": "^5.5.8",
-    "@pdfme/generator": "^5.5.8",
-    "@pdfme/schemas": "^5.5.8",
+    "@pdfme/common": "^6.0.6",
+    "@pdfme/generator": "^6.0.6",
+    "@pdfme/schemas": "^6.0.6",
     "@prisma/client": "^6.10.1",
     "@types/body-parser": "^1.19.2",
     "@types/compression": "^1.7.2",
