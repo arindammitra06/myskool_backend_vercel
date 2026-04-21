@@ -27,7 +27,13 @@ export class Application {
     this.express = express();
     this.server = http.createServer(this.express);
 
-    this.express.use(cors());
+    this.express.use(cors({
+      origin: process.env.NODE_ENV === "production"
+        ? ["https://myskool-pro.vercel.app"]
+        : ["http://localhost:3000", "http://localhost:3001"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      credentials: true,
+    }));
     this.express.use(helmet());
     this.express.use(compression());
     this.express.use(bodyParser.json({ limit: BODY_PARSER_LIMIT }));
