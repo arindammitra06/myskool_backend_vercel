@@ -58,7 +58,7 @@ export class AccountingController {
       }
     });
     let parentModel = [];
-    
+
     if (parents !== null && parents !== undefined && parents.length > 0) {
       for (let i = 0; i < parents.length; i++) {
         if (parents[i].children.length > 1) {
@@ -323,6 +323,8 @@ export class AccountingController {
   }
 
 
+
+
   public async acceptPayment(req: Request, res: Response) {
 
     const formData: any = req.body;
@@ -360,7 +362,8 @@ export class AccountingController {
           id: Number(formData.form.invoiceId)
         },
         data: {
-          feeStatus: invoice.amount === Number(totalPaid) ? FeeStatus.Paid : Number(totalPaid) < invoice.amount ? FeeStatus.Partial : FeeStatus.Paid,
+          feeStatus: invoice.amount === Number(totalPaid) ? FeeStatus.Paid
+            : Number(totalPaid) < invoice.amount ? FeeStatus.Partial : FeeStatus.Paid,
           paidOn: paidDate,
           paymentType: PaymentType.Cash,
           paidAmount: Number(totalPaid),
@@ -553,7 +556,13 @@ export class AccountingController {
           MYAALInvoices: {
             where: {
               campusId: Number(formData.campusId),
-            }
+            },
+            include: {
+              class: true,
+              campus: true,
+              section: true,
+              session: true
+            },
           },
         },
       });
@@ -576,11 +585,12 @@ export class AccountingController {
               let dueAfterPayment = 0;
 
               if (invoice.feeStatus !== FeeStatus.Paid && invoice.feeStatus !== FeeStatus.Cancelled) {
-                dueAfterPayment = Number(invoice.amount) - Number(invoice.paidAmount);
+                dueAfterPayment = Number(invoice.amount);
               }
 
 
-              if (invoice !== null && invoice !== undefined && (invoice.feeStatus === FeeStatus.Unpaid || invoice.feeStatus === FeeStatus.Partial)) {
+              if (invoice !== null && invoice !== undefined
+                && (invoice.feeStatus === FeeStatus.Unpaid || invoice.feeStatus === FeeStatus.Partial)) {
                 if (invoice.feeType === FeeType.MONTHLY) {
                   monthlyDues = monthlyDues + 1;
                   monthlyDuesAmt = monthlyDuesAmt + dueAfterPayment;
@@ -645,8 +655,6 @@ export class AccountingController {
         where: {
           id: Number(formData.studentId),
           campusId: Number(formData.campusId),
-          classId: Number(formData.classId),
-          sectionId: Number(formData.sectionId),
         },
         include: {
           campus: true,
@@ -667,9 +675,20 @@ export class AccountingController {
               transactions: true
             }
           },
+          parent: {
+            include: {
+              parent: { include: { FamilyCredit: true } }
+            }
+          },
           MYAALInvoices: {
             where: {
               campusId: Number(formData.campusId),
+            },
+            include: {
+              class: true,
+              campus: true,
+              section: true,
+              session: true
             },
             orderBy: [
               {
@@ -688,7 +707,8 @@ export class AccountingController {
         let totalDues = 0;
         let totalLateDues = 0;
 
-        if (currentStudent.MYAALInvoices !== null && currentStudent.MYAALInvoices !== undefined && currentStudent.MYAALInvoices.length > 0) {
+        if (currentStudent.MYAALInvoices !== null && currentStudent.MYAALInvoices !== undefined
+          && currentStudent.MYAALInvoices.length > 0) {
 
           for (let j = 0; j < currentStudent.MYAALInvoices.length; j++) {
             let invoice = currentStudent.MYAALInvoices[j];
@@ -716,15 +736,14 @@ export class AccountingController {
                 currentStudent.MYAALInvoices[j]['displayName'] = currentStudent.displayName;
                 currentStudent.MYAALInvoices[j]['latefee'] = new Date() > invoice.dueDate && invoice.feeStatus !== FeeStatus.Paid && invoice.feeStatus !== FeeStatus.Cancelled ? Number(lateFeeLov.shortName) : 0;
               }
-              let dueAfterPayment = 0;
-              let totalAmountBeforePayments = invoice.amount;
+              //let dueAfterPayment = 0;
+              // let totalAmountBeforePayments = invoice.amount;
 
-              if (invoice.feeStatus !== FeeStatus.Paid && invoice.feeStatus !== FeeStatus.Cancelled) {
-                dueAfterPayment = Number(invoice.amount) - Number(invoice.paidAmount);
-              }
-              totalDues = totalDues + dueAfterPayment;
-              invoice.amount = Number(dueAfterPayment);
-              invoice['totalAmountBeforePayments'] = totalAmountBeforePayments;
+              // if (invoice.feeStatus !== FeeStatus.Paid && invoice.feeStatus !== FeeStatus.Cancelled) {
+              //   dueAfterPayment = Number(invoice.amount);
+              // }
+              totalDues = totalDues + (invoice.amount - invoice.paidAmount);
+              invoice['totalAmountBeforePayments'] = invoice.amount;
 
               if (new Date() > invoice.dueDate && invoice.feeStatus !== FeeStatus.Paid && invoice.feeStatus !== FeeStatus.Cancelled) {
                 totalLateDues = totalLateDues + Number(lateFeeLov.shortName);
@@ -732,8 +751,8 @@ export class AccountingController {
             }
           }
           //add totals to student
-          currentStudent['totalDues'] = totalDues + '';
-          currentStudent['totalLateDues'] = totalLateDues + '';
+          currentStudent['totalDues'] = totalDues;
+          currentStudent['totalLateDues'] = totalLateDues;
         }
 
 
@@ -869,9 +888,14 @@ export class AccountingController {
                       amount: Number(feePlanActive.monthlyAmt),
                       updated_by: formData.curretUserId,
                       ongoingSession: Number(institute.sessionId),
+                      classId: Number(studentEach.classId),
+                      sectionId: Number(studentEach.sectionId),
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
-                      created_at: new Date()
+                      created_at: new Date(),
+                      description: `Monthly Fee for ${studentEach.displayName} for ${new Date(formData.year, formData.month).toLocaleString("default", {
+                        month: "long"
+                      })}, ${formData.year}`,
                     },
                   });
                   singleInvoiceGenerate = true;
@@ -892,10 +916,15 @@ export class AccountingController {
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(feePlanActive.yearlyAmt),
                       ongoingSession: Number(institute.sessionId),
+                      classId: Number(studentEach.classId),
+                      sectionId: Number(studentEach.sectionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
-                      created_at: new Date()
+                      created_at: new Date(),
+                      description: `Yearly Fee for ${studentEach.displayName} for ${new Date(formData.year, formData.month).toLocaleString("default", {
+                        month: "long"
+                      })}, ${formData.year}`,
                     },
                   });
                   singleInvoiceGenerate = true;
@@ -915,10 +944,15 @@ export class AccountingController {
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(formData.adhocAmount),
                       ongoingSession: Number(institute.sessionId),
+                      classId: Number(studentEach.classId),
+                      sectionId: Number(studentEach.sectionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
-                      created_at: new Date()
+                      created_at: new Date(),
+                      description: `Adhoc Fee for ${studentEach.displayName} for ${new Date(formData.year, formData.month).toLocaleString("default", {
+                        month: "long"
+                      })}, ${formData.year}`
                     },
                   });
                   singleInvoiceGenerate = true;
@@ -938,10 +972,15 @@ export class AccountingController {
                       dueDate: futureMonthDueDate.toDate(),
                       amount: Number(formData.adhocAmount),
                       ongoingSession: Number(institute.sessionId),
+                      classId: Number(studentEach.classId),
+                      sectionId: Number(studentEach.sectionId),
                       updated_by: formData.curretUserId,
                       updated_at: new Date(),
                       created_by: formData.curretUserId,
-                      created_at: new Date()
+                      created_at: new Date(),
+                      description: `Late Fee for ${studentEach.displayName} for ${new Date(formData.year, formData.month).toLocaleString("default", {
+                        month: "long"
+                      })}, ${formData.year}`
                     },
                   });
                   singleInvoiceGenerate = true;
@@ -969,150 +1008,150 @@ export class AccountingController {
 
 
   public async updateStudentFeePlan(req: Request, res: Response) {
-  const formData: any = req.body;
-  console.log(formData);
-  const institute = await prisma.institute.findFirst();
+    const formData: any = req.body;
+    console.log(formData);
+    const institute = await prisma.institute.findFirst();
 
-  try {
-    if (
-      formData.studentId &&
-      formData.feePlanId &&
-      formData.campusId &&
-      formData.currentUserId
-    ) {
-      const existingstudentWithFees = await prisma.user.findUnique({
-        where: {
-          id: Number(formData.studentId),
-          campusId: Number(formData.campusId),
-        },
-        include: {
-          StudentFees: {
-            where: { active: 1 },
-          },
-        },
-      });
-
-      if (existingstudentWithFees) {
-        let updatedFeeRecord;
-
-        // -----------------------------
-        // CASE 1: Student has an active fee plan → Update it
-        // -----------------------------
-        if (
-          existingstudentWithFees.StudentFees &&
-          existingstudentWithFees.StudentFees.length === 1
-        ) {
-          updatedFeeRecord = await prisma.studentFees.update({
-            where: {
-              id: existingstudentWithFees.StudentFees[0].id,
-              campusId: Number(formData.campusId),
-            },
-            data: {
-              feePlanId: Number(formData.feePlanId),
-              updated_by: Number(formData.currentUserId),
-              updated_at: new Date(),
-            },
-          });
-
-          // ---- AUDIT ENTRY FOR UPDATE ----
-          await prisma.studentFeesAudit.create({
-            data: {
-              studentFeesId: updatedFeeRecord.id,
-              campusId: Number(formData.campusId),
-              userId: Number(formData.studentId),
-              feePlanId: Number(formData.feePlanId),
-              created_by: Number(formData.currentUserId),
-              updated_by: Number(formData.currentUserId),
-              created_at: new Date(),
-              updated_at: new Date(),
-              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
-              active: 1,
-            },
-          });
-        }
-
-        // -----------------------------
-        // CASE 2: No fee plan exists → Create new one
-        // -----------------------------
-        else if (
-          existingstudentWithFees.StudentFees &&
-          existingstudentWithFees.StudentFees.length === 0
-        ) {
-          const createdFeeRecord = await prisma.studentFees.create({
-            data: {
-              userId: Number(formData.studentId),
-              campusId: Number(formData.campusId),
-              feePlanId: Number(formData.feePlanId),
-              active: 1,
-              created_by: Number(formData.currentUserId),
-              created_at: new Date(),
-              updated_by: Number(formData.currentUserId),
-              updated_at: new Date(),
-            },
-          });
-
-          // ---- AUDIT ENTRY FOR CREATE ----
-          await prisma.studentFeesAudit.create({
-            data: {
-              studentFeesId: createdFeeRecord.id,
-              campusId: Number(formData.campusId),
-              userId: Number(formData.studentId),
-              feePlanId: Number(formData.feePlanId),
-              created_by: Number(formData.currentUserId),
-              updated_by: Number(formData.currentUserId),
-              created_at: new Date(),
-              updated_at: new Date(),
-              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
-              active: 1,
-            },
-          });
-        }
-
-        // -----------------------------
-        // SEND NOTIFICATION (unchanged)
-        // -----------------------------
-        const currentUser = await prisma.user.findUnique({
+    try {
+      if (
+        formData.studentId &&
+        formData.feePlanId &&
+        formData.campusId &&
+        formData.currentUserId
+      ) {
+        const existingstudentWithFees = await prisma.user.findUnique({
           where: {
-            active: 1,
-            id: Number(formData.currentUserId),
-            campusId: Number(formData.campusId),
-          },
-        });
-
-        const student = await prisma.user.findUnique({
-          where: {
-            active: 1,
             id: Number(formData.studentId),
             campusId: Number(formData.campusId),
           },
+          include: {
+            StudentFees: {
+              where: { active: 1 },
+            },
+          },
         });
 
-        if (student && currentUser) {
-          addANotification(
-            Number(formData.campusId),
-            Number(formData.currentUserId),
-            Number(formData.currentUserId),
-            buildMessage(
-              FEE_PLAN_UPDATED,
-              student.displayName,
-              currentUser.displayName,
-              moment(new Date()).format("DD-MMM-YYYY HH:mm")
-            )
-          );
+        if (existingstudentWithFees) {
+          let updatedFeeRecord;
+
+          // -----------------------------
+          // CASE 1: Student has an active fee plan → Update it
+          // -----------------------------
+          if (
+            existingstudentWithFees.StudentFees &&
+            existingstudentWithFees.StudentFees.length === 1
+          ) {
+            updatedFeeRecord = await prisma.studentFees.update({
+              where: {
+                id: existingstudentWithFees.StudentFees[0].id,
+                campusId: Number(formData.campusId),
+              },
+              data: {
+                feePlanId: Number(formData.feePlanId),
+                updated_by: Number(formData.currentUserId),
+                updated_at: new Date(),
+              },
+            });
+
+            // ---- AUDIT ENTRY FOR UPDATE ----
+            await prisma.studentFeesAudit.create({
+              data: {
+                studentFeesId: updatedFeeRecord.id,
+                campusId: Number(formData.campusId),
+                userId: Number(formData.studentId),
+                feePlanId: Number(formData.feePlanId),
+                created_by: Number(formData.currentUserId),
+                updated_by: Number(formData.currentUserId),
+                created_at: new Date(),
+                updated_at: new Date(),
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                active: 1,
+              },
+            });
+          }
+
+          // -----------------------------
+          // CASE 2: No fee plan exists → Create new one
+          // -----------------------------
+          else if (
+            existingstudentWithFees.StudentFees &&
+            existingstudentWithFees.StudentFees.length === 0
+          ) {
+            const createdFeeRecord = await prisma.studentFees.create({
+              data: {
+                userId: Number(formData.studentId),
+                campusId: Number(formData.campusId),
+                feePlanId: Number(formData.feePlanId),
+                active: 1,
+                created_by: Number(formData.currentUserId),
+                created_at: new Date(),
+                updated_by: Number(formData.currentUserId),
+                updated_at: new Date(),
+              },
+            });
+
+            // ---- AUDIT ENTRY FOR CREATE ----
+            await prisma.studentFeesAudit.create({
+              data: {
+                studentFeesId: createdFeeRecord.id,
+                campusId: Number(formData.campusId),
+                userId: Number(formData.studentId),
+                feePlanId: Number(formData.feePlanId),
+                created_by: Number(formData.currentUserId),
+                updated_by: Number(formData.currentUserId),
+                created_at: new Date(),
+                updated_at: new Date(),
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                active: 1,
+              },
+            });
+          }
+
+          // -----------------------------
+          // SEND NOTIFICATION (unchanged)
+          // -----------------------------
+          const currentUser = await prisma.user.findUnique({
+            where: {
+              active: 1,
+              id: Number(formData.currentUserId),
+              campusId: Number(formData.campusId),
+            },
+          });
+
+          const student = await prisma.user.findUnique({
+            where: {
+              active: 1,
+              id: Number(formData.studentId),
+              campusId: Number(formData.campusId),
+            },
+          });
+
+          if (student && currentUser) {
+            addANotification(
+              Number(formData.campusId),
+              Number(formData.currentUserId),
+              Number(formData.currentUserId),
+              buildMessage(
+                FEE_PLAN_UPDATED,
+                student.displayName,
+                currentUser.displayName,
+                moment(new Date()).format("DD-MMM-YYYY HH:mm")
+              )
+            );
+          }
         }
       }
-    }
 
-    return res.json({ status: true, data: null, message: "Fee Plan updated" });
-  } catch (error) {
-    console.error(error);
-    return res.json({
-      status: false,
-      data: null,
-      message: "Some error occurred. Try later.",
-    });
+      return res.json({ status: true, data: null, message: "Fee Plan updated" });
+    } catch (error) {
+      console.error(error);
+      return res.json({
+        status: false,
+        data: null,
+        message: "Some error occurred. Try later.",
+      });
+    }
   }
-}
 
   public async acceptFamilyCredit(req: Request, res: Response) {
     const formData: any = req.body;
@@ -1631,23 +1670,23 @@ export class AccountingController {
 
   public async bulkLoadProduct(req: Request, res: Response) {
     const productForm: any = req.body;
-    
+
     try {
       if (productForm !== null && productForm !== undefined) {
-        if (productForm.data!== null && productForm.data !== undefined && productForm.data.length>0) {
-          
-          for(let i= 0;i <productForm.data.length; i++){
+        if (productForm.data !== null && productForm.data !== undefined && productForm.data.length > 0) {
+
+          for (let i = 0; i < productForm.data.length; i++) {
             let productFound = await prisma.stockProduct.findFirst({
-              where:{
-                productCode:productForm.data[i]['Product Code']
+              where: {
+                productCode: productForm.data[i]['Product Code']
               },
               take: 1,
             });
             //Product Exists just Update stock & prices
-            if(productFound!==null && productFound!==undefined &&  productFound.id!==null && productFound.id!==undefined){
+            if (productFound !== null && productFound !== undefined && productFound.id !== null && productFound.id !== undefined) {
               let stock = productFound.stock + Number(productForm.data[i].Stock);
-              
-              
+
+
               await prisma.stockProduct.update({
                 where: {
                   id: Number(productFound.id),
@@ -1661,7 +1700,7 @@ export class AccountingController {
                   updated_at: new Date()
                 },
               });
-            }else{
+            } else {
               let appProdId = generateProductIdNumber(5);
 
               await prisma.stockProduct.create({

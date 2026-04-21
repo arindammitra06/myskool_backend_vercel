@@ -387,12 +387,12 @@ export class MasterController {
     });
   }
 
-   public async getAllCompetitionMaster(req: Request, res: Response) {
+  public async getAllCompetitionMaster(req: Request, res: Response) {
     const institute = await prisma.institute.findFirst();
-    
+
     const competitions = await prisma.competition.findMany({
       where: { active: 1, ongoingSession: institute?.sessionId || 1 },
-      include: {session: true},
+      include: { session: true },
     });
 
     return res.json({
@@ -422,9 +422,9 @@ export class MasterController {
             ongoingSession: Number(inputData.sessionId),
             entryUrl: inputData.entryUrl,
             eventDate: moment(
-                              inputData.eventDate,
-                              'DD-MM-YYYY'
-                            ).toDate(),
+              inputData.eventDate,
+              'DD-MM-YYYY'
+            ).toDate(),
             result: inputData.result,
             attachment: req.body.attachmentUrls[0],
             updated_by: Number(inputData.currentUserId),
@@ -445,15 +445,15 @@ export class MasterController {
             ongoingSession: Number(inputData.sessionId),
             entryUrl: inputData.entryUrl,
             eventDate: moment(
-                              inputData.eventDate,
-                              'DD-MM-YYYY'
-                            ).toDate(),
+              inputData.eventDate,
+              'DD-MM-YYYY'
+            ).toDate(),
             result: inputData.result,
             attachment: req.body.attachmentUrls[0],
             active: 1,
-            created_by:  Number(inputData.currentUserId),
+            created_by: Number(inputData.currentUserId),
             created_at: new Date(),
-            updated_by:  Number(inputData.currentUserId),
+            updated_by: Number(inputData.currentUserId),
             updated_at: new Date(),
           },
         });
@@ -1447,13 +1447,13 @@ export class MasterController {
           data: {
             classId:
               timetable.form.classId === null ||
-              (timetable.form.classId !== null && timetable.form.classId === '')
+                (timetable.form.classId !== null && timetable.form.classId === '')
                 ? null
                 : Number(timetable.form.classId),
             sectionId:
               timetable.form.sectionId === null ||
-              (timetable.form.sectionId !== null &&
-                timetable.form.sectionId === '')
+                (timetable.form.sectionId !== null &&
+                  timetable.form.sectionId === '')
                 ? null
                 : Number(timetable.form.sectionId),
             year: timetable.form.year,
@@ -1481,13 +1481,13 @@ export class MasterController {
           data: {
             classId:
               timetable.form.classId === null ||
-              (timetable.form.classId !== null && timetable.form.classId === '')
+                (timetable.form.classId !== null && timetable.form.classId === '')
                 ? null
                 : Number(timetable.form.classId),
             sectionId:
               timetable.form.sectionId === null ||
-              (timetable.form.sectionId !== null &&
-                timetable.form.sectionId === '')
+                (timetable.form.sectionId !== null &&
+                  timetable.form.sectionId === '')
                 ? null
                 : Number(timetable.form.sectionId),
             ongoingSessionId: Number(timetable.form.sessionId),
@@ -1600,9 +1600,9 @@ export class MasterController {
           ) {
             thatsMonthData[0].holidays.push(
               holidays[i].name +
-                ' (' +
-                moment(holidays[i].holidayStart).format('DD/MM') +
-                ' )'
+              ' (' +
+              moment(holidays[i].holidayStart).format('DD/MM') +
+              ' )'
             );
           }
         }
@@ -2671,8 +2671,8 @@ export class MasterController {
             response: form.response ?? null,
             fileUrl:
               formData.attachmentUrls !== null &&
-              formData.attachmentUrls !== undefined &&
-              formData.attachmentUrls.length > 0
+                formData.attachmentUrls !== undefined &&
+                formData.attachmentUrls.length > 0
                 ? formData.attachmentUrls[0]
                 : null,
             submittedAt: new Date(),
@@ -3204,7 +3204,7 @@ export class MasterController {
               extracurricularId: Number(extracurricularId),
               ongoingSession: sessionId,
               comments: comments,
-              minutes:  0,
+              minutes: 0,
               completed: 0,
               created_at: new Date(),
               updated_at: new Date(),
@@ -3507,9 +3507,9 @@ export class MasterController {
           }
           console.log(
             'Updated yearlyAmount :' +
-              yearlyAmount +
-              ' monthlyAmount: ' +
-              monthlyAmount
+            yearlyAmount +
+            ' monthlyAmount: ' +
+            monthlyAmount
           );
 
           let feePlan = await prisma.feePlan.update({
@@ -3550,9 +3550,9 @@ export class MasterController {
             }
             console.log(
               'New yearlyAmount :' +
-                yearlyAmount +
-                ' monthlyAmount: ' +
-                monthlyAmount
+              yearlyAmount +
+              ' monthlyAmount: ' +
+              monthlyAmount
             );
           }
 
@@ -3778,23 +3778,23 @@ export class MasterController {
             sectionId: -1,
             student_leave_start:
               fetchedLeave.LeaveDates !== null &&
-              fetchedLeave.LeaveDates !== undefined &&
-              fetchedLeave.LeaveDates.length > 0
+                fetchedLeave.LeaveDates !== undefined &&
+                fetchedLeave.LeaveDates.length > 0
                 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
                 : '',
             student_leave_end:
               fetchedLeave.LeaveDates !== null &&
-              fetchedLeave.LeaveDates !== undefined &&
-              fetchedLeave.LeaveDates.length === 1
+                fetchedLeave.LeaveDates !== undefined &&
+                fetchedLeave.LeaveDates.length === 1
                 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
                 : fetchedLeave.LeaveDates !== null &&
-                    fetchedLeave.LeaveDates !== undefined &&
-                    fetchedLeave.LeaveDates.length > 1
+                  fetchedLeave.LeaveDates !== undefined &&
+                  fetchedLeave.LeaveDates.length > 1
                   ? moment(
-                      fetchedLeave.LeaveDates[
-                        fetchedLeave.LeaveDates.length - 1
-                      ].date
-                    ).format('DD-MM-YYYY')
+                    fetchedLeave.LeaveDates[
+                      fetchedLeave.LeaveDates.length - 1
+                    ].date
+                  ).format('DD-MM-YYYY')
                   : '',
             student_leave_approved_by: updater.displayName,
             student_leave_status:
@@ -3823,23 +3823,23 @@ export class MasterController {
             sectionId: -1,
             student_leave_start:
               fetchedLeave.LeaveDates !== null &&
-              fetchedLeave.LeaveDates !== undefined &&
-              fetchedLeave.LeaveDates.length > 0
+                fetchedLeave.LeaveDates !== undefined &&
+                fetchedLeave.LeaveDates.length > 0
                 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
                 : '',
             student_leave_end:
               fetchedLeave.LeaveDates !== null &&
-              fetchedLeave.LeaveDates !== undefined &&
-              fetchedLeave.LeaveDates.length === 1
+                fetchedLeave.LeaveDates !== undefined &&
+                fetchedLeave.LeaveDates.length === 1
                 ? moment(fetchedLeave.LeaveDates[0].date).format('DD-MM-YYYY')
                 : fetchedLeave.LeaveDates !== null &&
-                    fetchedLeave.LeaveDates !== undefined &&
-                    fetchedLeave.LeaveDates.length > 1
+                  fetchedLeave.LeaveDates !== undefined &&
+                  fetchedLeave.LeaveDates.length > 1
                   ? moment(
-                      fetchedLeave.LeaveDates[
-                        fetchedLeave.LeaveDates.length - 1
-                      ].date
-                    ).format('DD-MM-YYYY')
+                    fetchedLeave.LeaveDates[
+                      fetchedLeave.LeaveDates.length - 1
+                    ].date
+                  ).format('DD-MM-YYYY')
                   : '',
             student_leave_approved_by: updater.displayName,
             student_leave_status:

@@ -3,57 +3,58 @@ import { prisma } from "../../../../../../shared/db-client";
 
 export class ChatController {
 
-public async createOrGetRoom(req: Request, res: Response) {
-  try {
-    console.log("createOrGetRoom called with body:", req.body);
-    const chatTitle = req.body.chatTitle || "Chat Room";
-    const senderId = Number(req.body.senderId);
-    const recipientIds: number[] = req.body.recipientIds;
+  public async createOrGetRoom(req: Request, res: Response) {
+    try {
+      console.log("createOrGetRoom called with body:", req.body);
+      const chatTitle = req.body.chatTitle || "Chat Room";
+      const senderId = Number(req.body.senderId);
+      const recipientIds: number[] = req.body.recipientIds;
 
-    const allUserIds = [senderId, ...recipientIds].sort();
+      const allUserIds = [senderId, ...recipientIds].sort();
 
-    // Find existing room with same participants
-    const rooms = await prisma.chatRoom.findMany({
-      where: {
-        participants: {
-          every: {
-            userId: { in: allUserIds },
+      // Find existing room with same participants
+      const rooms = await prisma.chatRoom.findMany({
+        where: {
+          participants: {
+            every: {
+              userId: { in: allUserIds },
+            },
           },
         },
-      },
-      include: { participants: true },
-    });
+        include: { participants: true },
+      });
 
-    const exactRoom = rooms.find(
-      r => r.participants.length === allUserIds.length
-    );
+      const exactRoom = rooms.find(
+        r => r.participants.length === allUserIds.length
+      );
 
-    if (exactRoom) {
-      return res.json({ status: true, data: exactRoom });
+      if (exactRoom) {
+        return res.json({ status: true, data: exactRoom });
+      }
+
+      // Create new room
+      const room = await prisma.chatRoom.create({
+        data: {
+          name: chatTitle,
+          createdAt: new Date(),
+          participants: {
+            create: allUserIds.map(userId => ({ userId })),
+          },
+        },
+        include: {
+          participants: {
+            include: {
+              user: { select: { id: true, displayName: true, thumbnailUrl: true } },
+            },
+          },
+        },
+      });
+
+      return res.json({ status: true, data: room });
+    } catch {
+      return res.json({ status: false, message: "Failed to create chat room" });
     }
-
-    // Create new room
-    const room = await prisma.chatRoom.create({
-      data: {
-        name: chatTitle,
-        participants: {
-          create: allUserIds.map(userId => ({ userId })),
-        },
-      },
-      include: {
-        participants: {
-          include: {
-            user: { select: { id: true, displayName: true, thumbnailUrl: true  } },
-          },
-        },
-      },
-    });
-
-    return res.json({ status: true, data: room });
-  } catch {
-    return res.json({ status: false, message: "Failed to create chat room" });
   }
-}
 
   // 1️⃣ Get all chat rooms for current user
   public async getMyChatRooms(req: Request, res: Response) {
@@ -96,7 +97,7 @@ public async createOrGetRoom(req: Request, res: Response) {
       const messages = await prisma.message.findMany({
         where: { roomId },
         include: {
-          sender: { select: { id: true, displayName: true , thumbnailUrl: true} },
+          sender: { select: { id: true, displayName: true, thumbnailUrl: true } },
         },
         orderBy: { createdAt: "asc" },
       });
@@ -113,15 +114,16 @@ public async createOrGetRoom(req: Request, res: Response) {
       const userId = Number(req.params.userId);
       const roomId = Number(req.params.roomId);
       const { content } = req.body;
-    
+
       const message = await prisma.message.create({
         data: {
           content,
           senderId: userId,
           roomId,
+          createdAt: new Date(),
         },
         include: {
-          sender: { select: { id: true, displayName: true , thumbnailUrl: true} },
+          sender: { select: { id: true, displayName: true, thumbnailUrl: true } },
         },
       });
 

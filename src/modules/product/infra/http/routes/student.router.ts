@@ -11,7 +11,8 @@ StudentRouter.get("/getAllStudents/:campusId", studentControllerInstance.getAllS
 StudentRouter.get("/getAllStudentsByClassAndSection/:campusId/:classId/:sectionId/:active", studentControllerInstance.getAllStudentsByClassAndSection);
 StudentRouter.get("/getStudentById/:id/:campusId", studentControllerInstance.getStudentId);
 StudentRouter.post("/updatePhoto/:campusId/:id", studentControllerInstance.updatePhoto);
-
+StudentRouter.post("/fetchStudentExtracurricular", studentControllerInstance.fetchStudentExtracurricular);
+StudentRouter.post("/fetchStudentCompetition", studentControllerInstance.fetchStudentCompetition);
 StudentRouter.delete("/deleteStudent/:id/:campusId", studentControllerInstance.deleteStudent);
 StudentRouter.get("/getStudentBirthday/:campusId", studentControllerInstance.getStudentBirthday);
 StudentRouter.get("/getAllAdmissionEnquiry/:campusId/:isFromApp", studentControllerInstance.getAllAdmissionEnquiry);

@@ -1,4 +1,4 @@
-import { FeeType, Gender, Permission, Regime, TimeTable, User } from '@prisma/client';
+import { FeeType, Gender, Institute, Permission, Regime, TimeTable, User } from '@prisma/client';
 import * as crypto from 'crypto';
 import { prisma } from '../../db-client';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +8,81 @@ import fs from 'fs';
 import path from 'path';
 import imagekit from './imagekitClient';
 
+type Oklch = { l: number; c: number; h: number };
+function parseOklch(color: string): Oklch {
+  const match = color.match(
+    /oklch\(\s*([\d.]+)(%)?\s+([\d.]+)\s+([\d.]+)\s*\)/i
+  );
+
+  if (!match) {
+    throw new Error(`Invalid OKLCH color: ${color}`);
+  }
+
+  let l = parseFloat(match[1]);
+  const isPercent = !!match[2];
+
+  if (isPercent) {
+    l = l / 100;
+  }
+
+  return {
+    l, // ALWAYS 0–1
+    c: parseFloat(match[3]),
+    h: parseFloat(match[4]),
+  };
+}
+
+export function getAppSelectedCurrencySymbol(institute: Institute | null) {
+  return getCurrencySymbol('en-US',
+    institute !== null && institute !== undefined && institute.currency !== null && institute.currency !== undefined
+      ? institute.currency : 'INR ') + ' ';
+}
+
+
+export function generateOklchShades(
+  baseColor: string
+): string[] {
+  const { l, c, h } = parseOklch(baseColor);
+
+  const total = 10;
+  const baseIndex = 5;
+
+  const maxLight = 0.98;
+  const minDark = 0.22;
+
+  return Array.from({ length: total }, (_, i) => {
+    const dist =
+      i < baseIndex
+        ? (baseIndex - i) / baseIndex
+        : (i - baseIndex) / (total - 1 - baseIndex);
+
+    // ---- Lightness curve (perceptual, asymmetric) ----
+    const newL =
+      i < baseIndex
+        ? l + (maxLight - l) * Math.pow(dist, 1.25)
+        : l - (l - minDark) * Math.pow(dist, 1.1);
+
+    // ---- Chroma falloff (gentle, avoids mud) ----`
+    const chromaFalloff =
+      i === baseIndex
+        ? 1
+        : Math.exp(-dist * (i < baseIndex ? 1.6 : 1.2));
+
+    const newC = c * chromaFalloff;
+
+    return `oklch(${newL.toFixed(4)} ${newC.toFixed(4)} ${h})`;
+  });
+}
+
+
+export function repeatStringInArray(
+  color: string
+): any {
+  return [
+    color, color, color, color, color,
+    color, color, color, color, color,
+  ];
+}
 const ENC = "bf3c199c2470cb477d907b1e0917c17b";
 const IV = "5183666c72eec9e4";
 const ALGO = "aes-256-cbc";
@@ -328,54 +403,47 @@ function buildRadius(defaultRadius: any) {
     return 15;
   }
 }
-function repeatStringInArray(str: string): string[] {
-  return Array(10).fill(str);
-}
+
 export function buildTheme(themeObject: any) {
-  let primaryswatch: any = generateShades(themeObject.primaryColor);
-   
-   let blueswatch: any = generateShades(themeObject.blue);
-   let greenswatch: any = generateShades(themeObject.green);
-   let yellowswatch: any = generateShades(themeObject.yellow);
-   let orangeswatch: any = generateShades(themeObject.orange);
-   let redswatch: any = generateShades(themeObject.red);
-   let actionGreenButtonswatch: any = generateShades(themeObject.actionGreenButton);
-   let secondaryOrangeButtonswatch: any = generateShades(themeObject.secondaryOrangeButton);
+  const primaryswatch = generateOklchShades(themeObject.primaryColor);
 
-   let defaultRadius = buildRadius(themeObject.defaultRadius);
+  const blueswatch = generateOklchShades(themeObject.blue);
+  const greenswatch = generateOklchShades(themeObject.green);
+  const yellowswatch = generateOklchShades(themeObject.yellow);
+  const orangeswatch = generateOklchShades(themeObject.orange);
+  const redswatch = generateOklchShades(themeObject.red);
 
-   let backg: any = repeatStringInArray(themeObject.backg);
-   let foreg: any = repeatStringInArray(themeObject.foreg);
-   let header: any = repeatStringInArray(themeObject.header);
-   let leftmenu: any = repeatStringInArray(themeObject.leftmenu);
+  const actionButtonswatch =
+    generateOklchShades(themeObject.actionGreenButton);
+  const secondaryButtonswatch =
+    generateOklchShades(themeObject.secondaryOrangeButton);
 
-   
-   let newTheme: any = {
-      fontFamily: themeObject.fontFamily,
-      primaryShade: { light: 5, dark: 9 },
-      //colorScheme: form.values.lightOrDark as ColorScheme,
-      white: themeObject.white,
-      black: themeObject.black,
-      fontSizes: buildFontSize(themeObject.fontSize),
-      defaultRadius: defaultRadius,
-      colors: {
-         backg: backg,
-         foreg: foreg,
-         header: header,
-         leftmenu: leftmenu,
-         primary: primaryswatch,
-         red: redswatch,
-         orange: orangeswatch,
-         blue: blueswatch,
-         green: greenswatch,
-         yellow: yellowswatch,
-         actionButton: actionGreenButtonswatch,
-         secondaryButton: secondaryOrangeButtonswatch,
-      },
-      primaryColor: 'primary',
+  return {
+    fontFamily: themeObject.fontFamily,
+    primaryShade: { light: 5, dark: 9 },
+    white: themeObject.white,
+    black: themeObject.black,
+    fontSizes: buildFontSize(themeObject.fontSize),
+    defaultRadius: buildRadius(themeObject.defaultRadius),
 
-   };
-   return newTheme;
+    colors: {
+      backg: repeatStringInArray(themeObject.backg),
+      foreg: repeatStringInArray(themeObject.foreg),
+      header: repeatStringInArray(themeObject.header),
+      leftmenu: repeatStringInArray(themeObject.leftmenu),
+
+      primary: primaryswatch,
+      red: redswatch,
+      orange: orangeswatch,
+      blue: blueswatch,
+      green: greenswatch,
+      yellow: yellowswatch,
+      actionButton: actionButtonswatch,
+      secondaryButton: secondaryButtonswatch,
+    },
+
+    primaryColor: 'primary',
+  };
 }
 
 

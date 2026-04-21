@@ -124,7 +124,12 @@ export class InstituteController {
         include: {
           Campus: true,
           theme: true,
-          PaymentDetails: true
+          PaymentDetails: true,
+          TemplateMaster: {
+            include: {
+              pdf: true
+            }
+          },
         },
       });
 

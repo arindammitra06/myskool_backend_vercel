@@ -85,6 +85,18 @@ model StudentSessionHistory {
   section Section? @relation(fields: [sectionId], references: [id])
 }
 
+model TemplateMaster {
+  id           Int          @id @default(autoincrement())
+  templateName String       @db.VarChar(255)
+  templateType String       @db.VarChar(255)
+  instituteId  Int
+  institute    Institute    @relation(fields: [instituteId], references: [id])
+  pdfId        Int?
+  pdf          PdfTemplate? @relation(fields: [pdfId], references: [id], onDelete: SetNull)
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+}
+
 model Institute {
   id                        Int              @id @default(autoincrement())
   instituteName             String           @db.VarChar(255)
@@ -138,6 +150,7 @@ model Institute {
   fireSafetyClearanceNumber String?          @db.VarChar(255)
   buildingSafetyCertificate String?          @db.VarChar(255)
   studentTeacherRatio       String?          @db.VarChar(255)
+  TemplateMaster            TemplateMaster[]
 
   @@index([sessionId], map: "Institute_sessionId_fkey")
 }
@@ -454,10 +467,11 @@ model User {
   competitionsOfStudent         StudentToCompetition[] @relation("StudentCompetitionRelation")
   competitionsAssignedByTeacher StudentToCompetition[] @relation("TeacherCompetitionRelation")
 
-  notesOfStudent   DailyNotes[]      @relation("StudentNotesRelation")
-  notesFromTeacher DailyNotes[]      @relation("TeacherNotesRelation")
-  ChatParticipant  ChatParticipant[]
-  Message          Message[]
+  notesOfStudent    DailyNotes[]        @relation("StudentNotesRelation")
+  notesFromTeacher  DailyNotes[]        @relation("TeacherNotesRelation")
+  ChatParticipant   ChatParticipant[]
+  Message           Message[]
+  GeneratedDocument GeneratedDocument[]
 
   @@index([campusId], map: "User_campusId_fkey")
   @@index([classId], map: "User_classId_fkey")
@@ -1282,36 +1296,98 @@ model StudentFeesAudit {
 }
 
 model MYAALInvoices {
-  id             Int         @id @default(autoincrement())
+  id             Int              @id @default(autoincrement())
   userId         Int
   campusId       Int
-  feeType        FeeType     @default(MONTHLY)
-  feeStatus      FeeStatus   @default(Unpaid)
+  feeType        FeeType          @default(MONTHLY)
+  feeStatus      FeeStatus        @default(Unpaid)
   year           Int
   month          Int
-  dueDate        DateTime    @default(now()) @db.DateTime(6)
-  amount         Float       @default(0)
+  dueDate        DateTime         @default(now()) @db.DateTime(6)
+  amount         Float            @default(0)
   created_by     Int
   updated_by     Int
-  created_at     DateTime    @default(now()) @db.DateTime(6)
-  updated_at     DateTime    @default(now()) @db.DateTime(6)
-  invoiceNumber  String      @unique @db.VarChar(255)
-  paidAmount     Float       @default(0)
-  paidOn         DateTime?   @db.DateTime(6)
-  paymentType    PaymentType @default(Cash)
+  created_at     DateTime         @default(now()) @db.DateTime(6)
+  updated_at     DateTime         @default(now()) @db.DateTime(6)
+  invoiceNumber  String           @unique @db.VarChar(255)
+  paidAmount     Float            @default(0)
+  paidOn         DateTime?        @db.DateTime(6)
+  paymentType    PaymentType      @default(Cash)
   classId        Int?
   sectionId      Int?
   ongoingSession Int?
-  session        Sessions?   @relation(fields: [ongoingSession], references: [id])
-  campus         Campus      @relation(fields: [campusId], references: [id])
-  class          Class?      @relation(fields: [classId], references: [id])
-  section        Section?    @relation(fields: [sectionId], references: [id])
-  user           User        @relation(fields: [userId], references: [id])
+  description    String?          @db.LongText
+  session        Sessions?        @relation(fields: [ongoingSession], references: [id])
+  campus         Campus           @relation(fields: [campusId], references: [id])
+  class          Class?           @relation(fields: [classId], references: [id])
+  section        Section?         @relation(fields: [sectionId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+  PaymentRequest PaymentRequest[]
 
   @@index([campusId], map: "MYAALInvoices_campusId_fkey")
   @@index([classId], map: "MYAALInvoices_classId_fkey")
   @@index([sectionId], map: "MYAALInvoices_sectionId_fkey")
   @@index([userId], map: "MYAALInvoices_userId_fkey")
+}
+
+model PaymentGatewayConfig {
+  id       Int             @id @default(autoincrement())
+  provider PaymentProvider
+  isActive Int             @default(1) @db.TinyInt
+
+  apiKey        String?
+  secretKey     String?
+  webhookSecret String?
+  baseUrl       String?
+  merchantId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model PaymentRequest {
+  id        Int                  @id @default(autoincrement())
+  invoiceId Int
+  amount    Float
+  currency  String               @default("INR")
+  provider  PaymentProvider
+  status    PaymentRequestStatus @default(PENDING)
+
+  externalOrderId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+
+  invoice      MYAALInvoices        @relation(fields: [invoiceId], references: [id])
+  transactions PaymentTransaction[]
+}
+
+model PaymentTransaction {
+  id               Int             @id @default(autoincrement())
+  paymentRequestId Int
+  provider         PaymentProvider
+
+  externalPaymentId String?
+  status            PaymentTransactionStatus
+  rawResponse       Json
+
+  createdAt DateTime @default(now())
+
+  paymentRequest PaymentRequest @relation(fields: [paymentRequestId], references: [id])
+  Refund         Refund[]
+}
+
+model Refund {
+  id                   Int          @id @default(autoincrement())
+  paymentTransactionId Int
+  amount               Float
+  reason               String?
+  status               RefundStatus
+  externalRefundId     String?
+  rawResponse          Json?
+
+  createdAt DateTime @default(now())
+
+  transaction PaymentTransaction @relation(fields: [paymentTransactionId], references: [id])
 }
 
 model FamilyCredit {
@@ -2000,6 +2076,31 @@ model RequestParentAccount {
   @@index([studentId], map: "RequestParentAccount_studentId_fkey")
 }
 
+model PdfTemplate {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  active            Int                 @default(1) @db.TinyInt
+  type              String
+  templateJson      Json
+  dataQuery         String              @db.LongText
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now())
+  GeneratedDocument GeneratedDocument[]
+  TemplateMaster    TemplateMaster[]
+}
+
+model GeneratedDocument {
+  id            Int          @id @default(autoincrement())
+  templateId    Int?
+  template      PdfTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  fileName      String
+  mimeType      String       @default("application/pdf")
+  pdfData       Bytes
+  createdBy     Int?
+  createdByUser User?        @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime     @default(now())
+}
+
 enum UserType {
   admin
   student
@@ -2152,6 +2253,32 @@ enum ThemeType {
 enum ExamType {
   Exam
   Test
+}
+
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+  CASHFREE
+  PHONEPE
+}
+
+enum PaymentRequestStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum PaymentTransactionStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }
 
 enum Status {

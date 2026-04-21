@@ -29,107 +29,155 @@ INSERT INTO myskool.Theme (
  created_by, updated_by, created_at, updated_at, defaultRadius
 )
 VALUES (
- 1, 
- 1,
- 'System',          -- themeType
- 'Light',           -- themeName
- 'light',           -- scheme
- NULL,              -- schemeColor
- 'NotoSans',        -- fontFamily
- 0,                 -- fontSize
- '#8c59b0',         -- primaryColor
- '#5582b4',         -- actionGreenButton
- '#da2f8e',         -- secondaryOrangeButton
- '#1F7DCF',         -- blue
- '#E14A4A',         -- red
- '#E47112',         -- orange
- '#E19E05',         -- yellow
- '#3AAD4E',         -- green
- '#F5F5F5',         -- backg
- '#FFFFFF',         -- foreg
- '#f9efff',         -- header
- '#FEFBFB',         -- leftmenu
- '#FFFFFF',         -- white
- '#000000',         -- black
- 1,                 -- created_by
- 1,                 -- updated_by
- CURRENT_TIMESTAMP(6), -- created_at
- CURRENT_TIMESTAMP(6), -- updated_at
- 25                 -- defaultRadius
+ 1, 1,
+ 'System', 'Light', 'light', NULL,
+ 'NotoSans', 0,
+ 'oklch(58% 0.16 300)',   -- primaryColor
+ 'oklch(55% 0.14 250)',   -- actionGreenButton
+ 'oklch(60% 0.22 350)',   -- secondaryOrangeButton
+ 'oklch(55% 0.18 255)',   -- blue
+ 'oklch(60% 0.22 25)',    -- red
+ 'oklch(65% 0.20 55)',    -- orange
+ 'oklch(72% 0.18 85)',    -- yellow
+ 'oklch(62% 0.18 145)',   -- green
+ 'oklch(96% 0 0)',        -- backg
+ 'oklch(100% 0 0)',       -- foreg
+ 'oklch(95% 0.02 300)',   -- header
+ 'oklch(98% 0.01 20)',    -- leftmenu
+ 'oklch(100% 0 0)',       -- white
+ 'oklch(0% 0 0)',         -- black
+ 1, 1,
+ CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
+ 25
 );
 INSERT INTO myskool.Theme VALUES (
  2, 1,
  'System', 'Dark', 'dark', NULL,
  'NotoSans', 0,
- '#8c59b0', '#145bf0', '#ff09c8',
- '#1F7DCF', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#141517', '#000000', '#25262b', '#141517',
- '#FFFFFF', '#000000',
+ 'oklch(58% 0.16 300)',
+ 'oklch(52% 0.23 260)',
+ 'oklch(65% 0.30 345)',
+ 'oklch(55% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(18% 0.01 260)',   -- backg
+ 'oklch(0% 0 0)',         -- foreg
+ 'oklch(24% 0.02 260)',   -- header
+ 'oklch(18% 0.01 260)',   -- leftmenu
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  25
 );
-
 INSERT INTO myskool.Theme VALUES (
  3, 1,
  'System', 'Pale Red', 'light', NULL,
  'NotoSans', 0,
- '#e22762', '#4d1bed', '#58abad',
- '#1F7DCF', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#F5F5F5', '#FFFFFF', '#F8EDED', '#FEFBFB',
- '#FFFFFF', '#000000',
+ 'oklch(64% 0.23 350)',
+ 'oklch(58% 0.25 280)',
+ 'oklch(64% 0.16 195)',
+ 'oklch(55% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(96% 0 0)',
+ 'oklch(100% 0 0)',
+ 'oklch(95% 0.03 350)',
+ 'oklch(98% 0.01 20)',
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  25
 );
-
 INSERT INTO myskool.Theme VALUES (
  5, 1,
  'System', 'Haloween', 'dark', NULL,
  'Exo', 50,
- '#ff8b09', '#f04118', '#848484',
- '#1E88E5', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#212616', '#160D02', '#5D2C00', '#291300',
- '#FFFFFF', '#000000',
+ 'oklch(72% 0.22 55)',
+ 'oklch(58% 0.23 35)',
+ 'oklch(62% 0.01 0)',
+ 'oklch(60% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(22% 0.03 120)',
+ 'oklch(12% 0.04 45)',
+ 'oklch(38% 0.12 45)',
+ 'oklch(18% 0.08 45)',
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  75
 );
-
 INSERT INTO myskool.Theme VALUES (
  7, 1,
  'System', 'Havana', 'light', NULL,
  'NotoSans', 0,
- '#3ebccf', '#b94fae', '#8d22e6',
- '#1F7DCF', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#fff4e4', '#f7ffff', '#d7f0f3', '#eefcea',
- '#FFFFFF', '#000000',
+ 'oklch(70% 0.15 200)',
+ 'oklch(60% 0.20 330)',
+ 'oklch(55% 0.26 300)',
+ 'oklch(55% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(97% 0.03 80)',
+ 'oklch(98% 0.01 190)',
+ 'oklch(92% 0.05 200)',
+ 'oklch(97% 0.04 140)',
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  25
 );
-
 INSERT INTO myskool.Theme VALUES (
  8, 1,
  'System', 'Berries', 'light', NULL,
  'NotoSans', 0,
- '#da2e49', '#5e69ab', '#d9355a',
- '#1F7DCF', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#fffbfe', '#efeaee', '#9b889c', '#fff2f2',
- '#FFFFFF', '#000000',
+ 'oklch(58% 0.25 25)',
+ 'oklch(55% 0.14 265)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(55% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(98% 0.01 300)',
+ 'oklch(92% 0.02 300)',
+ 'oklch(65% 0.05 320)',
+ 'oklch(97% 0.03 25)',
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  25
 );
-
 INSERT INTO myskool.Theme VALUES (
  9, 1,
  'System', 'Bonfire', 'light', NULL,
  'NotoSans', 0,
- '#fd530d', '#dd662a', '#5f7aa8',
- '#1F7DCF', '#E14A4A', '#E47112', '#E19E05', '#3AAD4E',
- '#fffbfe', '#dbe3e6', '#dbe3e6', '#f7f7f7',
- '#FFFFFF', '#000000',
+ 'oklch(70% 0.24 45)',
+ 'oklch(65% 0.20 50)',
+ 'oklch(55% 0.10 255)',
+ 'oklch(55% 0.18 255)',
+ 'oklch(60% 0.22 25)',
+ 'oklch(65% 0.20 55)',
+ 'oklch(72% 0.18 85)',
+ 'oklch(62% 0.18 145)',
+ 'oklch(98% 0.01 300)',
+ 'oklch(90% 0.02 240)',
+ 'oklch(90% 0.02 240)',
+ 'oklch(97% 0 0)',
+ 'oklch(100% 0 0)',
+ 'oklch(0% 0 0)',
  1, 1,
  CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6),
  25
@@ -251,11 +299,14 @@ insert into myskool.MenuItems values (32,'Manage Timetable & Marks','examTimetab
 insert into myskool.MenuItems values (40,'My Leaves','myLeaves',1, 1, 1,1, CURDATE(),CURDATE(),18,'');
 insert into myskool.MenuItems values (41,'Student Leave Management','studentLeaveManagement',2, 1, 1,1, CURDATE(),CURDATE(),18,'');
 insert into myskool.MenuItems values (42,'Staff Leave Management','staffLeaveManagement',3, 1, 1,1, CURDATE(),CURDATE(),18,'');
-insert into myskool.MenuItems values (43,'Fee Payment','feePayment',1, 2, 1,1, CURDATE(),CURDATE(),19,'');
-insert into myskool.MenuItems values (44,'Generate Fees','generateFees',1, 1, 1,1, CURDATE(),CURDATE(),19,'');
-insert into myskool.MenuItems values (45,'Wallet','creditSystem',3, 1, 1,1, CURDATE(),CURDATE(),19,'');
-insert into myskool.MenuItems values (46,'Family Fee Calculator','familyFeeCalc',4, 1, 1,1, CURDATE(),CURDATE(),19,'');
+
+insert into myskool.MenuItems values (90,'My Fees','myFeePayments',1, 1, 1,1, CURDATE(),CURDATE(),19,'');
+insert into myskool.MenuItems values (43,'Fee Payment','feePayment',2, 1, 1,1, CURDATE(),CURDATE(),19,'');
+insert into myskool.MenuItems values (44,'Generate Fees','generateFees',3, 1, 1,1, CURDATE(),CURDATE(),19,'');
+insert into myskool.MenuItems values (45,'Wallet','creditSystem',4, 1, 1,1, CURDATE(),CURDATE(),19,'');
+insert into myskool.MenuItems values (46,'Family Fee Calculator','familyFeeCalc',5, 1, 1,1, CURDATE(),CURDATE(),19,'');
 insert into myskool.MenuItems values (48,'Balance Sheet','balanceSheet',6, 1, 1,1, CURDATE(),CURDATE(),19,'');
+
 insert into myskool.MenuItems values (49,'Generate Salary','generateSalary',1, 1, 1,1, CURDATE(),CURDATE(),20,'');
 insert into myskool.MenuItems values (50,'Pay Salaries','paySalaries',2, 1, 1,1, CURDATE(),CURDATE(),20,'');
 insert into myskool.MenuItems values (51,'Manage Loans','manageLoans',3, 1, 1,1, CURDATE(),CURDATE(),20,'');
@@ -269,8 +320,9 @@ insert into myskool.MenuItems values (58,'Manage Expense','manageExpense',1, 1, 
 insert into myskool.MenuItems values (59,'Expense Types','expenseTypes',2, 1, 1,1, CURDATE(),CURDATE(),22,'');
 insert into myskool.MenuItems values (60,'My Notifications','myNotifications',1, 1, 1,1, CURDATE(),CURDATE(),23,'');
 insert into myskool.MenuItems values (61,'Send Adhoc Notification','sendAdhocNotification',2, 1, 1,1, CURDATE(),CURDATE(),23,'');
-insert into myskool.MenuItems values (62,'SMS Templates','smsTemplates',3, 1, 1,1, CURDATE(),CURDATE(),23,'');
-insert into myskool.MenuItems values (63,'SMS History','smsHistory',4, 1, 1,1, CURDATE(),CURDATE(),23,'');
+--insert into myskool.MenuItems values (62,'SMS Templates','smsTemplates',3, 1, 1,1, CURDATE(),CURDATE(),23,'');
+--insert into myskool.MenuItems values (63,'SMS History','smsHistory',4, 1, 1,1, CURDATE(),CURDATE(),23,'');
+insert into myskool.MenuItems values (63,'Chat','chat',4, 1, 1,1, CURDATE(),CURDATE(),23,'');
 insert into myskool.MenuItems values (64,'Email Templates','emailTemplates',5, 1, 1,1, CURDATE(),CURDATE(),23,'');
 insert into myskool.MenuItems values (65,'Email History','emailHistory',6, 1, 1,1, CURDATE(),CURDATE(),23,'');
 insert into myskool.MenuItems values (66,'Manage Noticeboard','manageNoticeboard',7, 1, 1,1, CURDATE(),CURDATE(),23,'');
@@ -287,6 +339,7 @@ insert into myskool.MenuItems values (80,'Manage Themes','admin/manageThemes',9,
 insert into myskool.MenuItems values (84,'Manage Grades','admin/manageGrades',10, 1, 1,1, CURDATE(),CURDATE(),26,'Manage Exam Test Grades');
 insert into myskool.MenuItems values (86,'Manage Year','admin/manageYear',11, 1, 1,1, CURDATE(),CURDATE(),26,'Manage Year, Session & Fiscal Year');
 insert into myskool.MenuItems values (88,'Manage Recognition','admin/manageRecognition',12, 1, 1,1, CURDATE(),CURDATE(),26,'Manage badges, appreciations');
+insert into myskool.MenuItems values (91,'Manage Templates','admin/manageTemplates',13, 1, 1,1, CURDATE(),CURDATE(),26,'Manage templates');
 
 
 
@@ -612,6 +665,29 @@ insert into myskool.EmailTemplate(campusId,active,subject, body, name,keywords, 
 	'Leave Request', 
 	'$student_name|$roll_no|$student_id_card|$institute_name|$student_leave_start|$student_leave_end|$student_leave_approved_by|$student_leave_status|$current_date',
 	1,1,CURDATE(),CURDATE(),1);    
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('Character Certificate','Certificate',1,420002, CURRENT_TIMESTAMP(3));
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('DOB Certificate','Certificate',1,270001, CURRENT_TIMESTAMP(3));
+
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('School Leaving Certificate','Certificate',1,420002, CURRENT_TIMESTAMP(3));
+
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('Fee Invoice Unpaid','Invoice',1,210001, CURRENT_TIMESTAMP(3));
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('Fee Invoice Paid','Invoice',1,210001, CURRENT_TIMESTAMP(3));
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('ID Card Student','Card',1,210001, CURRENT_TIMESTAMP(3));
+
+INSERT INTO myskool.TemplateMaster(templateName,templateType,instituteId,pdfId, updated_at)
+VALUES ('ID Card Employee','Card',1,210001, CURRENT_TIMESTAMP(3));
     
    
 

@@ -15,7 +15,8 @@ import AccountingRouter from '../../../modules/product/infra/http/routes/account
 import SalaryRouter from '../../../modules/product/infra/http/routes/salary.router';
 import ExamRouter from '../../../modules/product/infra/http/routes/exam.router';
 import ChatRouter from '../../../modules/product/infra/http/routes/chat.router';
-
+import PaymentRouter from '../../../modules/product/infra/http/routes/payment.router';
+import InvoicingRouter from '../../../modules/product/infra/http/routes/invoicing.router';
 
 const Routes = Router();
 Routes.use('/', DefaultRouter);
@@ -33,5 +34,6 @@ Routes.use("/accounting", AccountingRouter);
 Routes.use("/salary", SalaryRouter);
 Routes.use("/exam", ExamRouter);
 Routes.use("/chat", ChatRouter);
-
+Routes.use("/payment", PaymentRouter);
+Routes.use("/invoicing", InvoicingRouter);
 export default Routes;

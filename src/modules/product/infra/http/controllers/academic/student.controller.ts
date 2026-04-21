@@ -755,9 +755,9 @@ export class StudentController {
                   data: {
                     userId: ceratedStudentResponse.id,
                     invoiceNumber: invoiceNumber,
-                    campusId: Number(studentWithParents.form.campusId),
-                    classId: Number(studentWithParents.form.classId),
-                    sectionId: Number(studentWithParents.form.sectionId),
+                    campusId: Number(ceratedStudentResponse.campusId),
+                    classId: Number(ceratedStudentResponse.classId),
+                    sectionId: Number(ceratedStudentResponse.sectionId),
                     feeStatus: FeeStatus.Unpaid,
                     feeType: FeeType.YEARLY,
                     year: new Date().getFullYear(),
@@ -769,6 +769,7 @@ export class StudentController {
                     updated_at: new Date(),
                     created_by: studentWithParents.created_by,
                     created_at: new Date(),
+                    description: `Admission Yearly Fee for ${ceratedStudentResponse.displayName} for session ${institute.sessionId}`,
                   },
                 });
 
@@ -1939,53 +1940,53 @@ export class StudentController {
   }
 
   public async updateStudentCompetition(req: Request, res: Response) {
-      const payload: any = req.body;
-      console.log(payload)
-      try {
-        if (!payload?.form) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Invalid data received.',
-          });
-        }
-  
-        // ------------------------------------------
-        // Get active session
-        // ------------------------------------------
-        const institute = await prisma.institute.findFirst();
-        const sessionId = institute?.sessionId;
-  
-        if (!sessionId) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Active session not found.',
-          });
-        }
-  
-        const {
-          studentId,
-          teacherId,
-          score,
-          competitionId,
-          remark,
-        } = payload.form;
-  
-        
-        if (!competitionId) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Competition is required.',
-          });
-        }
-  
-  
-        // ------------------------------------------
-        // Update per student (session-based)
-        // ------------------------------------------
-        await prisma.studentToCompetition.update({
+    const payload: any = req.body;
+    console.log(payload)
+    try {
+      if (!payload?.form) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Invalid data received.',
+        });
+      }
+
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Active session not found.',
+        });
+      }
+
+      const {
+        studentId,
+        teacherId,
+        score,
+        competitionId,
+        remark,
+      } = payload.form;
+
+
+      if (!competitionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Competition is required.',
+        });
+      }
+
+
+      // ------------------------------------------
+      // Update per student (session-based)
+      // ------------------------------------------
+      await prisma.studentToCompetition.update({
         where: {
           id: competitionId,
         },
@@ -1996,22 +1997,22 @@ export class StudentController {
           remark: remark,
         },
       });
-        return res.json({
-          status: true,
-          data: null,
-          message: `Competition details saved/updated for selected student.`,
-        });
-      } catch (error: any) {
-        console.error(error);
-        return res.status(400).json({
-          status: false,
-          data: null,
-          message: error.message,
-        });
-      }
+      return res.json({
+        status: true,
+        data: null,
+        message: `Competition details saved/updated for selected student.`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        status: false,
+        data: null,
+        message: error.message,
+      });
     }
+  }
 
-    
+
   public async getAllStudentsByClassAndSection(req: Request, res: Response) {
     const campusId = Number(req.params.campusId);
     const classId = Number(req.params.classId);
@@ -2052,7 +2053,7 @@ export class StudentController {
             session: true
           }
         },
-        competitionsOfStudent:{
+        competitionsOfStudent: {
           where: {
             ongoingSession: Number(institute.sessionId)
           },
@@ -2883,86 +2884,232 @@ export class StudentController {
   }
 
   public async updateStudentExtracurricular(req: Request, res: Response) {
-      const payload: any = req.body;
-      console.log(payload)
-      try {
-        if (!payload?.form) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Invalid data received.',
-          });
-        }
-  
-        // ------------------------------------------
-        // Get active session
-        // ------------------------------------------
-        const institute = await prisma.institute.findFirst();
-        const sessionId = institute?.sessionId;
-  
-        if (!sessionId) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Active session not found.',
-          });
-        }
-  
-        const {
-          studentId,
-          teacherId,
-          completed,
-          minutes,
-          rating,
-          campusId,
-          extracurricularId,
-          comments,
-        } = payload.form;
-  
-        const proofUrl= payload.attachmentUrls;
-        
-        if (!extracurricularId) {
-          return res.json({
-            status: false,
-            data: null,
-            message: 'Extracurricular is required.',
-          });
-        }
-  
-  
-        // ------------------------------------------
-        // Update per student (session-based)
-        // ------------------------------------------
-        await prisma.studentToExtracurricular.update({
-        where: {
-          id: extracurricularId,
-        },
-        data: {
-          completed: Number(completed),
-          completedAt:new Date(),
-          rating  : rating,
-          proofUrl: proofUrl!==null && proofUrl!==undefined && proofUrl.length===1 ? proofUrl[0] : '',
-          updated_by: teacherId,
-          updated_at: new Date(),
-          comments: comments,
-          minutes: minutes,
-          ongoingSession: sessionId,
-        },
-      });
+    const payload: any = req.body;
+    console.log(payload)
+    try {
+      if (!payload?.form) {
         return res.json({
-          status: true,
-          data: null,
-          message: `Extracurricular saved/updated for selected student.`,
-        });
-      } catch (error: any) {
-        console.error(error);
-        return res.status(400).json({
           status: false,
           data: null,
-          message: error.message,
+          message: 'Invalid data received.',
         });
       }
+
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Active session not found.',
+        });
+      }
+
+      const {
+        studentId,
+        teacherId,
+        completed,
+        minutes,
+        rating,
+        campusId,
+        extracurricularId,
+        comments,
+        isStudent,
+        currentUser
+      } = payload.form;
+
+      const proofUrl = payload.attachmentUrls;
+
+      if (!extracurricularId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Extracurricular is required.',
+        });
+      }
+
+
+      // ------------------------------------------
+      // Update per student (session-based)
+      // ------------------------------------------
+      if (!isStudent) {
+        await prisma.studentToExtracurricular.update({
+          where: {
+            id: extracurricularId,
+          },
+          data: {
+            completed: Number(completed),
+            completedAt: new Date(),
+            rating: rating,
+            proofUrl: proofUrl !== null && proofUrl !== undefined && proofUrl.length === 1 ? proofUrl[0] : '',
+            updated_by: teacherId,
+            updated_at: new Date(),
+            comments: comments,
+            minutes: minutes,
+            ongoingSession: sessionId,
+          },
+        });
+      } else {
+        await prisma.studentToExtracurricular.update({
+          where: {
+            id: extracurricularId,
+          },
+          data: {
+            completed: Number(completed),
+            completedAt: new Date(),
+            proofUrl: proofUrl !== null && proofUrl !== undefined && proofUrl.length === 1 ? proofUrl[0] : '',
+            updated_by: currentUser,
+            updated_at: new Date(),
+            minutes: minutes,
+          },
+        });
+      }
+
+      return res.json({
+        status: true,
+        data: null,
+        message: `Extracurricular saved/updated for selected student.`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        status: false,
+        data: null,
+        message: error.message,
+      });
     }
+  }
+
+  public async fetchStudentExtracurricular(req: Request, res: Response) {
+    const payload: any = req.body;
+    let extracurricularItems = [];
+    console.log("fetchStudentExtracurricular", payload)
+    try {
+      if (!payload?.form) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Invalid data received.',
+        });
+      }
+
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Active session not found.',
+        });
+      }
+
+      const {
+        studentId,
+      } = payload.form;
+
+      extracurricularItems = await prisma.studentToExtracurricular.findMany({
+        where: {
+          ongoingSession: sessionId,
+          studentId: studentId,
+        },
+        include: {
+          extracurricular: true,
+          teacher: true,
+          session: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        status: false,
+        data: null,
+        message: error.message,
+      });
+    }
+
+    return res.json({
+      status: true,
+      data: {
+        extracurriculars: extracurricularItems,
+      },
+      message: 'Student Extracurriculars retrieved',
+    });
+  }
+
+  public async fetchStudentCompetition(req: Request, res: Response) {
+    const payload: any = req.body;
+    let competitionItems = [];
+
+    console.log(payload)
+    try {
+      if (!payload?.form) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Invalid data received.',
+        });
+      }
+
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: 'Active session not found.',
+        });
+      }
+
+      const {
+        studentId,
+      } = payload.form;
+
+      competitionItems = await prisma.studentToCompetition.findMany({
+        where: {
+          ongoingSession: sessionId,
+          studentId: studentId,
+        },
+        include: {
+          competition: true,
+          teacher: true,
+          session: true,
+        },
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        status: false,
+        data: null,
+        message: error.message,
+      });
+    }
+
+    return res.json({
+      status: true,
+      data: {
+        competitions: competitionItems,
+      },
+      message: 'Student Competitions retrieved',
+    });
+  }
 
   public async deleteStudentBehavior(req: Request, res: Response) {
     const id = Number(req.params.id);
@@ -2982,117 +3129,117 @@ export class StudentController {
   }
 
   public async bulkSaveStudentCompetition(req: Request, res: Response) {
-  const payload: any = req.body;
+    const payload: any = req.body;
 
-  try {
-    if (!payload?.form) {
-      return res.json({
-        status: false,
-        data: null,
-        message: "Invalid data received.",
-      });
-    }
-
-    // ------------------------------------------
-    // Get active session
-    // ------------------------------------------
-    const institute = await prisma.institute.findFirst();
-    const sessionId = institute?.sessionId;
-
-    if (!sessionId) {
-      return res.json({
-        status: false,
-        data: null,
-        message: "Active session not found.",
-      });
-    }
-
-    const { competitionId, remark, created_by } = payload.form;
-    const selectedStudents = payload.selectedStudents ?? [];
-
-    if (!competitionId) {
-      return res.json({
-        status: false,
-        data: null,
-        message: "Competition is required.",
-      });
-    }
-
-    if (selectedStudents.length === 0) {
-      return res.json({
-        status: false,
-        data: null,
-        message: "No students selected.",
-      });
-    }
-
-    let assignedCount = 0;
-    let alreadyAssignedCount = 0;
-
-    // ------------------------------------------
-    // Process students one by one
-    // ------------------------------------------
-    await prisma.$transaction(async (tx) => {
-      for (const student of selectedStudents) {
-        const studentId = Number(student.id);
-
-        // Check if already assigned for this session
-        const existing = await tx.studentToCompetition.findFirst({
-          where: {
-            studentId,
-            competitionId: Number(competitionId),
-            ongoingSession: sessionId,
-          },
+    try {
+      if (!payload?.form) {
+        return res.json({
+          status: false,
+          data: null,
+          message: "Invalid data received.",
         });
-
-        if (existing) {
-          alreadyAssignedCount++;
-          continue;
-        }
-
-        // Assign competition
-        await tx.studentToCompetition.create({
-          data: {
-            studentId,
-            teacherId: Number(created_by),
-            competitionId: Number(competitionId),
-            ongoingSession: sessionId,
-            remark: remark ?? null,
-            score: 0,
-            created_at: new Date(),
-            updated_at: new Date(),
-            created_by: Number(created_by),
-            updated_by: Number(created_by),
-          },
-        });
-
-        assignedCount++;
       }
-    });
 
-    // ------------------------------------------
-    // Final response
-    // ------------------------------------------
-    return res.json({
-      status: true,
-      data: {
-        assigned: assignedCount,
-        alreadyAssigned: alreadyAssignedCount,
-      },
-      message:
-        alreadyAssignedCount > 0
-          ? `${assignedCount} student(s) assigned. ${alreadyAssignedCount} already had this competition for the current session.`
-          : `Competition assigned to ${assignedCount} student(s).`,
-    });
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({
-      status: false,
-      data: null,
-      message: error.message,
-    });
+      // ------------------------------------------
+      // Get active session
+      // ------------------------------------------
+      const institute = await prisma.institute.findFirst();
+      const sessionId = institute?.sessionId;
+
+      if (!sessionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: "Active session not found.",
+        });
+      }
+
+      const { competitionId, remark, created_by } = payload.form;
+      const selectedStudents = payload.selectedStudents ?? [];
+
+      if (!competitionId) {
+        return res.json({
+          status: false,
+          data: null,
+          message: "Competition is required.",
+        });
+      }
+
+      if (selectedStudents.length === 0) {
+        return res.json({
+          status: false,
+          data: null,
+          message: "No students selected.",
+        });
+      }
+
+      let assignedCount = 0;
+      let alreadyAssignedCount = 0;
+
+      // ------------------------------------------
+      // Process students one by one
+      // ------------------------------------------
+      await prisma.$transaction(async (tx) => {
+        for (const student of selectedStudents) {
+          const studentId = Number(student.id);
+
+          // Check if already assigned for this session
+          const existing = await tx.studentToCompetition.findFirst({
+            where: {
+              studentId,
+              competitionId: Number(competitionId),
+              ongoingSession: sessionId,
+            },
+          });
+
+          if (existing) {
+            alreadyAssignedCount++;
+            continue;
+          }
+
+          // Assign competition
+          await tx.studentToCompetition.create({
+            data: {
+              studentId,
+              teacherId: Number(created_by),
+              competitionId: Number(competitionId),
+              ongoingSession: sessionId,
+              remark: remark ?? null,
+              score: 0,
+              created_at: new Date(),
+              updated_at: new Date(),
+              created_by: Number(created_by),
+              updated_by: Number(created_by),
+            },
+          });
+
+          assignedCount++;
+        }
+      });
+
+      // ------------------------------------------
+      // Final response
+      // ------------------------------------------
+      return res.json({
+        status: true,
+        data: {
+          assigned: assignedCount,
+          alreadyAssigned: alreadyAssignedCount,
+        },
+        message:
+          alreadyAssignedCount > 0
+            ? `${assignedCount} student(s) assigned. ${alreadyAssignedCount} already had this competition for the current session.`
+            : `Competition assigned to ${assignedCount} student(s).`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({
+        status: false,
+        data: null,
+        message: error.message,
+      });
+    }
   }
-}
 
 
   public async getStudentNotes(req: Request, res: Response) {

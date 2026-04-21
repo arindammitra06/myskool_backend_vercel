@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { prisma } from "../../../../../../shared/db-client";
 import { addANotification, buildTheme, encrypt, getMenuCategory } from "../../../../../../shared/helpers/utils/generic.utils";
 import { FeeStatus, UserType } from "@prisma/client";
-import { systemAppThemes } from "../../../../../../shared/helpers/utils/app-themes";
 import moment from "moment";
 import { buildMessage, ROLE_DELETED, ROLE_UPDATES, SYSTEM_THEME_UPDATED, USER_DELETED, USER_DETAILS_UPDATED, USER_PASSWORD_RESET, USER_PERMISSION_MODIFIED, USER_PHOTO_UPDATED, USER_THEME_UPDATED } from "../../../../../../shared/constants/notification.constants";
 
@@ -212,7 +211,7 @@ export class UserController {
             updated_by: Number(themeInfo.currentUserId)
           },
         });
-        console.log('Updaing Completed to Theme ID',themeInfo.themeId);
+        console.log('Updaing Completed to Theme ID', themeInfo.themeId);
 
         //Add notification
         addANotification(
@@ -222,7 +221,7 @@ export class UserController {
           buildMessage(SYSTEM_THEME_UPDATED, themeInfo.currentUserId));
 
         return res.json({ status: true, data: null, message: "System theme updated" });
-      }else{
+      } else {
         return res.json({ status: false, data: null, message: "Found no institute" });
       }
 
@@ -480,10 +479,12 @@ export class UserController {
     const parmaspassed: any = req.body.params;
     const idCardNumber = parmaspassed.idCardNumber;
     const password = parmaspassed.password;
+    const institute = await prisma.institute.findFirst();
+
+
     let returnObj;
     let user;
-    console.log(parmaspassed);
-    console.log(encrypt(String(password)))
+
     try {
 
       user = await prisma.user
@@ -498,6 +499,77 @@ export class UserController {
             class: true,
             section: true,
             BankInformation: true,
+            MYAALInvoices: true,
+            Attendance: true,
+
+            behaviourOfStudent: {
+              include: {
+                teacher: true,
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            badgesOfStudent: {
+              include: {
+                badge: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            extracurricularOfStudent: {
+              include: {
+                extracurricular: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            competitionsOfStudent: {
+              include: {
+                competition: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            notesOfStudent: {
+              include: {
+                teacher: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            notesFromTeacher: {
+              include: {
+                teacher: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            StudentRatings: {
+              include: {
+                ratingFromUser: true,
+                session: true
+              },
+              where: {
+                ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+              }
+            },
+            Message: {
+              include: {
+                room: true,
+                sender: true,
+              },
+              take: 5,
+              orderBy: {
+                createdAt: 'desc'
+              },
+            },
+
             children: {
               include: {
                 children: {
@@ -507,6 +579,73 @@ export class UserController {
                     campus: true,
                     MYAALInvoices: true,
                     Attendance: true,
+                    behaviourOfStudent: {
+                      include: {
+                        teacher: true,
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    StudentRatings: {
+                      include: {
+                        ratingFromUser: true,
+                        session: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    badgesOfStudent: {
+                      include: {
+                        badge: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    extracurricularOfStudent: {
+                      include: {
+                        extracurricular: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    competitionsOfStudent: {
+                      include: {
+                        competition: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    notesOfStudent: {
+                      include: {
+                        teacher: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    notesFromTeacher: {
+                      include: {
+                        teacher: true
+                      },
+                      where: {
+                        ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+                      }
+                    },
+                    Message: {
+                      include: {
+                        room: true,
+                        sender: true,
+                      },
+                      take: 5,
+                      orderBy: {
+                        createdAt: 'desc'
+                      },
+                    },
                   }
                 }
               }
@@ -723,43 +862,165 @@ export class UserController {
 
   public async addUpdateRoles(req: Request, res: Response) {
 
-  const roleDetails: any = req.body;
+    const roleDetails: any = req.body;
 
-  try {
-    // ---------------------------------------------
-    // UPDATE PERMISSION
-    // ---------------------------------------------
-    if (roleDetails && roleDetails.id != null) {
+    try {
+      // ---------------------------------------------
+      // UPDATE PERMISSION
+      // ---------------------------------------------
+      if (roleDetails && roleDetails.id != null) {
 
-      await prisma.permission.update({
-        where: {
-          id: roleDetails.id,
-          campusId: roleDetails.campusId,
-        },
+        await prisma.permission.update({
+          where: {
+            id: roleDetails.id,
+            campusId: roleDetails.campusId,
+          },
+          data: {
+            permissionName: roleDetails.permissionName,
+            permissionType: roleDetails.permissionType,
+            isReadonly: roleDetails.readonly,
+            dashboardUrl: roleDetails.dashboardUrl,
+            updated_by: roleDetails.currentUserId,
+            updated_at: new Date()
+          }
+        });
+
+        // ---------------------------------------------------
+        // ACCESS PERMISSIONS
+        // ---------------------------------------------------
+        await prisma.accessPermission.deleteMany({
+          where: {
+            permissionId: roleDetails.id,
+            campusId: roleDetails.campusId,
+          },
+        });
+
+        if (Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
+          await prisma.accessPermission.createMany({
+            data: roleDetails.permissionAccess.map((id: number) => ({
+              permissionId: Number(roleDetails.id),
+              accessId: Number(id),
+              campusId: roleDetails.campusId,
+              created_by: roleDetails.currentUserId,
+              created_at: new Date(),
+              updated_by: roleDetails.currentUserId,
+              updated_at: new Date()
+            }))
+          });
+        }
+
+        // ---------------------------------------------------
+        // MENU PERMISSIONS
+        // ---------------------------------------------------
+        if (Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
+
+          let menuCategories: number[] = [];
+          let menuItems: number[] = [];
+
+          roleDetails.selected.forEach((idsEach: string) => {
+            const split = idsEach.split("|");
+            if (split && split.length === 3) {
+              if (split[1] === "MENU_CAT") menuCategories.push(Number(split[0]));
+              if (split[1] === "MENU_ITEM") menuItems.push(Number(split[0]));
+            }
+          });
+
+          await prisma.menuCategoryPermissions.deleteMany({
+            where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
+          });
+
+          await prisma.menuItemPermissions.deleteMany({
+            where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
+          });
+
+          if (menuCategories.length > 0) {
+            await prisma.menuCategoryPermissions.createMany({
+              data: menuCategories.map((id) => ({
+                permissionId: Number(roleDetails.id),
+                menuCategoryId: id,
+                campusId: roleDetails.campusId,
+                active: 1,
+                created_by: roleDetails.currentUserId,
+                updated_by: roleDetails.currentUserId
+              }))
+            });
+          }
+
+          if (menuItems.length > 0) {
+            await prisma.menuItemPermissions.createMany({
+              data: menuItems.map((id) => ({
+                permissionId: Number(roleDetails.id),
+                menuItemId: id,
+                campusId: roleDetails.campusId,
+                active: 1,
+                created_by: roleDetails.currentUserId,
+                updated_by: roleDetails.currentUserId
+              }))
+            });
+          }
+
+          // Existing logic preserved
+          let userpermissions = await prisma.userPermission.findMany({
+            where: {
+              permissionId: Number(roleDetails.id),
+              campusId: roleDetails.campusId,
+              active: 1
+            },
+            include: { User: true }
+          });
+
+          if (userpermissions?.length) {
+            userpermissions.forEach(up => {
+              if (up?.User) console.log("User present for permission id --> " + up.User.displayName);
+            });
+          }
+
+          addANotification(
+            Number(roleDetails.campusId),
+            Number(roleDetails.currentUserId),
+            Number(roleDetails.currentUserId),
+            roleDetails.permissionName + ROLE_UPDATES
+          );
+
+          return res.json({ status: true, data: null, message: "Updated Role" });
+        }
+
+        // NO MENU SELECTED
+        await prisma.menuCategoryPermissions.deleteMany({
+          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
+        });
+
+        await prisma.menuItemPermissions.deleteMany({
+          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
+        });
+
+        return res.json({ status: true, data: null, message: "Updated Role" });
+      }
+
+      // -----------------------------------------------------
+      // CREATE NEW PERMISSION
+      // -----------------------------------------------------
+      const createPermission = await prisma.permission.create({
         data: {
+          active: 1,
+          isMobile: 0,
           permissionName: roleDetails.permissionName,
           permissionType: roleDetails.permissionType,
-          isReadonly: roleDetails.readonly,
+          campusId: roleDetails.campusId,
           dashboardUrl: roleDetails.dashboardUrl,
+          isReadonly: roleDetails.readonly,
+          created_by: roleDetails.currentUserId,
+          created_at: new Date(),
           updated_by: roleDetails.currentUserId,
           updated_at: new Date()
         }
       });
 
-      // ---------------------------------------------------
       // ACCESS PERMISSIONS
-      // ---------------------------------------------------
-      await prisma.accessPermission.deleteMany({
-        where: {
-          permissionId: roleDetails.id,
-          campusId: roleDetails.campusId,
-        },
-      });
-
       if (Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
         await prisma.accessPermission.createMany({
           data: roleDetails.permissionAccess.map((id: number) => ({
-            permissionId: Number(roleDetails.id),
+            permissionId: Number(createPermission.id),
             accessId: Number(id),
             campusId: roleDetails.campusId,
             created_by: roleDetails.currentUserId,
@@ -770,9 +1031,7 @@ export class UserController {
         });
       }
 
-      // ---------------------------------------------------
       // MENU PERMISSIONS
-      // ---------------------------------------------------
       if (Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
 
         let menuCategories: number[] = [];
@@ -786,18 +1045,10 @@ export class UserController {
           }
         });
 
-        await prisma.menuCategoryPermissions.deleteMany({
-          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
-        });
-
-        await prisma.menuItemPermissions.deleteMany({
-          where: { permissionId: roleDetails.id, campusId: roleDetails.campusId }
-        });
-
         if (menuCategories.length > 0) {
           await prisma.menuCategoryPermissions.createMany({
             data: menuCategories.map((id) => ({
-              permissionId: Number(roleDetails.id),
+              permissionId: Number(createPermission.id),
               menuCategoryId: id,
               campusId: roleDetails.campusId,
               active: 1,
@@ -810,29 +1061,13 @@ export class UserController {
         if (menuItems.length > 0) {
           await prisma.menuItemPermissions.createMany({
             data: menuItems.map((id) => ({
-              permissionId: Number(roleDetails.id),
+              permissionId: Number(createPermission.id),
               menuItemId: id,
-              campusId: roleDetails.campusId,
               active: 1,
+              campusId: roleDetails.campusId,
               created_by: roleDetails.currentUserId,
               updated_by: roleDetails.currentUserId
             }))
-          });
-        }
-
-        // Existing logic preserved
-        let userpermissions = await prisma.userPermission.findMany({
-          where: {
-            permissionId: Number(roleDetails.id),
-            campusId: roleDetails.campusId,
-            active: 1
-          },
-          include: { User: true }
-        });
-
-        if (userpermissions?.length) {
-          userpermissions.forEach(up => {
-            if (up?.User) console.log("User present for permission id --> " + up.User.displayName);
           });
         }
 
@@ -842,111 +1077,15 @@ export class UserController {
           Number(roleDetails.currentUserId),
           roleDetails.permissionName + ROLE_UPDATES
         );
-
-        return res.json({ status: true, data: null, message: "Updated Role" });
       }
 
-      // NO MENU SELECTED
-      await prisma.menuCategoryPermissions.deleteMany({
-        where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
-      });
+      return res.json({ status: true, data: null, message: 'Created new role' });
 
-      await prisma.menuItemPermissions.deleteMany({
-        where: { permissionId: roleDetails.id, campusId: roleDetails.campusId },
-      });
-
-      return res.json({ status: true, data: null, message: "Updated Role" });
+    } catch (error) {
+      console.error(error);
+      return res.json({ status: false, data: null, message: 'Failed to update role' });
     }
-
-    // -----------------------------------------------------
-    // CREATE NEW PERMISSION
-    // -----------------------------------------------------
-    const createPermission = await prisma.permission.create({
-      data: {
-        active: 1,
-        isMobile: 0,
-        permissionName: roleDetails.permissionName,
-        permissionType: roleDetails.permissionType,
-        campusId: roleDetails.campusId,
-        dashboardUrl: roleDetails.dashboardUrl,
-        isReadonly: roleDetails.readonly,
-        created_by: roleDetails.currentUserId,
-        created_at: new Date(),
-        updated_by: roleDetails.currentUserId,
-        updated_at: new Date()
-      }
-    });
-
-    // ACCESS PERMISSIONS
-    if (Array.isArray(roleDetails.permissionAccess) && roleDetails.permissionAccess.length > 0) {
-      await prisma.accessPermission.createMany({
-        data: roleDetails.permissionAccess.map((id: number) => ({
-          permissionId: Number(createPermission.id),
-          accessId: Number(id),
-          campusId: roleDetails.campusId,
-          created_by: roleDetails.currentUserId,
-          created_at: new Date(),
-          updated_by: roleDetails.currentUserId,
-          updated_at: new Date()
-        }))
-      });
-    }
-
-    // MENU PERMISSIONS
-    if (Array.isArray(roleDetails.selected) && roleDetails.selected.length > 0) {
-
-      let menuCategories: number[] = [];
-      let menuItems: number[] = [];
-
-      roleDetails.selected.forEach((idsEach: string) => {
-        const split = idsEach.split("|");
-        if (split && split.length === 3) {
-          if (split[1] === "MENU_CAT") menuCategories.push(Number(split[0]));
-          if (split[1] === "MENU_ITEM") menuItems.push(Number(split[0]));
-        }
-      });
-
-      if (menuCategories.length > 0) {
-        await prisma.menuCategoryPermissions.createMany({
-          data: menuCategories.map((id) => ({
-            permissionId: Number(createPermission.id),
-            menuCategoryId: id,
-            campusId: roleDetails.campusId,
-            active: 1,
-            created_by: roleDetails.currentUserId,
-            updated_by: roleDetails.currentUserId
-          }))
-        });
-      }
-
-      if (menuItems.length > 0) {
-        await prisma.menuItemPermissions.createMany({
-          data: menuItems.map((id) => ({
-            permissionId: Number(createPermission.id),
-            menuItemId: id,
-            active: 1,
-            campusId: roleDetails.campusId,
-            created_by: roleDetails.currentUserId,
-            updated_by: roleDetails.currentUserId
-          }))
-        });
-      }
-
-      addANotification(
-        Number(roleDetails.campusId),
-        Number(roleDetails.currentUserId),
-        Number(roleDetails.currentUserId),
-        roleDetails.permissionName + ROLE_UPDATES
-      );
-    }
-
-    return res.json({ status: true, data: null, message: 'Created new role' });
-
-  } catch (error) {
-    console.error(error);
-    return res.json({ status: false, data: null, message: 'Failed to update role' });
   }
-}
 
 
 
@@ -1137,6 +1276,8 @@ export class UserController {
     const id = Number(req.params.id);
     const campusId = Number(req.params.campusId);
     const usertype = String(req.params.usertype);
+    const institute = await prisma.institute.findFirst();
+
     let daysInMonthNumber = 7;
     let overviewDate = {};
     console.log('usertype >>' + usertype);
@@ -1146,7 +1287,7 @@ export class UserController {
     let user;
 
     if (usertype !== null && usertype !== undefined && (usertype === 'student' || usertype === 'parent')) {
-
+      console.log("campusid", campusId, "userid", id)
       user = await prisma.user.findUnique({
         where: {
           id: id,
@@ -1184,6 +1325,81 @@ export class UserController {
             },
             take: 5,
           },
+          behaviourOfStudent: {
+            include: {
+              teacher: true,
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            }
+          },
+          badgesOfStudent: {
+            include: {
+              badge: true
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            }
+          },
+          extracurricularOfStudent: {
+            include: {
+              extracurricular: true
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            }
+          },
+          competitionsOfStudent: {
+            include: {
+              competition: true
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            }
+          },
+          StudentRatings: {
+            include: {
+              ratingFromUser: true,
+              session: true,
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            }
+          },
+          notesOfStudent: {
+            include: {
+              teacher: true
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            },
+            orderBy: {
+              id: 'desc',
+            },
+            take: 5,
+          },
+          notesFromTeacher: {
+            include: {
+              teacher: true
+            },
+            where: {
+              ongoingSession: institute?.sessionId ? Number(institute.sessionId) : null,
+            },
+            orderBy: {
+              id: 'desc',
+            },
+            take: 5,
+          },
+          Message: {
+            include: {
+              room: true,
+              sender: true,
+            },
+            take: 5,
+            orderBy: {
+              createdAt: 'desc'
+            },
+          },
         },
       });
       if (user !== null && user !== undefined) {
@@ -1212,8 +1428,63 @@ export class UserController {
         } else {
           overviewDate["my-notifications"] = [];
         }
+
+        //current badges
+        if (user.badgesOfStudent !== null && user.badgesOfStudent !== undefined && user.badgesOfStudent.length > 0) {
+          overviewDate["my-badges"] = user.badgesOfStudent;
+        } else {
+          overviewDate["my-badges"] = [];
+        }
+        console.log(user.StudentRatings)
+        if (user.StudentRatings !== null && user.StudentRatings !== undefined && user.StudentRatings.length > 0) {
+          overviewDate["my-ratings"] = user.StudentRatings;
+        } else {
+          overviewDate["my-ratings"] = [];
+        }
+
+        //current extracurricular
+        if (user.extracurricularOfStudent !== null && user.extracurricularOfStudent !== undefined && user.extracurricularOfStudent.length > 0) {
+          overviewDate["my-extracurricular"] = user.extracurricularOfStudent;
+        } else {
+          overviewDate["my-extracurricular"] = [];
+        }
+
+        //current competitions
+        if (user.competitionsOfStudent !== null && user.competitionsOfStudent !== undefined && user.competitionsOfStudent.length > 0) {
+          overviewDate["my-competitions"] = user.competitionsOfStudent;
+        } else {
+          overviewDate["my-competitions"] = [];
+        }
+        //current behaviour
+        if (user.behaviourOfStudent !== null && user.behaviourOfStudent !== undefined && user.behaviourOfStudent.length > 0) {
+          overviewDate["my-behaviour"] = user.behaviourOfStudent;
+        } else {
+          overviewDate["my-behaviour"] = [];
+        }
+
+        //current notes
+        if (user.notesOfStudent !== null && user.notesOfStudent !== undefined && user.notesOfStudent.length > 0) {
+          overviewDate["my-notes"] = user.notesOfStudent;
+        } else {
+          overviewDate["my-notes"] = [];
+        }
+
+        //current notes from teacher
+        if (user.notesFromTeacher !== null && user.notesFromTeacher !== undefined && user.notesFromTeacher.length > 0) {
+          overviewDate["my-notes-from-teacher"] = user.notesFromTeacher;
+        } else {
+          overviewDate["my-notes-from-teacher"] = [];
+        }
+
+        //current messages
+        if (user.Message !== null && user.Message !== undefined && user.Message.length > 0) {
+          overviewDate["my-messages"] = user.Message;
+        } else {
+          overviewDate["my-messages"] = [];
+        }
       }
     } else {
+      //For Teacher
       user = await prisma.user.findUnique({
         where: {
           id: id,
