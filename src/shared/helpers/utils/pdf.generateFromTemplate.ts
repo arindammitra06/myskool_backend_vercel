@@ -1,7 +1,14 @@
 import { prisma } from "../../db-client";
 import fs from "fs";
-import { image, line, multiVariableText, text, barcodes, rectangle } from "@pdfme/schemas";
-import { table } from '@pdfme/schemas';
+import {
+    image,
+    line,
+    multiVariableText,
+    text,
+    barcodes,
+    rectangle,
+    table
+} from "@pdfme/schemas";
 import {
     exo2Base64,
     greatVibesBase64,
