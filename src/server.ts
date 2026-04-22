@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import 'reflect-metadata';
 
-import gracefulShutdown from './shared/events/gracefulShutdown';
 
 import { PORT } from './shared/constants/app.constants';
 
@@ -9,6 +8,7 @@ import application from './app/application';
 import logger from './shared/helpers/utils/Logger';
 
 import { ShutdownEnum } from './shared/enums/shutdown.enum';
+import gracefulShutdown from './shared/events/gracefulShutdown';
 
 ((): void => {
   const server = application.listen(PORT, (): boolean =>

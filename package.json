@@ -59,7 +59,7 @@
     "glob": "10.4.3",
     "helmet": "^5.1.1",
     "imagekit": "^6.0.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mailgun.js": "^12.5.0",
     "minimatch": "9.0.5",
     "moment": "^2.30.1",
