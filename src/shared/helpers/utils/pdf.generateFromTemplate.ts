@@ -1,11 +1,23 @@
 import { prisma } from "../../db-client";
-import { generate } from "@pdfme/generator";
 import fs from "fs";
 import { image, line, multiVariableText, text, barcodes, rectangle } from "@pdfme/schemas";
 import { table } from '@pdfme/schemas';
-import { exo2Base64, greatVibesBase64, montserratBase64, notoSansBase64, notoSansBoldBase64, notoSansJpBase64, notoSerifJpBase64, oldEnglishBase64, pinyonBase64, robotoBase64, seagramBase64 } from "./fonts";
-import { normalizeRowForPdf, runTemplateQuery, transformTablesFromTemplate } from "./runTemplateQuery";
+import {
+    exo2Base64,
+    greatVibesBase64,
+    montserratBase64,
+    notoSansBase64,
+    notoSansBoldBase64,
+    notoSansJpBase64,
+    notoSerifJpBase64,
+    oldEnglishBase64,
+    pinyonBase64,
+    robotoBase64,
+    seagramBase64
+} from "./fonts";
+import { normalizeRowForPdf } from "./runTemplateQuery";
 import { Institute } from "@prisma/client";
+
 type PdfMeTemplate = {
     basePdf: unknown;
     schemas: Array<Record<string, any>>;
@@ -16,6 +28,9 @@ export async function generatePdfFromTemplate(
     runtimeData: Record<string, any>,
     institute: Institute | null
 ) {
+    // ✅ FIX: dynamic import
+    const { generate } = await import("@pdfme/generator");
+
     const template = await prisma.pdfTemplate.findUnique({
         where: { id: templateId }
     });
@@ -26,7 +41,6 @@ export async function generatePdfFromTemplate(
 
     const pdfTemplate = template.templateJson as unknown as PdfMeTemplate;
 
-    // schema definition from template
     const schemaFields = Object.values(pdfTemplate.schemas[0]);
 
     console.log(
@@ -36,18 +50,17 @@ export async function generatePdfFromTemplate(
 
     console.log("Runtime keys:", Object.keys(runtimeData));
 
-
-    // STEP 1 — auto build tables from template
-
     const normalizedInput = await normalizeRowForPdf(
         runtimeData,
         schemaFields,
         institute
     );
+
     console.log("Normalized input --->", normalizedInput);
+
     return await generate({
         template: pdfTemplate as any,
-        inputs: [normalizedInput], // pdfme expects array
+        inputs: [normalizedInput],
         plugins: {
             text,
             image,
