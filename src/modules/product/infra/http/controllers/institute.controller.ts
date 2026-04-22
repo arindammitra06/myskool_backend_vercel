@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
-import { prisma } from '../../../../../shared/db-client';
-import { buildTheme } from '../../../../../shared/helpers/utils/generic.utils';
-
+import { prisma } from '../../../../../shared/db-client.js';
+import { buildTheme } from '../../../../../shared/helpers/utils/generic.utils.js';
 
 
 export class InstituteController {

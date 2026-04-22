@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
 import moment from "moment";
 import { AbsenseStatus, AttendanceType, DayStatus, EntryStatus, UserType } from "@prisma/client";
-import { Attendance, AttendanceSheetModel, AttendanceShort } from "../../../../../../shared/models/attendance.model";
+import { Attendance, AttendanceSheetModel, AttendanceShort } from "../../../../../../shared/models/attendance.model.js";
 import { v4 as uuidv4 } from 'uuid';
-import { addANotification, getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils";
-import { sendSms, sendEmail } from "../../../../../../shared/helpers/notifications/notifications";
-import { buildMessage, NEW_HOMEWORK_ADDED, STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT, STUDENT_STAFF_ATTENDANCE_MARKED_LATE } from "../../../../../../shared/constants/notification.constants";
+import { addANotification, getDateForMatching } from "../../../../../../shared/helpers/utils/generic.utils.js";
+import { sendSms, sendEmail } from "../../../../../../shared/helpers/notifications/notifications.js";
+import { buildMessage, NEW_HOMEWORK_ADDED, STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT, STUDENT_STAFF_ATTENDANCE_MARKED_LATE } from "../../../../../../shared/constants/notification.constants.js";
 
 export class AttendanceController {
 
@@ -676,8 +676,8 @@ export class AttendanceController {
             });
 
 
-            if ((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
-                        || element.attendanceStatus === 'Absent') {
+            if ((element.entryStatus === 'Late' && element.attendanceStatus === 'Present')
+              || element.attendanceStatus === 'Absent') {
 
               if (element.userType === 'student') {
 
@@ -708,13 +708,13 @@ export class AttendanceController {
                         addANotification(Number(element.campusId),
                           Number(studentsInClass.parent[j].parent.id),
                           Number(attendanceForm.currentUserId),
-                          buildMessage((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
-                              ? STUDENT_STAFF_ATTENDANCE_MARKED_LATE : STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT,
-                                studentsInClass.displayName,
-                                moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY')));
+                          buildMessage((element.entryStatus === 'Late' && element.attendanceStatus === 'Present')
+                            ? STUDENT_STAFF_ATTENDANCE_MARKED_LATE : STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT,
+                            studentsInClass.displayName,
+                            moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY')));
 
 
-                        if (element.entryStatus === 'Late' && element.attendanceStatus==='Present') {
+                        if (element.entryStatus === 'Late' && element.attendanceStatus === 'Present') {
                           sendSms('Late SMS',
                             {
                               user_name: studentsInClass.displayName,
@@ -783,13 +783,13 @@ export class AttendanceController {
                   addANotification(Number(element.campusId),
                     Number(staffFetched.id),
                     Number(attendanceForm.currentUserId),
-                    buildMessage((element.entryStatus === 'Late' && element.attendanceStatus==='Present') 
+                    buildMessage((element.entryStatus === 'Late' && element.attendanceStatus === 'Present')
                       ? STUDENT_STAFF_ATTENDANCE_MARKED_LATE : STUDENT_STAFF_ATTENDANCE_MARKED_ABSENT,
                       staffFetched.displayName,
                       moment(element.attendanceDateProcessed, 'DD-MM-YYYY').format('DD-MM-YYYY')));
 
 
-                  if (element.entryStatus === 'Late' && element.attendanceStatus==='Present') {
+                  if (element.entryStatus === 'Late' && element.attendanceStatus === 'Present') {
                     sendSms('Late SMS',
                       {
                         user_name: staffFetched.displayName,

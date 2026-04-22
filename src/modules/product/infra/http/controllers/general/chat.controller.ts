@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
 
 export class ChatController {
 

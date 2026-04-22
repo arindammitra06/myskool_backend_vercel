@@ -1,7 +1,7 @@
 import { Institute } from "@prisma/client";
-import { prisma } from "../../db-client";
-import { processFieldValue } from "./pdf.paramProcessor";
-import { getAppSelectedCurrencySymbol } from "./generic.utils";
+import { prisma } from "../../db-client.js";
+import { processFieldValue } from "./pdf.paramProcessor.js";
+import { getAppSelectedCurrencySymbol } from "./generic.utils.js";
 import sharp from "sharp";
 import axios from "axios";
 

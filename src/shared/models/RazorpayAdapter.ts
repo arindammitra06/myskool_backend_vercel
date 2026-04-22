@@ -1,7 +1,7 @@
 // payments/adapters/RazorpayAdapter.ts
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { PaymentAdapter } from "./PaymentAdapter";
+import { PaymentAdapter } from "./PaymentAdapter.js";
 
 export class RazorpayAdapter implements PaymentAdapter {
     private razorpay;

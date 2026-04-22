@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { transportControllerInstance } from '../controllers';
+import { transportControllerInstance } from "../controllers/index.js";
 
 
 const TransportRouter = Router();

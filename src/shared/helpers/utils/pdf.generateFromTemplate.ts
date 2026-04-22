@@ -1,4 +1,4 @@
-import { prisma } from "../../db-client";
+import { prisma } from "../../db-client.js";
 import fs from "fs";
 import {
     image,
@@ -21,8 +21,8 @@ import {
     pinyonBase64,
     robotoBase64,
     seagramBase64
-} from "./fonts";
-import { normalizeRowForPdf } from "./runTemplateQuery";
+} from "./fonts.js";
+import { normalizeRowForPdf } from "./runTemplateQuery.js";
 import { Institute } from "@prisma/client";
 
 type PdfMeTemplate = {

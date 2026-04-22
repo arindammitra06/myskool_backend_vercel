@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { attendanceControllerInstance } from '../controllers';
+import { attendanceControllerInstance } from '../controllers/index.js';
 
 const AttendanceRouter = Router();
 AttendanceRouter.post("/fetchAnyMonthAttendance", attendanceControllerInstance.fetchAnyMonthAttendance);

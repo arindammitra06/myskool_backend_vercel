@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { parentControllerInstance } from '../controllers';
+import { parentControllerInstance } from "../controllers/index.js";
 
 
 const ParentRouter = Router();

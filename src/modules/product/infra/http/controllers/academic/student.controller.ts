@@ -15,20 +15,20 @@ import {
   generateIdsForParentAndStudent,
   generateInvoiceNumber,
   getPermissionByName,
-} from '../../../../../../shared/helpers/utils/generic.utils';
-import { prisma } from '../../../../../../shared/db-client';
+} from '../../../../../../shared/helpers/utils/generic.utils.js';
+import { prisma } from '../../../../../../shared/db-client.js';
 import moment from 'moment';
 import {
   sendAccountCreationEmail,
   sendEmail,
   sendSms,
-} from '../../../../../../shared/helpers/notifications/notifications';
+} from '../../../../../../shared/helpers/notifications/notifications.js';
 import {
   APPLICATION_REQUEST_SUBMITTED,
   USER_CREATED,
   USER_DELETED,
   USER_UPDATED,
-} from '../../../../../../shared/constants/notification.constants';
+} from '../../../../../../shared/constants/notification.constants.js';
 
 export class StudentController {
   public async submitApplicationForm(req: Request, res: Response) {

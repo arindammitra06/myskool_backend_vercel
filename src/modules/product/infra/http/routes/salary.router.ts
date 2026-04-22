@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { salaryControllerInstance } from "../controllers";
+import { salaryControllerInstance } from "../controllers/index.js";
 
 const SalaryRouter = Router();
 

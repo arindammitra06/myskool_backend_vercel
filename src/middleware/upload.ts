@@ -1,5 +1,5 @@
 import multer from "multer";
-import { createMulterStorage } from "../shared/services/multer-storage";
+import { createMulterStorage } from "../shared/services/multer-storage.js";
 
 const upload = createMulterStorage();
 

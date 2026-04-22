@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { ApprovalStatus, FeeStatus, FeeType, PaymentType, PaySlip, SalaryPlan, SalaryPlanBreakup, TransactionSource, TransactionType, UserType } from '@prisma/client';
-import { addANotification, calculateMonthlyTDS_NewRegime, generatePaySlipNumber, getARandomAlphanumericID, getBonusByEmployeeId, getCurrencySymbol, getFinancialYearIdByDate, getTdsDeductedTillNow, getTotalBonusPaidForEmployee } from "../../../../../../shared/helpers/utils/generic.utils";
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
+import { addANotification, calculateMonthlyTDS_NewRegime, generatePaySlipNumber, getARandomAlphanumericID, getBonusByEmployeeId, getCurrencySymbol, getFinancialYearIdByDate, getTdsDeductedTillNow, getTotalBonusPaidForEmployee } from "../../../../../../shared/helpers/utils/generic.utils.js";
 import { v4 as uuidv4 } from 'uuid';
-import { buildMessage, LOAN_REQUEST_CREATED, LOAN_REQUEST_STATUS } from "../../../../../../shared/constants/notification.constants";
-import { sendPaymentViaRazorpayX } from "../../../../../../shared/services/razorpayXService";
+import { buildMessage, LOAN_REQUEST_CREATED, LOAN_REQUEST_STATUS } from "../../../../../../shared/constants/notification.constants.js";
+import { sendPaymentViaRazorpayX } from "../../../../../../shared/services/razorpayXService.js";
 
 
 
@@ -103,7 +103,7 @@ export class SalaryController {
       },
       include: {
         PaySlip: {
-          where:{ 
+          where: {
             slipStatus: FeeStatus.Unpaid
           },
           include: {
@@ -142,7 +142,7 @@ export class SalaryController {
       },
     });
 
-    return res.json({ status: true, data: employees, message: employees.PaySlip!==null && employees.PaySlip!==undefined && employees.PaySlip.length>0 ? 'Unpaid Payslips fetched' : 'No Unpaid Payslips'});
+    return res.json({ status: true, data: employees, message: employees.PaySlip !== null && employees.PaySlip !== undefined && employees.PaySlip.length > 0 ? 'Unpaid Payslips fetched' : 'No Unpaid Payslips' });
   }
 
   public async getActiveSalaryPlans(req: Request, res: Response) {
@@ -1207,13 +1207,13 @@ export class SalaryController {
                 await prisma.salaryPaymentRecord.create({
                   data: {
                     invoiceNumber: payslip.invoiceNumber,
-                    paySlipId:payslip.id,
+                    paySlipId: payslip.id,
                     campusId: payslip.campusId,
                     paymentType: PaymentType.Online,
-                    paidAmount:payslip.amount,
-                    paidOn : new Date(),
+                    paidAmount: payslip.amount,
+                    paidOn: new Date(),
                     vendor: "RazorPay",
-                    referenceNo:result.payoutId,
+                    referenceNo: result.payoutId,
                     created_by: Number(formData.curretUserId),
                     created_at: new Date(),
                     updated_by: Number(formData.curretUserId),
@@ -1221,7 +1221,7 @@ export class SalaryController {
                   },
                 });
 
-                
+
               } else {
                 console.log('❌ Payment failed:', 'result.message');
               }
@@ -1253,7 +1253,7 @@ export class SalaryController {
     let employeesWithBankInfo = [];
 
     if (formData !== null && formData !== undefined && (formData.payslips === null && formData.payslips === undefined)
-       || (formData.payslips !== null && formData.payslips !== undefined && formData.payslips.length === 0)) {
+      || (formData.payslips !== null && formData.payslips !== undefined && formData.payslips.length === 0)) {
       return res.json({ status: false, data: null, message: 'No payslips selected.' });
     }
 
@@ -1262,17 +1262,17 @@ export class SalaryController {
       return res.json({ status: false, data: null, message: 'No employee selected.' });
     }
 
-    if (formData.employee  !== null && formData.employee  !== undefined && 
-          formData.employee.BankInformation !== null && formData.employee.BankInformation !== undefined && formData.employee.BankInformation.length === 1) {
-          employeesWithBankInfo.push(formData.employee);
-        } else {
-          employeesWithoutBankInfo.push(formData.employee);
-   }
+    if (formData.employee !== null && formData.employee !== undefined &&
+      formData.employee.BankInformation !== null && formData.employee.BankInformation !== undefined && formData.employee.BankInformation.length === 1) {
+      employeesWithBankInfo.push(formData.employee);
+    } else {
+      employeesWithoutBankInfo.push(formData.employee);
+    }
 
 
     if (employeesWithoutBankInfo !== null && employeesWithoutBankInfo !== undefined && employeesWithoutBankInfo.length > 0) {
       return res.json({ status: false, data: null, message: 'Bank account not linked. Payment cancelled' });
-    } else if (employeesWithBankInfo !== null && employeesWithBankInfo !== undefined && employeesWithBankInfo.length ===1) {
+    } else if (employeesWithBankInfo !== null && employeesWithBankInfo !== undefined && employeesWithBankInfo.length === 1) {
 
       let currentSelectedEmployee = employeesWithBankInfo[0];
 
@@ -1280,55 +1280,55 @@ export class SalaryController {
         let payslipSelected = formData.payslips[k];
 
         if (payslipSelected !== null && payslipSelected !== undefined && payslipSelected.id !== null && payslipSelected.id !== undefined) {
-          
+
           if (payslipSelected.slipStatus === 'Unpaid') {
-              const result = await sendPaymentViaRazorpayX({
-                accountNumber: currentSelectedEmployee.BankInformation[0].accountNo,
-                ifscCode: currentSelectedEmployee.BankInformation[0].ifscCode,
-                amount: payslipSelected.amount,
-                employeeName: currentSelectedEmployee.BankInformation[0].fullName,
-                referenceId: `PAY-${currentSelectedEmployee.id}-${Date.now()}`,
-                message: `Salary Payment for ${currentSelectedEmployee.BankInformation[0].fullName} for ${payslipSelected.month}, ${payslipSelected.year}`
+            const result = await sendPaymentViaRazorpayX({
+              accountNumber: currentSelectedEmployee.BankInformation[0].accountNo,
+              ifscCode: currentSelectedEmployee.BankInformation[0].ifscCode,
+              amount: payslipSelected.amount,
+              employeeName: currentSelectedEmployee.BankInformation[0].fullName,
+              referenceId: `PAY-${currentSelectedEmployee.id}-${Date.now()}`,
+              message: `Salary Payment for ${currentSelectedEmployee.BankInformation[0].fullName} for ${payslipSelected.month}, ${payslipSelected.year}`
+            });
+
+            if (result.success) {
+              console.log('✅ Payment sent:', result.payoutId, result.status);
+              oneInvoicePaid = true;
+              countOfInvoicesPaid = countOfInvoicesPaid + 1;
+
+              await prisma.paySlip.update({
+                where: {
+                  id: payslipSelected.id,
+                  campusId: payslipSelected.campusId,
+                },
+                data: {
+                  slipStatus: FeeStatus.Paid,
+                  updated_by: Number(formData.curretUserId),
+                  updated_at: new Date()
+                },
+              });
+              await prisma.salaryPaymentRecord.create({
+                data: {
+                  invoiceNumber: payslipSelected.invoiceNumber,
+                  paySlipId: payslipSelected.id,
+                  campusId: payslipSelected.campusId,
+                  paymentType: PaymentType.Online,
+                  paidAmount: payslipSelected.amount,
+                  paidOn: new Date(),
+                  vendor: "RazorPay",
+                  referenceNo: result.payoutId,
+                  created_by: Number(formData.curretUserId),
+                  created_at: new Date(),
+                  updated_by: Number(formData.curretUserId),
+                  updated_at: new Date()
+                },
               });
 
-              if (result.success) {
-                console.log('✅ Payment sent:', result.payoutId, result.status);
-                oneInvoicePaid = true;
-                countOfInvoicesPaid = countOfInvoicesPaid + 1;
 
-                await prisma.paySlip.update({
-                  where: {
-                    id: payslipSelected.id,
-                    campusId: payslipSelected.campusId,
-                  },
-                  data: {
-                    slipStatus: FeeStatus.Paid,
-                    updated_by: Number(formData.curretUserId),
-                    updated_at: new Date()
-                  },
-                });
-                await prisma.salaryPaymentRecord.create({
-                  data: {
-                    invoiceNumber: payslipSelected.invoiceNumber,
-                    paySlipId:payslipSelected.id,
-                    campusId: payslipSelected.campusId,
-                    paymentType: PaymentType.Online,
-                    paidAmount:payslipSelected.amount,
-                    paidOn : new Date(),
-                    vendor: "RazorPay",
-                    referenceNo:result.payoutId,
-                    created_by: Number(formData.curretUserId),
-                    created_at: new Date(),
-                    updated_by: Number(formData.curretUserId),
-                    updated_at: new Date()
-                  },
-                });
-
-                
-              } else {
-                console.log('❌ Payment failed:', 'result.message');
-              }
+            } else {
+              console.log('❌ Payment failed:', 'result.message');
             }
+          }
 
         }
       }

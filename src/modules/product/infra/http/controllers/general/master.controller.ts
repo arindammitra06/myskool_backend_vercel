@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../../../../../../shared/db-client';
+import { prisma } from '../../../../../../shared/db-client.js';
 import {
   EmailTemplate,
   FileType,
@@ -10,32 +10,16 @@ import {
   UserType,
 } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import {
-  addANotification,
-  buildTheme,
-  formatDateTime,
-  getBlankMonthWiseHolidayList,
-  getCurrencySymbol,
-  getIsoDay,
-  processTimeTableJsonData,
-} from '../../../../../../shared/helpers/utils/generic.utils';
 import moment from 'moment';
-import resetPasswordTemplate from '../../../../../../emails/reset-password';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  buildMessage,
-  LEAVE_REQUEST_APP_REJ,
-  LEAVE_REQUESTED,
-  NEW_HOMEWORK_ADDED,
-  PRODUCT_CATEGORY_ADDED,
-  UPDATE_MASTER_NOTIFICATION,
-  USER_CREATED,
-} from '../../../../../../shared/constants/notification.constants';
 import path from 'path';
-import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit';
-import imagekit from '../../../../../../shared/helpers/utils/imagekitClient';
-import { sendAdhocEmail, sendSms, sendEmail, getEmailTemplateByName, sendEmailCommon, changeAccountResetStatus } from '../../../../../../shared/helpers/notifications/notifications';
-const fs = require('fs');
+import { sendAdhocEmail, sendSms, sendEmail, getEmailTemplateByName, sendEmailCommon, changeAccountResetStatus } from '../../../../../../shared/helpers/notifications/notifications.js';
+import { buildMessage, LEAVE_REQUEST_APP_REJ, LEAVE_REQUESTED, NEW_HOMEWORK_ADDED, PRODUCT_CATEGORY_ADDED, UPDATE_MASTER_NOTIFICATION, USER_CREATED } from '../../../../../../shared/constants/notification.constants.js';
+import { addANotification, buildTheme, formatDateTime, getBlankMonthWiseHolidayList, getCurrencySymbol, getIsoDay, processTimeTableJsonData } from '../../../../../../shared/helpers/utils/generic.utils.js';
+import imagekit from '../../../../../../shared/helpers/utils/imagekitClient.js';
+import { uploadImageToImageKit } from '../../../../../../shared/helpers/utils/uploadImageToImageKit.js';
+import resetPasswordTemplate from '../../../../../../emails/reset-password.js';
+import fs from 'fs';
 
 interface MulterMemoryRequest extends Request {
   file: Express.Multer.File;

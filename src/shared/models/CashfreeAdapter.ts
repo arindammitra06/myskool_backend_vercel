@@ -1,6 +1,6 @@
 // payments/adapters/CashfreeAdapter.ts
 import axios from "axios";
-import { PaymentAdapter } from "./PaymentAdapter";
+import { PaymentAdapter } from "./PaymentAdapter.js";
 
 export class CashfreeAdapter implements PaymentAdapter {
     private config;

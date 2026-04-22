@@ -1,11 +1,9 @@
 import { Router } from "express";
-import { ChatController } from "../controllers/general/chat.controller";
-
+import { chatControllerInstance } from "../controllers/index.js";
 const ChatRouter = Router();
-const controller = new ChatController();
 
-ChatRouter.get("/rooms/:userId", controller.getMyChatRooms);
-ChatRouter.get("/rooms/:roomId/messages", controller.getRoomMessages);
-ChatRouter.post("/rooms/:roomId/:userId/messages", controller.sendMessage);
-ChatRouter.post("/rooms", controller.createOrGetRoom);
+ChatRouter.get("/rooms/:userId", chatControllerInstance.getMyChatRooms);
+ChatRouter.get("/rooms/:roomId/messages", chatControllerInstance.getRoomMessages);
+ChatRouter.post("/rooms/:roomId/:userId/messages", chatControllerInstance.sendMessage);
+ChatRouter.post("/rooms", chatControllerInstance.createOrGetRoom);
 export default ChatRouter;

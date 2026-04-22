@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
-import { addANotification, buildTheme, encrypt, getMenuCategory } from "../../../../../../shared/helpers/utils/generic.utils";
+import { prisma } from "../../../../../../shared/db-client.js";
+import { addANotification, buildTheme, encrypt, getMenuCategory } from "../../../../../../shared/helpers/utils/generic.utils.js";
 import { FeeStatus, UserType } from "@prisma/client";
 import moment from "moment";
-import { buildMessage, ROLE_DELETED, ROLE_UPDATES, SYSTEM_THEME_UPDATED, USER_DELETED, USER_DETAILS_UPDATED, USER_PASSWORD_RESET, USER_PERMISSION_MODIFIED, USER_PHOTO_UPDATED, USER_THEME_UPDATED } from "../../../../../../shared/constants/notification.constants";
+import { buildMessage, ROLE_DELETED, ROLE_UPDATES, SYSTEM_THEME_UPDATED, USER_DELETED, USER_DETAILS_UPDATED, USER_PASSWORD_RESET, USER_PERMISSION_MODIFIED, USER_PHOTO_UPDATED, USER_THEME_UPDATED } from "../../../../../../shared/constants/notification.constants.js";
 
 
 

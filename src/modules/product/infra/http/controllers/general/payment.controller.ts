@@ -1,10 +1,11 @@
+import { FeeStatus, FeeType, PaymentTransactionStatus, PaymentType, TransactionType, TransactionSource } from "@prisma/client";
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
-import { createPaymentOrder, getPaymentAdapter } from "../../../../../../shared/helpers/utils/payment.utils";
-import { FeeStatus, FeeType, PaymentTransactionStatus, PaymentType, TransactionSource, TransactionType } from "@prisma/client";
-import { addANotification, generateInvoiceNumber } from "../../../../../../shared/helpers/utils/generic.utils";
-import { buildMessage, INVOICE_PAID } from "../../../../../../shared/constants/notification.constants";
+
 import moment from "moment";
+import { buildMessage, INVOICE_PAID } from "../../../../../../shared/constants/notification.constants.js";
+import { prisma } from "../../../../../../shared/db-client.js";
+import { generateInvoiceNumber, addANotification } from "../../../../../../shared/helpers/utils/generic.utils.js";
+import { createPaymentOrder, getPaymentAdapter } from "../../../../../../shared/helpers/utils/payment.utils.js";
 
 export class PaymentController {
 

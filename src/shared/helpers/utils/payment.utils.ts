@@ -1,11 +1,11 @@
 // payments/getPaymentAdapter.ts
 
 import { MYAALInvoices } from "@prisma/client";
-import { prisma } from "../../db-client";
-import { CashfreeAdapter } from "../../models/CashfreeAdapter";
-import { PhonePeAdapter } from "../../models/PhonePeAdapter";
-import { RazorpayAdapter } from "../../models/RazorpayAdapter";
-import { StripeAdapter } from "../../models/StripeAdapter";
+import { prisma } from "../../db-client.js";
+import { CashfreeAdapter } from "../../models/CashfreeAdapter.js";
+import { PhonePeAdapter } from "../../models/PhonePeAdapter.js";
+import { RazorpayAdapter } from "../../models/RazorpayAdapter.js";
+import { StripeAdapter } from "../../models/StripeAdapter.js";
 
 export function getPaymentAdapter(provider: string, config: any) {
     switch (provider) {

@@ -1,4 +1,4 @@
-import { HttpStatus } from '../../enums/http-status.enum';
+import { HttpStatus } from '../../enums/http-status.enum.js';
 
 type MessageType = {
   statusCode: HttpStatus;

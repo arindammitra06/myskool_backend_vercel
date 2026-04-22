@@ -1,7 +1,7 @@
-import { AnsiColors } from '../../enums/colors.enum';
+import { AnsiColors } from '../../enums/colors.enum.js';
 
 export class Logger {
-  constructor(private context?: string) {}
+  constructor(private context?: string) { }
   public info(value: string) {
     process.stdout.write(
       AnsiColors.FgBlue + this.handleWithContext(value) + AnsiColors.Reset

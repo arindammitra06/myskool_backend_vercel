@@ -1,5 +1,5 @@
 import type { Server } from 'node:http';
-import { Logger } from '../helpers/utils/Logger';
+import { Logger } from '../helpers/utils/Logger.js';
 
 export function gracefulShutdown(
   server: Server,

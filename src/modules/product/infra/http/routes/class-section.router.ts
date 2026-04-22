@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { classSectionControllerInstance } from '../controllers';
+import { classSectionControllerInstance } from '../controllers/index.js';
 
 const ClassSectionRouter = Router();
 ClassSectionRouter.post("/createStudentClass", classSectionControllerInstance.createStudentClass);

@@ -1,4 +1,4 @@
-import { sendViaBrevo, sendViaMailgun, sendViaSendPulse, sendViaSMTP } from "./emailProviders";
+import { sendViaBrevo, sendViaMailgun, sendViaSendPulse, sendViaSMTP } from "./emailProviders.js";
 
 export async function sendEmailNotificationFinal(provider, config, mail) {
   switch (provider) {

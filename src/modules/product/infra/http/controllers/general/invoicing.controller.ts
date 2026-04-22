@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
-import { generatePdfFromTemplate } from "../../../../../../shared/helpers/utils/pdf.generateFromTemplate";
+import { prisma } from "../../../../../../shared/db-client.js";
+import { generatePdfFromTemplate } from "../../../../../../shared/helpers/utils/pdf.generateFromTemplate.js";
 
 export class InvoicingController {
     constructor() {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { instituteControllerInstance } from '../controllers';
+import { instituteControllerInstance } from "../controllers/index.js";
 
 const InstituteCouter = Router();
 InstituteCouter.post("/createInstitute", instituteControllerInstance.createInstitute);

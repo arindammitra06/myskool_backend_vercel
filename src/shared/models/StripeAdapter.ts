@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentAdapter } from "./PaymentAdapter";
+import { PaymentAdapter } from "./PaymentAdapter.js";
 import type { Stripe as StripeTypes } from "stripe";
 
 

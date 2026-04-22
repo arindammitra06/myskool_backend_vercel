@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { staffAccControllerInstance } from '../controllers';
+import { staffAccControllerInstance } from "../controllers/index.js";
 
 
 const StaffAccRouter = Router();

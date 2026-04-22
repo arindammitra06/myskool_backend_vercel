@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
-import imagekit from "./imagekitClient"; // you already created this
+import imagekit from "./imagekitClient.js"; // you already created this
 
 export async function uploadImageToImageKit(buffer: Buffer, fileName?: string, folderPath?: string): Promise<any> {
     try {
-        
+
 
         const result = await imagekit.upload({
             file: buffer,

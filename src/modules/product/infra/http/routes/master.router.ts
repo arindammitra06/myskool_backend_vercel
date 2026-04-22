@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { masterControllerInstance } from '../controllers';
-import upload from "../middlewares/multer";
-import { uploadSingleFile } from "../../../../../middleware/upload";
+import { uploadSingleFile } from "../../../../../middleware/upload.js";
+import { masterControllerInstance } from "../controllers/index.js";
+import upload from "../middlewares/multer.js";
 
 
 const MasterRouter = Router();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { subjectControllerInstance } from '../controllers';
+import { subjectControllerInstance } from "../controllers/index.js";
 
 const SubjectRouter = Router();
 SubjectRouter.post("/createOrUpdateSubject", subjectControllerInstance.createOrUpdateSubject);

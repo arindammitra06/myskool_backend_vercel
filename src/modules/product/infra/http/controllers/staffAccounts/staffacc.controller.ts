@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { ApprovalStatus, Gender, ParentType, UserType } from '@prisma/client';
 import generator from 'generate-password-ts';
-import { addANotification, encrypt, generateIdsForParentAndStudent } from "../../../../../../shared/helpers/utils/generic.utils";
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
+import { addANotification, encrypt, generateIdsForParentAndStudent } from "../../../../../../shared/helpers/utils/generic.utils.js";
 import moment from "moment";
-import { sendAccountCreationEmail } from "../../../../../../shared/helpers/notifications/notifications";
-import { USER_UPDATED } from "../../../../../../shared/constants/notification.constants";
+import { sendAccountCreationEmail } from "../../../../../../shared/helpers/notifications/notifications.js";
+import { USER_UPDATED } from "../../../../../../shared/constants/notification.constants.js";
 
 
 
@@ -18,7 +18,7 @@ export class StaffAccountantController {
     const staffDetails: any = req.body;
     const empType = String(req.params.empType);
     const institute = await prisma.institute.findFirst();
-    
+
     const password = generator.generate({
       length: 10,
       numbers: true,
@@ -224,20 +224,20 @@ export class StaffAccountantController {
         include: {
           campus: true,
           EmployeeSalary: true,
-          LoanRequest:{
-            where:{
+          LoanRequest: {
+            where: {
               approvalStatus: ApprovalStatus.Pending
             }
           },
           EmployeeLoan: {
             include: {
               transactions: {
-                orderBy:{
+                orderBy: {
                   created_at: 'desc'
                 }
               },
               LoanDetails: {
-                orderBy:{
+                orderBy: {
                   created_at: 'desc'
                 }
               }
@@ -245,7 +245,7 @@ export class StaffAccountantController {
           },
         },
       });
-      
+
       if (employee !== null && employee !== undefined) {
         return res.json({ status: true, data: employee, message: 'Employee info retrieved' });
       } else {

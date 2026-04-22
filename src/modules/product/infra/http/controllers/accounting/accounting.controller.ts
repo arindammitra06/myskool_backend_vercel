@@ -1,9 +1,9 @@
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
 import { Request, Response } from "express";
 import { FeeStatus, FeeType, ParentType, PaymentType, Prisma, SellProductDetails, StudentFees, SubjectType, TransactionSource, TransactionType, User, UserType } from "@prisma/client";
 import moment from "moment";
-import { addANotification, generateInvoiceNumber, generateProductIdNumber, generateSellingInvoiceNumber, getARandomAlphanumericID } from "../../../../../../shared/helpers/utils/generic.utils";
-import { buildMessage, EXPENSE_ADDED, EXPENSE_TYPE_ADDED, EXPENSE_TYPE_UPDATED, EXPENSE_UPDATED, FAMILY_CREDIT_UPDATED, FEE_PLAN_UPDATED, INVOICE_CANCELLED, INVOICE_PAID, POINT_OF_SALE, PRODUCT_CATEGORY_ADDED, PRODUCT_CATEGORY_UPDATED } from "../../../../../../shared/constants/notification.constants";
+import { addANotification, generateInvoiceNumber, generateProductIdNumber, generateSellingInvoiceNumber, getARandomAlphanumericID } from "../../../../../../shared/helpers/utils/generic.utils.js";
+import { buildMessage, EXPENSE_ADDED, EXPENSE_TYPE_ADDED, EXPENSE_TYPE_UPDATED, EXPENSE_UPDATED, FAMILY_CREDIT_UPDATED, FEE_PLAN_UPDATED, INVOICE_CANCELLED, INVOICE_PAID, POINT_OF_SALE, PRODUCT_CATEGORY_ADDED, PRODUCT_CATEGORY_UPDATED } from "../../../../../../shared/constants/notification.constants.js";
 
 
 

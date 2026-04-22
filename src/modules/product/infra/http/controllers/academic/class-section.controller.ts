@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../../../../../../shared/db-client";
+import { prisma } from "../../../../../../shared/db-client.js";
 
 
 export class ClassSectionController {
@@ -186,7 +186,7 @@ export class ClassSectionController {
       },
       include: {
         Section: {
-          where:{
+          where: {
             active: 1
           }
         },
@@ -209,17 +209,17 @@ export class ClassSectionController {
       },
       include: {
         Section: {
-          where:{
-              active: 1
+          where: {
+            active: 1
           },
           include: {
             subjects: {
-              where:{
+              where: {
                 active: 1
               }
             },
-            TeachersInSection:{
-              include:{
+            TeachersInSection: {
+              include: {
                 teacher: true
               }
             }
@@ -227,7 +227,7 @@ export class ClassSectionController {
         },
         campus: true,
         User: {
-          where:{
+          where: {
             active: 1
           }
         },
@@ -271,8 +271,8 @@ export class ClassSectionController {
           }
         });
         //Add New Teachers
-        if (sectionS.form.teacherId !== null && sectionS.form.teacherId !== undefined 
-                  && Array.isArray(sectionS.form.teacherId) && sectionS.form.teacherId.length > 0) {
+        if (sectionS.form.teacherId !== null && sectionS.form.teacherId !== undefined
+          && Array.isArray(sectionS.form.teacherId) && sectionS.form.teacherId.length > 0) {
           sectionS.form.teacherId.forEach(async (idsEach) => {
             const teachersInSection = await prisma.teachersInSection.create({
               data: {
@@ -294,7 +294,7 @@ export class ClassSectionController {
             campusId: Number(sectionS.form.campusId),
             classId: Number(sectionS.form.classId),
             sectionName: sectionS.form.sectionName,
-            created_at:new Date(),
+            created_at: new Date(),
             created_by: Number(sectionS.form.updated_by),
             updated_by: Number(sectionS.form.updated_by),
             updated_at: new Date(),
@@ -465,7 +465,7 @@ export class ClassSectionController {
           id: Number(id),
           campusId: Number(campusId)
         },
-        include:{
+        include: {
           TeachersInSection: true,
         }
       });
@@ -484,63 +484,63 @@ export class ClassSectionController {
     const active = Number(req.params.active);
     console.log(classId);
     let section = [];
-    if(classId!==null && classId!==undefined &&  classId!=='0'  &&  classId!=='NaN'){
-      section  =await prisma.section.findMany({
+    if (classId !== null && classId !== undefined && classId !== '0' && classId !== 'NaN') {
+      section = await prisma.section.findMany({
         where: {
           campusId: Number(campusId),
           classId: Number(classId),
           active: Number(active)
         },
-  
+
         include: {
           class: true,
           campus: true,
           User: {
-            where:{
+            where: {
               active: 1
             }
           },
           subjects: {
-            where:{
+            where: {
               active: 1
             }
           },
           TeachersInSection: {
-            include:{
+            include: {
               teacher: true
             }
           }
         },
       });
-    }else{
-      section  =await prisma.section.findMany({
+    } else {
+      section = await prisma.section.findMany({
         where: {
           campusId: Number(campusId),
           active: Number(active)
         },
-  
+
         include: {
           class: true,
           campus: true,
           User: {
-            where:{
+            where: {
               active: 1
             }
           },
           subjects: {
-            where:{
+            where: {
               active: 1
             }
           },
           TeachersInSection: {
-            include:{
+            include: {
               teacher: true
             }
           }
         },
       });
     }
-    
+
     return res.json({ status: true, data: section, message: 'Sections for Class loaded' });
   }
 
@@ -551,7 +551,7 @@ export class ClassSectionController {
     const currentUserid = Number(req.params.currentUserid);
     console.log(req.params);
 
-    if(isSubscribed==='false'){
+    if (isSubscribed === 'false') {
       console.log('Not Subscribed')
       await prisma.teachersInSection.create({
         data: {
@@ -560,7 +560,7 @@ export class ClassSectionController {
           sectionId: Number(sectionId),
         }
       });
-    }else{
+    } else {
       console.log('Already Subscribed')
       await prisma.teachersInSection.deleteMany({
         where: {
@@ -570,8 +570,8 @@ export class ClassSectionController {
         }
       });
     }
-    
-    return res.json({ status: true, data: null, message: isSubscribed==='false' ? 'Subscribed to updates'  : 'Unsubscribed from updates'});
+
+    return res.json({ status: true, data: null, message: isSubscribed === 'false' ? 'Subscribed to updates' : 'Unsubscribed from updates' });
   }
 
 
@@ -582,7 +582,7 @@ export class ClassSectionController {
       where: {
         campusId: Number(campusId)
       },
-      include:{
+      include: {
         TeachersInSection: true,
       }
     });

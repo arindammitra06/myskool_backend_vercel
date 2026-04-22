@@ -1,12 +1,12 @@
 import { FeeType, Gender, Institute, Permission, Regime, TimeTable, User } from '@prisma/client';
 import * as crypto from 'crypto';
-import { prisma } from '../../db-client';
+import { prisma } from '../../db-client.js';
 import { v4 as uuidv4 } from 'uuid';
-import { HolidayListModel } from '../../models/time-model';
+import { HolidayListModel } from '../../models/time-model.js';
 import ShadeGenerator, { Shade } from 'shade-generator';
 import fs from 'fs';
 import path from 'path';
-import imagekit from './imagekitClient';
+import imagekit from './imagekitClient.js';
 
 type Oklch = { l: number; c: number; h: number };
 function parseOklch(color: string): Oklch {
@@ -447,43 +447,7 @@ export function buildTheme(themeObject: any) {
 }
 
 
-export function generateShades(colorString: string) {
-  const config: Record<Shade, number> = {
-    "10": 0.9,
-    "20": 0.8,
-    "30": 0.7,
-    "40": 0.6,
-    "50": 0.5,
-    "60": 0.4,
-    "70": 0.3,
-    "80": 0.2,
-    "90": 0.1,
-    "100": 0,
-    "200": 0.9,
-    "300": 0.8,
-    "400": 0.7,
-    "500": 0.6,
-    "600": 0.5,
-    "700": 0.4,
-    "800": 0.3,
-    "900": 0.2,
-    "1000": 0.1,
-  };
-  const color = ShadeGenerator.hue(colorString).config(config).shadesMap("hex");
 
-  return [
-    color['10'],
-    color['30'],
-    color['60'],
-    color['80'],
-    color['90'],
-    color['100'],
-    color['200'],
-    color['300'],
-    color['400'],
-    color['500'],
-  ] as string[];
-}
 
 export async function addANotification(campusId: number, userId: number, createdBy: number, message: string) {
   await prisma.notifications.create({

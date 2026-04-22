@@ -1,5 +1,5 @@
 import axios from "axios";
-import { PaymentAdapter } from "./PaymentAdapter";
+import { PaymentAdapter } from "./PaymentAdapter.js";
 
 export class PhonePeAdapter implements PaymentAdapter {
     private config;

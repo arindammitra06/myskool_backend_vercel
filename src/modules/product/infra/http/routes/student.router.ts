@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { studentControllerInstance } from '../controllers';
+import { studentControllerInstance } from "../controllers/index.js";
 
 const StudentRouter = Router();
 StudentRouter.post("/submitApplicationForm", studentControllerInstance.submitApplicationForm);
