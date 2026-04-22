@@ -8,7 +8,7 @@ import application from './app/application';
 import logger from './shared/helpers/utils/Logger';
 
 import { ShutdownEnum } from './shared/enums/shutdown.enum';
-import gracefulShutdown from './shared/events/gracefulShutdown.js';
+import gracefulShutdown from './shared/events/gracefulShutdown';
 
 ((): void => {
   const server = application.listen(PORT, (): boolean =>
