@@ -29,16 +29,31 @@ export class Application {
 
     this.express.use(
       cors({
-        origin: [
-          "https://myskool-pro.vercel.app",
-          "http://localhost:3000",
-          "http://localhost:3001",
-        ],
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        origin: (origin, callback) => {
+          const allowed = [
+            "https://myskool-pro.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:3001",
+          ];
+
+          if (!origin || allowed.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        },
         credentials: true,
       })
     );
+    this.express.options("*", cors());
+    this.express.use((err: any, req: any, res: any, next: any) => {
+      console.error("GLOBAL ERROR:", err);
 
+      res.status(500).json({
+        message: "Internal Server Error",
+        error: err?.message,
+      });
+    });
     this.express.use(helmet());
     this.express.use(compression());
     this.express.use(bodyParser.json({ limit: BODY_PARSER_LIMIT }));
